@@ -18,5 +18,17 @@
     <EmbeddedResource Include="$(RazorLanguageDir)\**\*.resx" Link="Microsoft.AspNetCore.Razor.Language\%(RecursiveDir)%(FileName)%(Extension)" />
     <Compile Remove="$(RazorLanguageDir)\Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <None Update="RazorLanguageResources.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>RazorLanguageResources.cs</LastGenOutput>
+    </None>
+    <Compile Update="RazorLanguageResources.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>RazorLanguageResources.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
 
 </Project>
