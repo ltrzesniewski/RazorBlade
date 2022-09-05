@@ -10,6 +10,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{12E535CC
 		Directory.Build.targets = Directory.Build.targets
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorBlade.IntegrationTest", "RazorBlade.IntegrationTest\RazorBlade.IntegrationTest.csproj", "{2FE5A803-86C8-42D2-A0DB-61D156DB6EB9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{F94996B6-EC52-4CAD-8E0B-2CB7B97DE31A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F94996B6-EC52-4CAD-8E0B-2CB7B97DE31A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F94996B6-EC52-4CAD-8E0B-2CB7B97DE31A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FE5A803-86C8-42D2-A0DB-61D156DB6EB9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FE5A803-86C8-42D2-A0DB-61D156DB6EB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FE5A803-86C8-42D2-A0DB-61D156DB6EB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FE5A803-86C8-42D2-A0DB-61D156DB6EB9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
