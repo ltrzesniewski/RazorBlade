@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorBlade", "RazorBlade\RazorBlade.csproj", "{1280633E-E181-4E53-9819-2B0A0AC07A7E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorBlade.Analyzers", "RazorBlade.Analyzers\RazorBlade.Analyzers.csproj", "{F94996B6-EC52-4CAD-8E0B-2CB7B97DE31A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{12E535CC-9AAC-4EEC-92BC-87A9325577B8}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+		Directory.Build.targets = Directory.Build.targets
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1280633E-E181-4E53-9819-2B0A0AC07A7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1280633E-E181-4E53-9819-2B0A0AC07A7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1280633E-E181-4E53-9819-2B0A0AC07A7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1280633E-E181-4E53-9819-2B0A0AC07A7E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F94996B6-EC52-4CAD-8E0B-2CB7B97DE31A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F94996B6-EC52-4CAD-8E0B-2CB7B97DE31A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F94996B6-EC52-4CAD-8E0B-2CB7B97DE31A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F94996B6-EC52-4CAD-8E0B-2CB7B97DE31A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

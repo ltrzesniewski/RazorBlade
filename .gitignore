@@ -1,0 +1,16 @@
+
+local-*
+
+.vs/
+.vscode/
+.idea/
+output/
+bin/
+obj/
+
+Thumbs.db
+
+*.user
+*.log
+*.binlog
+*.orig
