@@ -2,33 +2,46 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Nullable>disable</Nullable>
-    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+    <Configurations>$(Configurations);DebugExternalLib</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" />
   </ItemGroup>
 
-  <PropertyGroup>
-    <RazorLanguageDir>..\..\lib\razor-compiler\src\Microsoft.AspNetCore.Razor.Language\src</RazorLanguageDir>
-  </PropertyGroup>
-  
+  <Choose>
+    <When Condition="'$(Configuration)' == 'DebugExternalLib'">
+      <PropertyGroup>
+        <DefineConstants>$(DefineConstants);RAZOR_EXTERNAL_LIB</DefineConstants>
+      </PropertyGroup>
+      
+      <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Razor.Language" Version="6.0.8" />
+      </ItemGroup>
+    </When>
+    
+    <Otherwise>
+      <PropertyGroup>
+        <RazorLanguageDir>../../lib/razor-compiler/src/Microsoft.AspNetCore.Razor.Language/src</RazorLanguageDir>
+      </PropertyGroup>
+
+      <ItemGroup>
+        <Compile Include="$(RazorLanguageDir)/**/*.cs" Exclude="$(RazorLanguageDir)/obj/**/*.cs" Link="RazorLanguage/Source/%(RecursiveDir)%(FileName)%(Extension)" />
+        <Compile Remove="$(RazorLanguageDir)/Properties/AssemblyInfo.cs" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
+
   <ItemGroup>
-    <Compile Include="$(RazorLanguageDir)\**\*.cs" Exclude="$(RazorLanguageDir)\obj\**\*.cs" Link="Microsoft.AspNetCore.Razor.Language\%(RecursiveDir)%(FileName)%(Extension)" />
-    <EmbeddedResource Include="$(RazorLanguageDir)\**\*.resx" Link="Microsoft.AspNetCore.Razor.Language\%(RecursiveDir)%(FileName)%(Extension)" />
-    <Compile Remove="$(RazorLanguageDir)\Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <None Update="RazorLanguageResources.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>RazorLanguageResources.cs</LastGenOutput>
-    </None>
-    <Compile Update="RazorLanguageResources.cs">
+    <Compile Update="RazorLanguage/Resources.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>RazorLanguageResources.tt</DependentUpon>
+      <DependentUpon>Resources.tt</DependentUpon>
     </Compile>
+    <None Update="RazorLanguage/Resources.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Resources.cs</LastGenOutput>
+    </None>
   </ItemGroup>
-
+  
 </Project>
