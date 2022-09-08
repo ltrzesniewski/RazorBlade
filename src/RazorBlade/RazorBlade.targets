@@ -1,5 +1,15 @@
 <Project>
+
   <ItemGroup>
-    <AdditionalFiles Include="**/*.cshtml" />
+    <RazorBlade Update="@(RazorBlade)" Namespace="$([MSBuild]::ValueOrDefault('$(RootNamespace).%(RelativeDir)', '').Replace('\', '.').Replace('/', '.').Trim('.'))" />
+    <RazorBlade Update="@(RazorBlade)" IsRazorBlade="True" />
+
+    <None Remove="@(RazorBlade)" />
+    <AdditionalFiles Include="@(RazorBlade)" />
+
+    <CompilerVisibleProperty Include="RootNamespace" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="IsRazorBlade" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Namespace" />
   </ItemGroup>
+
 </Project>
