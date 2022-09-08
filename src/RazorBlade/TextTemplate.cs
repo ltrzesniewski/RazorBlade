@@ -1,17 +1,10 @@
-﻿using System.Text;
-using System.Threading.Tasks;
+﻿namespace RazorBlade;
 
-namespace RazorBlade;
-
-public abstract class TextTemplate
+public abstract class TextTemplate : RazorTemplate
 {
-    private readonly StringBuilder _sb = new();
+    protected void WriteLiteral(string? value)
+        => Output.Write(value);
 
-    public abstract Task ExecuteAsync();
-
-    public override string ToString() =>
-        _sb.ToString();
-
-    protected void WriteLiteral(string value)
-        => _sb.Append(value);
+    protected void Write(object? value)
+        => Output.Write(value);
 }

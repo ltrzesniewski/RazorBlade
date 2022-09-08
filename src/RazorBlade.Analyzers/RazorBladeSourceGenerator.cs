@@ -52,7 +52,14 @@ public class RazorBladeSourceGenerator : IIncrementalGenerator
             cfg =>
             {
                 cfg.SetNamespace(file.Namespace ?? "Razor"); // TODO: Use SetRootNamespace instead?
-                cfg.ConfigureClass((_, node) => node.ClassName = file.ClassName);
+
+                cfg.ConfigureClass((_, node) =>
+                {
+                    node.ClassName = file.ClassName;
+
+                    node.Modifiers.Clear();
+                    node.Modifiers.Add("internal");
+                });
             }
         );
 

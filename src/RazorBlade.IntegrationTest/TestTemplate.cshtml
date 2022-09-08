@@ -1,2 +1,7 @@
 @inherits RazorBlade.TextTemplate
-Hello, World!
+
+Hello, @Name!
+
+@functions {
+    public string? Name { get; set; }
+}
