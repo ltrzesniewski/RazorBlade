@@ -1,6 +1,6 @@
 ﻿namespace RazorBlade;
 
-public abstract class TextTemplate : RazorTemplate
+public abstract class PlainTextTemplate : RazorTemplate
 {
     protected void WriteLiteral(string? value)
         => Output.Write(value);
