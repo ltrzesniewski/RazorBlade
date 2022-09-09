@@ -20,11 +20,12 @@
   <PropertyGroup>
     <Authors>Lucas Trzesniewski</Authors>
     <Description>Compile Razor templates at build-time without a dependency on ASP.NET.</Description>
-    <Copyright>Copyright © Lucas Trzesniewski 2022-$([System.DateTime]::Now.ToString('yyyy'))</Copyright>
-    <PackageTags>Razor</PackageTags>
+    <Copyright>Copyright © Lucas Trzesniewski $([System.DateTime]::Now.ToString('yyyy'))</Copyright>
+    <PackageTags>Razor;Template</PackageTags>
     <PackageProjectUrl>https://github.com/ltrzesniewski/RazorBlade</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageOutputPath>$(MSBuildThisFileDirectory)..\output</PackageOutputPath>
+    <PackageIconUrl>https://github.com/ltrzesniewski/RazorBlade/raw/master/icon.png</PackageIconUrl>
   </PropertyGroup>
 
   <ItemGroup>

@@ -6,11 +6,17 @@
   <PropertyGroup>
     <IsPackable>true</IsPackable>
     <PackageId>RazorBlade</PackageId>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="../RazorBlade.Analyzers/RazorBlade.Analyzers.csproj" ReferenceOutputAssembly="false" />
     <None Include="../RazorBlade.Analyzers/bin/$(Configuration)/netstandard2.0/RazorBlade.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="RazorBlade.props" Pack="true" PackagePath="build" />
+    <None Include="RazorBlade.targets" Pack="true" PackagePath="build" />
+    <None Include="../../icon.png" Pack="true" PackagePath="/" Visible="false" />
+    <None Include="../NuGetReadme.md" Pack="true" PackagePath="/README.md" Visible="false" />
   </ItemGroup>
 
 </Project>
