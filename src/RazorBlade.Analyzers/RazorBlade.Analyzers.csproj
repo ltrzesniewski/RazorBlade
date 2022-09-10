@@ -11,6 +11,11 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <RazorLanguageDir>../../lib/razor-compiler/src/Microsoft.AspNetCore.Razor.Language/src</RazorLanguageDir>
+    <RazorCodeAnalysisDir>../../lib/razor-compiler/src/Microsoft.CodeAnalysis.Razor/src</RazorCodeAnalysisDir>
+  </PropertyGroup>
+
   <Choose>
     <When Condition="'$(Configuration)' == 'DebugExternalLib'">
       <PropertyGroup>
@@ -23,16 +28,16 @@
     </When>
 
     <Otherwise>
-      <PropertyGroup>
-        <RazorLanguageDir>../../lib/razor-compiler/src/Microsoft.AspNetCore.Razor.Language/src</RazorLanguageDir>
-      </PropertyGroup>
-
       <ItemGroup>
-        <Compile Include="$(RazorLanguageDir)/**/*.cs" Exclude="$(RazorLanguageDir)/obj/**/*.cs" Link="RazorLanguage/Source/%(RecursiveDir)%(FileName)%(Extension)" />
+        <Compile Include="$(RazorLanguageDir)/**/*.cs" Exclude="$(RazorLanguageDir)/obj/**/*.cs" Link="RazorLanguage/Language/%(RecursiveDir)%(FileName)%(Extension)" />
         <Compile Remove="$(RazorLanguageDir)/Properties/AssemblyInfo.cs" />
       </ItemGroup>
     </Otherwise>
   </Choose>
+  
+  <ItemGroup>
+    <Compile Include="$(RazorCodeAnalysisDir)/RazorProjectEngineBuilderExtensions.cs"  Link="RazorLanguage/CodeAnalysis/%(RecursiveDir)%(FileName)%(Extension)" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Update="RazorLanguage/Resources.cs">
