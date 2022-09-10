@@ -1,4 +1,4 @@
-# RazorBlade
+# RazorBlade                       <a href="#"><img src="icon.png" align="right" alt="Logo" /></a>
 
 Compile Razor templates at build-time without a dependency on ASP.NET.
 
