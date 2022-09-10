@@ -3,6 +3,7 @@ using System.IO;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
+using RazorBlade.Analyzers.Support;
 
 #nullable enable
 
@@ -75,6 +76,9 @@ public class RazorBladeSourceGenerator : IIncrementalGenerator
         );
 
         var csharpDoc = codeDoc.GetCSharpDocument();
+
+        foreach (var diagnostic in csharpDoc.Diagnostics)
+            context.ReportDiagnostic(diagnostic.ToDiagnostic());
 
         context.AddSource($"{file.Namespace}.{file.ClassName}", csharpDoc.GeneratedCode);
     }
