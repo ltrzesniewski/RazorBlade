@@ -3,6 +3,8 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <Nullable>disable</Nullable>
     <Configurations>$(Configurations);DebugExternalLib</Configurations>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>../RazorBlade/Build/key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,12 +16,12 @@
       <PropertyGroup>
         <DefineConstants>$(DefineConstants);RAZOR_EXTERNAL_LIB</DefineConstants>
       </PropertyGroup>
-      
+
       <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Razor.Language" Version="6.0.8" />
       </ItemGroup>
     </When>
-    
+
     <Otherwise>
       <PropertyGroup>
         <RazorLanguageDir>../../lib/razor-compiler/src/Microsoft.AspNetCore.Razor.Language/src</RazorLanguageDir>
@@ -43,5 +45,5 @@
       <LastGenOutput>Resources.cs</LastGenOutput>
     </None>
   </ItemGroup>
-  
+
 </Project>

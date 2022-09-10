@@ -2,12 +2,19 @@
 
 namespace RazorBlade;
 
+/// <summary>
+/// Base class for HTML templates.
+/// </summary>
+/// <remarks>
+/// Special HTML characters will be escaped.
+/// </remarks>
 public abstract class HtmlTemplate : RazorTemplate
 {
-    protected void WriteLiteral(string? value)
-        => Output.Write(value);
-
-    protected void Write(object? value)
+    /// <summary>
+    /// Write a value to the output.
+    /// </summary>
+    /// <param name="value">The value to write.</param>
+    protected internal void Write(object? value)
     {
         var valueString = value?.ToString();
         if (valueString is null or "")
