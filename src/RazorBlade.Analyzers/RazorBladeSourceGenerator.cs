@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -56,7 +57,8 @@ public class RazorBladeSourceGenerator : IIncrementalGenerator
     {
         var engine = RazorProjectEngine.Create(
             RazorConfiguration.Default,
-            RazorProjectFileSystem.Create(Path.GetDirectoryName(file.AdditionalText.Path)),
+            //RazorProjectFileSystem.Create(Path.GetDirectoryName(file.AdditionalText.Path)),
+            RazorProjectFileSystem.Empty,
             cfg =>
             {
                 cfg.SetCSharpLanguageVersion(razorOptions.LanguageVersion);
@@ -80,7 +82,7 @@ public class RazorBladeSourceGenerator : IIncrementalGenerator
             return;
 
         var codeDoc = engine.Process(
-            RazorSourceDocument.Create(sourceText.ToString(), file.AdditionalText.Path, sourceText.Encoding),
+            RazorSourceDocument.Create(sourceText.ToString(), file.AdditionalText.Path, sourceText.Encoding ?? Encoding.UTF8),
             FileKinds.GetFileKindFromFilePath(file.AdditionalText.Path),
             Array.Empty<RazorSourceDocument>(),
             Array.Empty<TagHelperDescriptor>()

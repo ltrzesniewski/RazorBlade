@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorBlade.IntegrationTest"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorBlade.Tests", "RazorBlade.Tests\RazorBlade.Tests.csproj", "{4013CD72-9A23-4796-9C8D-1AB6B082D01E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorBlade.Analyzers.Tests", "RazorBlade.Analyzers.Tests\RazorBlade.Analyzers.Tests.csproj", "{8D894247-5CD6-43CC-854A-313E50BE1644}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,5 +49,11 @@ Global
 		{4013CD72-9A23-4796-9C8D-1AB6B082D01E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4013CD72-9A23-4796-9C8D-1AB6B082D01E}.DebugExternalLib|Any CPU.ActiveCfg = Debug|Any CPU
 		{4013CD72-9A23-4796-9C8D-1AB6B082D01E}.DebugExternalLib|Any CPU.Build.0 = Debug|Any CPU
+		{8D894247-5CD6-43CC-854A-313E50BE1644}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D894247-5CD6-43CC-854A-313E50BE1644}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D894247-5CD6-43CC-854A-313E50BE1644}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D894247-5CD6-43CC-854A-313E50BE1644}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D894247-5CD6-43CC-854A-313E50BE1644}.DebugExternalLib|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D894247-5CD6-43CC-854A-313E50BE1644}.DebugExternalLib|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 EndGlobal

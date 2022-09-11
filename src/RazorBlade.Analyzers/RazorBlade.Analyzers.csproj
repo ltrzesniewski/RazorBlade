@@ -34,9 +34,9 @@
       </ItemGroup>
     </Otherwise>
   </Choose>
-  
+
   <ItemGroup>
-    <Compile Include="$(RazorCodeAnalysisDir)/RazorProjectEngineBuilderExtensions.cs"  Link="RazorLanguage/CodeAnalysis/%(RecursiveDir)%(FileName)%(Extension)" />
+    <Compile Include="$(RazorCodeAnalysisDir)/RazorProjectEngineBuilderExtensions.cs" Link="RazorLanguage/CodeAnalysis/%(RecursiveDir)%(FileName)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
