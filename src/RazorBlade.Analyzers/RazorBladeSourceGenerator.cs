@@ -40,7 +40,20 @@ public class RazorBladeSourceGenerator : IIncrementalGenerator
                                 .WhereNotNull()
                                 .Combine(razorOptions);
 
-        context.RegisterSourceOutput(inputFiles, static (context, args) => Generate(context, args.Left, args.Right));
+        context.RegisterSourceOutput(
+            inputFiles,
+            static (context, args) =>
+            {
+                try
+                {
+                    Generate(context, args.Left, args.Right);
+                }
+                catch (Exception ex)
+                {
+                    context.ReportDiagnostic(Diagnostics.InternalError(ex.Message, Location.Create(args.Left.AdditionalText.Path, default, default)));
+                }
+            }
+        );
     }
 
     private static RazorOptions GetRazorOptions(AnalyzerConfigOptionsProvider configOptionsProvider, ParseOptions parseOptions)
@@ -57,8 +70,7 @@ public class RazorBladeSourceGenerator : IIncrementalGenerator
     {
         var engine = RazorProjectEngine.Create(
             RazorConfiguration.Default,
-            //RazorProjectFileSystem.Create(Path.GetDirectoryName(file.AdditionalText.Path)),
-            RazorProjectFileSystem.Empty,
+            RazorProjectFileSystem.Create(Path.GetDirectoryName(file.AdditionalText.Path)),
             cfg =>
             {
                 cfg.SetCSharpLanguageVersion(razorOptions.LanguageVersion);

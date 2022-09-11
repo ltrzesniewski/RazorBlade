@@ -16,5 +16,5 @@ internal class AdditionalTextMock : AdditionalText
     public override SourceText GetText(CancellationToken cancellationToken = default)
         => SourceText.From(Text);
 
-    public override string Path => "TestFile.cshtml";
+    public override string Path => "./TestFile.cshtml";
 }

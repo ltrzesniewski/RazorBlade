@@ -45,6 +45,7 @@ Hello, @Name!
                                           .RunGenerators(compilation)
                                           .GetRunResult();
 
+        result.Diagnostics.ShouldBeEmpty();
         return result.Results.Single().GeneratedSources.Single();
     }
 }
