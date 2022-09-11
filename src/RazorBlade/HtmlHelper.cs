@@ -49,10 +49,10 @@ public sealed class HtmlHelper
 
             sb.Append(valueSpan[idx] switch
             {
-                '&' => "&amp;",
-                '<' => "&lt;",
-                '>' => "&gt;",
-                _   => throw new InvalidOperationException()
+                '&'   => "&amp;",
+                '<'   => "&lt;",
+                '>'   => "&gt;",
+                var c => c.ToString() // Won't happen
             });
 
             valueSpan = valueSpan[(idx + 1)..];

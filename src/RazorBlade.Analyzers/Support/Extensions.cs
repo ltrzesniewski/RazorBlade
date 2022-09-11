@@ -1,7 +1,7 @@
 ﻿using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 
-namespace RazorBlade.Analyzers;
+namespace RazorBlade.Analyzers.Support;
 
 #nullable enable
 

@@ -50,10 +50,10 @@ public abstract class HtmlTemplate : RazorTemplate
 
             Output.Write(valueSpan[idx] switch
             {
-                '&' => "&amp;",
-                '<' => "&lt;",
-                '>' => "&gt;",
-                _   => throw new InvalidOperationException()
+                '&'   => "&amp;",
+                '<'   => "&lt;",
+                '>'   => "&gt;",
+                var c => c.ToString() // Won't happen
             });
 
             valueSpan = valueSpan[(idx + 1)..];

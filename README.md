@@ -9,7 +9,7 @@
 
 Compile Razor templates at build-time without a dependency on ASP.NET.
 
-:warning: **This is a work-in-progress.** The API is unstable and will probably change in the future. More features will be added over time.
+:warning: **This is a work-in-progress.** The API is unstable and could change in the future. More features will be added over time.
 
 ## Usage
 
@@ -17,7 +17,7 @@ This package will generate a template class for every `.cshtml` file in your pro
 
 You can use a `@functions { ... }` block to add properties to your template (instead of a model), which the IDE will see.
 
-The generated template class will inherit from `RazorBlade.HtmlTemplate` by default, but you can customize this with an `@inherits` directive. Specifying the base class explicitly will give you access to its members in the IDE.
+The generated template class will inherit from `RazorBlade.HtmlTemplate` by default, but you can customize this with an `@inherits` directive. Specifying the base class explicitly will give you access to its members in the IDE (IntelliSense).
 
 ## Example
 
