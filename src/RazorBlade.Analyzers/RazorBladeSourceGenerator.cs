@@ -66,9 +66,11 @@ public class RazorBladeSourceGenerator : IIncrementalGenerator
                 cfg.ConfigureClass((_, node) =>
                 {
                     node.ClassName = file.ClassName;
+                    node.BaseType = "global::RazorBlade.HtmlTemplate";
 
                     node.Modifiers.Clear();
                     node.Modifiers.Add("internal");
+                    node.Modifiers.Add("partial");
                 });
             }
         );
