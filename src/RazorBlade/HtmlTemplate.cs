@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace RazorBlade;
 
@@ -10,12 +11,27 @@ namespace RazorBlade;
 /// </remarks>
 public abstract class HtmlTemplate : RazorTemplate
 {
+    // ReSharper disable once RedundantDisableWarningComment
+#pragma warning disable CA1822
+
+    /// <inheritdoc cref="HtmlHelper"/>
+    [SuppressMessage("ReSharper", "MemberCanBeMadeStatic.Global")]
+    protected HtmlHelper Html => HtmlHelper.Instance;
+
+#pragma warning restore CA1822
+
     /// <summary>
     /// Write a value to the output.
     /// </summary>
     /// <param name="value">The value to write.</param>
     protected internal void Write(object? value)
     {
+        if (value is IHtmlString htmlString)
+        {
+            Output.Write(htmlString.ToHtmlString());
+            return;
+        }
+
         var valueString = value?.ToString();
         if (valueString is null or "")
             return;

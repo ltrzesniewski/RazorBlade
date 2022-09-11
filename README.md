@@ -19,6 +19,8 @@ The generated template class will inherit from `RazorBlade.HtmlTemplate` by defa
 The following template, in the `TestTemplate.cshtml` file:
 
 ```Razor
+@inherits RazorBlade.HtmlTemplate
+
 Hello, @Name!
 
 @functions {

@@ -1,4 +1,10 @@
-Hello, @Name!
+@inherits RazorBlade.HtmlTemplate
+
+<b>Hello, @Name!</b>
+
+@{ var br = "<br>"; }
+@br
+@Html.Raw("<br>")
 
 @functions {
     public string? Name { get; set; }

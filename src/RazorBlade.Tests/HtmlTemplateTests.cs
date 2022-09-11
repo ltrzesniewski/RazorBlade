@@ -20,6 +20,15 @@ public class HtmlTemplateTests
         template.Render().ShouldEqual(expectedOutput);
     }
 
+    [Test]
+    public void should_not_escape_IHtmlString()
+    {
+        var template = new Template(_ => { });
+        var htmlString = new TestHtmlString();
+        template.Write(htmlString);
+        template.Output.ToString().ShouldEqual(htmlString.ToHtmlString());
+    }
+
     private class Template : HtmlTemplate
     {
         private readonly Action<Template> _executeAction;
@@ -34,5 +43,11 @@ public class HtmlTemplateTests
             _executeAction(this);
             return base.ExecuteAsync();
         }
+    }
+
+    private class TestHtmlString : IHtmlString
+    {
+        public string ToHtmlString()
+            => "<br>";
     }
 }
