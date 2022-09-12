@@ -1,10 +1,12 @@
 ﻿using System.Collections.Immutable;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
 using RazorBlade.Analyzers.Tests.Support;
 using RazorBlade.Tests.Support;
+using VerifyNUnit;
 
 namespace RazorBlade.Analyzers.Tests;
 
@@ -12,16 +14,18 @@ namespace RazorBlade.Analyzers.Tests;
 public class RazorBladeSourceGeneratorTests
 {
     [Test]
-    public void should_generate_source()
+    public Task should_generate_source()
     {
-        var result = Generate("Hello!").SourceText.ToString();
+        var sourceResult = Generate("Hello!");
+        var result = sourceResult.SourceText.ToString();
 
         result.ShouldContain("namespace TestNamespace");
         result.ShouldContain("internal partial class TestFile : global::RazorBlade.HtmlTemplate");
+        return Verifier.Verify(sourceResult);
     }
 
     [Test]
-    public void should_write_members()
+    public Task should_write_members()
     {
         var result = Generate(@"
 Hello, @Name!
@@ -29,6 +33,7 @@ Hello, @Name!
 ");
 
         result.SourceText.ToString().ShouldContain("Write(Name)");
+        return Verifier.Verify(result);
     }
 
     private static GeneratedSourceResult Generate(string input)
