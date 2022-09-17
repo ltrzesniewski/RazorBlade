@@ -17,8 +17,6 @@ using System.Globalization;
 
 namespace Microsoft.AspNetCore.Razor.Language;
 
-#if !RAZOR_EXTERNAL_LIB
-
 <#
     foreach (var inputFile in inputFiles)
     {
@@ -69,11 +67,9 @@ internal static class <#= Path.GetFileNameWithoutExtension(inputFile) #>
         }
 #>
 }
-
 <#
     }
 #>
-#endif
 <#+
     private static string VerbatimString(string value)
         => $"@\"{value.Replace("\"", "\"\"")}\"";

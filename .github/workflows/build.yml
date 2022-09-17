@@ -24,11 +24,8 @@ jobs:
       - name: Restore
         run: dotnet restore src/RazorBlade.sln
 
-      - name: Internal Check
-        run: dotnet build --configuration DebugExternalLib src/RazorBlade.Analyzers/RazorBlade.Analyzers.csproj
-
       - name: Build
-        run: dotnet build --configuration Release src/RazorBlade.sln
+        run: dotnet build --configuration Release --no-restore src/RazorBlade.sln
 
       - name: Pack
         run: dotnet pack --configuration Release --no-build src/RazorBlade.sln

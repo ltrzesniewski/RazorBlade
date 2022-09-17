@@ -4,8 +4,6 @@ using System.Globalization;
 
 namespace Microsoft.AspNetCore.Razor.Language;
 
-#if !RAZOR_EXTERNAL_LIB
-
 internal static class ComponentResources
 {
     internal static string AttributeDirective_AttributeToken_Description
@@ -165,7 +163,6 @@ internal static class ComponentResources
         => @"type parameter";
 
 }
-
 internal static class Resources
 {
     internal static string AddTagHelperDirective_Description
@@ -852,5 +849,3 @@ internal static class Resources
         => string.Format(CultureInfo.InvariantCulture, RazorDiagnosticDescriptor_DefaultError, p0);
 
 }
-
-#endif
