@@ -8,8 +8,6 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Razor;
 using RazorBlade.Analyzers.Support;
 
-#nullable enable
-
 namespace RazorBlade.Analyzers;
 
 [Generator]

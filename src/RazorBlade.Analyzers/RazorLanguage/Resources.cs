@@ -23,6 +23,9 @@ internal static class ComponentResources
     internal static string FormatBindTagHelper_Component_Documentation(object p0, object p1)
         => string.Format(CultureInfo.InvariantCulture, BindTagHelper_Component_Documentation, p0, p1);
 
+    internal static string BindTagHelper_Element_After_Documentation
+        => @"Specifies an action to run after the new value has been set.";
+
     internal static string BindTagHelper_Element_Culture_Documentation
         => @"Specifies the culture to use for conversions.";
 
@@ -43,6 +46,12 @@ internal static class ComponentResources
 
     internal static string FormatBindTagHelper_Element_Format_Documentation(object p0)
         => string.Format(CultureInfo.InvariantCulture, BindTagHelper_Element_Format_Documentation, p0);
+
+    internal static string BindTagHelper_Element_Get_Documentation
+        => @"Specifies the expression to use for binding the value to the attribute.";
+
+    internal static string BindTagHelper_Element_Set_Documentation
+        => @"Specifies the expression to use for updating the bound value when a new value is available.";
 
     internal static string BindTagHelper_Fallback_Documentation
         => @"Binds the provided expression to an attribute and a change event, based on the naming of the bind attribute. For example: <code>@bind-value=""...""</code> and <code>@bind-value:event=""onchange""</code> will assign the current value of the expression to the 'value' attribute, and assign a delegate that attempts to set the value to the 'onchange' attribute.";

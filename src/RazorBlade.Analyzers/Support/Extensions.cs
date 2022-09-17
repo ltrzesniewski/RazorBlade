@@ -3,8 +3,6 @@ using Microsoft.CodeAnalysis;
 
 namespace RazorBlade.Analyzers.Support;
 
-#nullable enable
-
 internal static class Extensions
 {
     public static IncrementalValuesProvider<T> WhereNotNull<T>(this IncrementalValuesProvider<T?> provider)

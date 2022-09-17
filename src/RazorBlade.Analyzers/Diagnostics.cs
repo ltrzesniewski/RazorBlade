@@ -2,8 +2,6 @@
 
 namespace RazorBlade.Analyzers;
 
-#nullable enable
-
 internal static class Diagnostics
 {
     private const string _category = "RazorBlade";

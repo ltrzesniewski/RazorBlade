@@ -23,7 +23,7 @@ internal static class AssertExtensions
         => Assert.That(actual, Is.Null);
 
     [ContractAnnotation("null => halt")]
-    public static T ShouldNotBeNull<T>([System.Diagnostics.CodeAnalysis.NotNull] this T? actual)
+    public static T ShouldNotBeNull<T>(this T? actual)
         where T : class
     {
         Assert.That(actual, Is.Not.Null);

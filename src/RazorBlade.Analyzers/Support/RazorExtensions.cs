@@ -5,8 +5,6 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace RazorBlade.Analyzers.Support;
 
-#nullable enable
-
 internal static class RazorExtensions
 {
     public static Diagnostic ToDiagnostic(this RazorDiagnostic razorDiagnostic)

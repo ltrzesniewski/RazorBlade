@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-// ReSharper disable once CheckNamespace
+﻿// ReSharper disable once CheckNamespace
 namespace System.Runtime.CompilerServices;
 
 // ReSharper disable once UnusedType.Global
