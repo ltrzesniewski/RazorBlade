@@ -4,13 +4,16 @@ on: [push, pull_request]
 
 env:
   DOTNET_NOLOGO: 1
-  NUGET_CERT_REVOCATION_MODE to offline: offline
+  NUGET_CERT_REVOCATION_MODE: offline
 
 jobs:
   windows:
     name: Windows
     runs-on: windows-latest
     steps:
+      - name: Configure Git
+        run: git config --system core.longpaths true
+
       - name: Checkout
         uses: actions/checkout@v2
         with:
