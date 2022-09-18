@@ -14,7 +14,7 @@ public abstract class RazorTemplate
     /// <summary>
     /// The <see cref="TextWriter"/> which receives the output.
     /// </summary>
-    public TextWriter Output { get; set; } = new StringWriter();
+    protected internal TextWriter Output { get; internal set; } = new StreamWriter(Stream.Null);
 
     /// <summary>
     /// Renders the template synchronously and returns the result as a string.
@@ -32,6 +32,25 @@ public abstract class RazorTemplate
     }
 
     /// <summary>
+    /// Renders the template synchronously to the given <see cref="TextWriter"/>.
+    /// </summary>
+    /// <param name="textWriter">The <see cref="TextWriter"/> to write to.</param>
+    /// <remarks>
+    /// Use this only if the template does not use <c>@async</c> directives.
+    /// </remarks>
+    public void Render(TextWriter textWriter)
+    {
+        var renderTask = RenderAsync(textWriter);
+        if (renderTask.IsCompleted)
+        {
+            renderTask.GetAwaiter().GetResult();
+            return;
+        }
+
+        Task.Run(async () => await renderTask.ConfigureAwait(false)).GetAwaiter().GetResult();
+    }
+
+    /// <summary>
     /// Renders the template asynchronously and returns the result as a string.
     /// </summary>
     /// <remarks>
@@ -39,14 +58,26 @@ public abstract class RazorTemplate
     /// </remarks>
     public async Task<string> RenderAsync()
     {
+        var output = new StringWriter();
+        await RenderAsync(output).ConfigureAwait(false);
+        return output.ToString();
+    }
+
+    /// <summary>
+    /// Renders the template asynchronously to the given <see cref="TextWriter"/>.
+    /// </summary>
+    /// <param name="textWriter">The <see cref="TextWriter"/> to write to.</param>
+    /// <remarks>
+    /// Use this if the template uses <c>@async</c> directives.
+    /// </remarks>
+    public async Task RenderAsync(TextWriter textWriter)
+    {
         var previousOutput = Output;
 
         try
         {
-            var output = new StringWriter();
-            Output = output;
+            Output = textWriter;
             await ExecuteAsync().ConfigureAwait(false);
-            return output.ToString();
         }
         finally
         {
@@ -57,14 +88,8 @@ public abstract class RazorTemplate
     /// <summary>
     /// Executes the template and appends the result to <see cref="Output"/>.
     /// </summary>
-    public virtual Task ExecuteAsync()
+    protected internal virtual Task ExecuteAsync()
         => Task.CompletedTask; // The IDE complains when this method is abstract :(
-
-    /// <summary>
-    /// Returns <see cref="Output"/> as a string.
-    /// </summary>
-    public override string ToString()
-        => Output.ToString() ?? string.Empty;
 
     /// <summary>
     /// Writes a literal value to the output.

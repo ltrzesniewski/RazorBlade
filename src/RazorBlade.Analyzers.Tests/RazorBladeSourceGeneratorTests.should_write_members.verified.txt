@@ -10,7 +10,7 @@ namespace TestNamespace
     internal partial class TestFile : global::RazorBlade.HtmlTemplate
     {
         #pragma warning disable 1998
-        public async override global::System.Threading.Tasks.Task ExecuteAsync()
+        protected async override global::System.Threading.Tasks.Task ExecuteAsync()
         {
             WriteLiteral("\r\nHello, ");
 #nullable restore

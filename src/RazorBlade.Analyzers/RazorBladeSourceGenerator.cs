@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.CodeAnalysis;
@@ -77,7 +78,9 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
 
                 cfg.SetNamespace(file.Namespace ?? "Razor"); // TODO: Use SetRootNamespace instead?
 
-                cfg.ConfigureClass((_, node) =>
+                var configurationFeature = cfg.Features.OfType<DefaultDocumentClassifierPassFeature>().Single();
+
+                configurationFeature.ConfigureClass.Add((_, node) =>
                 {
                     node.ClassName = file.ClassName;
                     node.BaseType = "global::RazorBlade.HtmlTemplate";
@@ -85,6 +88,14 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                     node.Modifiers.Clear();
                     node.Modifiers.Add("internal");
                     node.Modifiers.Add("partial");
+                });
+
+                configurationFeature.ConfigureMethod.Add((_, node) =>
+                {
+                    node.Modifiers.Clear();
+                    node.Modifiers.Add("protected");
+                    node.Modifiers.Add("async");
+                    node.Modifiers.Add("override");
                 });
             }
         );

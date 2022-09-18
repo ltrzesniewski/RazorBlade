@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
@@ -28,6 +29,19 @@ public class RazorTemplateTests
     }
 
     [Test]
+    public void should_render_to_text_writer()
+    {
+        var template = new Template(t => t.WriteLiteral("foo"));
+        template.Output.Write("bar");
+
+        var output = new StringWriter();
+        template.Render(output);
+        output.ToString().ShouldEqual("foo");
+
+        template.Output.ToString().ShouldEqual("bar");
+    }
+
+    [Test]
     public async Task should_render_async_to_local_output()
     {
         var template = new Template(t => t.WriteLiteral("foo"));
@@ -38,11 +52,16 @@ public class RazorTemplateTests
     }
 
     [Test]
-    public void should_return_output_as_string()
+    public async Task should_render_async_to_text_writer()
     {
-        var template = new Template(_ => { });
-        template.Output.Write("foo");
-        template.ToString().ShouldEqual("foo");
+        var template = new Template(t => t.WriteLiteral("foo"));
+        await template.Output.WriteAsync("bar");
+
+        var output = new StringWriter();
+        await template.RenderAsync(output);
+        output.ToString().ShouldEqual("foo");
+
+        template.Output.ToString().ShouldEqual("bar");
     }
 
     private class Template : RazorTemplate
@@ -52,9 +71,10 @@ public class RazorTemplateTests
         public Template(Action<Template> executeAction)
         {
             _executeAction = executeAction;
+            Output = new StringWriter();
         }
 
-        public override Task ExecuteAsync()
+        protected internal override Task ExecuteAsync()
         {
             _executeAction(this);
             return base.ExecuteAsync();

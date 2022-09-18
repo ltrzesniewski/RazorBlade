@@ -53,7 +53,7 @@ public abstract class HtmlTemplate : RazorTemplate
                 '&'   => "&amp;",
                 '<'   => "&lt;",
                 '>'   => "&gt;",
-                '\"'  => "&quot;",
+                '"'   => "&quot;",
                 var c => c.ToString() // Won't happen
             });
 

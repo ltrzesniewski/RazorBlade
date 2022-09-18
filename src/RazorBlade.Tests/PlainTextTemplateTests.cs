@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using RazorBlade.Tests.Support;
@@ -22,9 +23,10 @@ public class PlainTextTemplateTests
         public Template(Action<Template> executeAction)
         {
             _executeAction = executeAction;
+            Output = new StringWriter();
         }
 
-        public override Task ExecuteAsync()
+        protected internal override Task ExecuteAsync()
         {
             _executeAction(this);
             return base.ExecuteAsync();
