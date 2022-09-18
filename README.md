@@ -54,3 +54,10 @@ var template = new TestTemplate
 
 var result = template.Render();
 ```
+
+## Features
+
+As of v0.0.2:
+
+- Use the `@namespace` directive to override the namespace of the generated class.
+- You can compose templates by writing them as values: use the `@(new Footer())` syntax for instance.
