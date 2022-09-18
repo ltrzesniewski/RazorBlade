@@ -47,7 +47,11 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         if (!options.TryGetValue("build_metadata.AdditionalFiles.Namespace", out var ns))
             ns = null;
 
-        return new InputFile(additionalText, ns, Path.GetFileNameWithoutExtension(additionalText.Path));
+        return new InputFile(
+            additionalText,
+            ns,
+            CSharpIdentifier.SanitizeIdentifier(Path.GetFileNameWithoutExtension(additionalText.Path))
+        );
     }
 
     private static void GenerateSafe(SourceProductionContext context, InputFile file, GlobalOptions globalOptions)
