@@ -23,3 +23,6 @@ indent_style = tab
 
 [*.md]
 trim_trailing_whitespace = false
+
+[*.{received,verified}.txt]
+insert_final_newline = false
