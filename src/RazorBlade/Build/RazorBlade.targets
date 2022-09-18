@@ -7,7 +7,6 @@
     <None Remove="@(RazorBlade)" />
     <AdditionalFiles Include="@(RazorBlade)" />
 
-    <CompilerVisibleProperty Include="RootNamespace" />
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="IsRazorBlade" />
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Namespace" />
   </ItemGroup>

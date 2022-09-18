@@ -16,9 +16,8 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var globalOptions = context.AnalyzerConfigOptionsProvider
-                                   .Combine(context.ParseOptionsProvider)
-                                   .Select(static (pair, _) => GetGlobalOptions(pair.Left, pair.Right));
+        var globalOptions = context.ParseOptionsProvider
+                                   .Select(static (parseOptions, _) => GetGlobalOptions(parseOptions));
 
         var inputFiles = context.AdditionalTextsProvider
                                 .Where(static i => i.Path.EndsWith(".cshtml", StringComparison.OrdinalIgnoreCase))
@@ -30,12 +29,9 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         context.RegisterSourceOutput(inputFiles, static (context, args) => GenerateSafe(context, args.Left, args.Right));
     }
 
-    private static GlobalOptions GetGlobalOptions(AnalyzerConfigOptionsProvider configOptionsProvider, ParseOptions parseOptions)
+    private static GlobalOptions GetGlobalOptions(ParseOptions parseOptions)
     {
-        configOptionsProvider.GlobalOptions.TryGetValue("build_property.RootNamespace", out var rootNamespace);
-
         return new GlobalOptions(
-            rootNamespace ?? "Razor",
             ((CSharpParseOptions)parseOptions).LanguageVersion
         );
     }
@@ -48,7 +44,8 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         if (!string.Equals(isTargetFile, bool.TrueString, StringComparison.OrdinalIgnoreCase))
             return null;
 
-        options.TryGetValue("build_metadata.AdditionalFiles.Namespace", out var ns);
+        if (!options.TryGetValue("build_metadata.AdditionalFiles.Namespace", out var ns))
+            ns = null;
 
         return new InputFile(additionalText, ns, Path.GetFileNameWithoutExtension(additionalText.Path));
     }
@@ -71,14 +68,14 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
 
         var engine = RazorProjectEngine.Create(
             RazorConfiguration.Default,
-            RazorProjectFileSystem.Create(Path.GetDirectoryName(file.AdditionalText.Path)),
+            RazorProjectFileSystem.Empty,
             cfg =>
             {
                 cfg.SetCSharpLanguageVersion(globalOptions.LanguageVersion);
 
-                cfg.SetNamespace(file.Namespace ?? "Razor"); // TODO: Use SetRootNamespace instead?
-
                 var configurationFeature = cfg.Features.OfType<DefaultDocumentClassifierPassFeature>().Single();
+
+                configurationFeature.ConfigureNamespace.Add((_, node) => node.Content = file.Namespace ?? "Razor");
 
                 configurationFeature.ConfigureClass.Add((_, node) =>
                 {
@@ -123,5 +120,5 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
 
     private record InputFile(AdditionalText AdditionalText, string? Namespace, string ClassName);
 
-    private record GlobalOptions(string RootNamespace, LanguageVersion LanguageVersion);
+    private record GlobalOptions(LanguageVersion LanguageVersion);
 }
