@@ -36,6 +36,17 @@ Hello, @Name!
         return Verifier.Verify(result);
     }
 
+    [Test]
+    public Task should_set_namespace()
+    {
+        var result = Generate(@"
+@namespace CustomNamespace
+");
+
+        result.SourceText.ToString().ShouldContain("namespace CustomNamespace");
+        return Verifier.Verify(result);
+    }
+
     private static GeneratedSourceResult Generate(string input)
     {
         var compilation = CSharpCompilation.Create("TestAssembly")

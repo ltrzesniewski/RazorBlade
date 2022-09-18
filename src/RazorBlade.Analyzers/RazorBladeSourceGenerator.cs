@@ -75,7 +75,12 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
 
                 var configurationFeature = cfg.Features.OfType<DefaultDocumentClassifierPassFeature>().Single();
 
-                configurationFeature.ConfigureNamespace.Add((_, node) => node.Content = file.Namespace ?? "Razor");
+                configurationFeature.ConfigureNamespace.Add((codeDoc, node) =>
+                {
+                    node.Content = NamespaceVisitor.GetNamespaceDirectiveContent(codeDoc)
+                                   ?? file.Namespace
+                                   ?? "Razor";
+                });
 
                 configurationFeature.ConfigureClass.Add((_, node) =>
                 {
