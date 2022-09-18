@@ -13,7 +13,7 @@ public class HtmlTemplateTests
     [TestCase("foo", "foo")]
     [TestCase("&foo", "&amp;foo")]
     [TestCase("foo&", "foo&amp;")]
-    [TestCase("foo & bar < baz > foobar", "foo &amp; bar &lt; baz &gt; foobar")]
+    [TestCase("foo & bar < baz > foo\"bar", "foo &amp; bar &lt; baz &gt; foo&quot;bar")]
     public void should_escape_special_characters(string input, string expectedOutput)
     {
         var template = new Template(t => t.Write(input));

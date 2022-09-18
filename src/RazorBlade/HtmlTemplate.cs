@@ -41,7 +41,7 @@ public abstract class HtmlTemplate : RazorTemplate
 
         while (true)
         {
-            var idx = valueSpan.IndexOfAny('&', '<', '>');
+            var idx = valueSpan.IndexOfAny("&<>\"");
             if (idx < 0)
                 break;
 
@@ -53,6 +53,7 @@ public abstract class HtmlTemplate : RazorTemplate
                 '&'   => "&amp;",
                 '<'   => "&lt;",
                 '>'   => "&gt;",
+                '\"'  => "&quot;",
                 var c => c.ToString() // Won't happen
             });
 
@@ -66,6 +67,7 @@ public abstract class HtmlTemplate : RazorTemplate
             valueString.Replace("&", "&amp;")
                        .Replace("<", "&lt;")
                        .Replace(">", "&gt;")
+                       .Replace("\"", "&quot;")
         );
 #endif
     }

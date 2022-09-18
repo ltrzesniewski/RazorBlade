@@ -18,7 +18,7 @@ public class HtmlHelperTests
     [TestCase("foo", "foo")]
     [TestCase("&foo", "&amp;foo")]
     [TestCase("foo&", "foo&amp;")]
-    [TestCase("foo & bar < baz > foobar", "foo &amp; bar &lt; baz &gt; foobar")]
+    [TestCase("foo & bar < baz > foo\"bar", "foo &amp; bar &lt; baz &gt; foo&quot;bar")]
     public void should_html_encode_string(string input, string expectedOutput)
     {
         HtmlHelper.Instance.Encode(input).ShouldEqual(expectedOutput);

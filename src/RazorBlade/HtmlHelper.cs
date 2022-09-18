@@ -40,7 +40,7 @@ public sealed class HtmlHelper
 
         while (true)
         {
-            var idx = valueSpan.IndexOfAny('&', '<', '>');
+            var idx = valueSpan.IndexOfAny("&<>\"");
             if (idx < 0)
                 break;
 
@@ -52,6 +52,7 @@ public sealed class HtmlHelper
                 '&'   => "&amp;",
                 '<'   => "&lt;",
                 '>'   => "&gt;",
+                '"'   => "&quot;",
                 var c => c.ToString() // Won't happen
             });
 
@@ -65,7 +66,8 @@ public sealed class HtmlHelper
 #else
         return valueString.Replace("&", "&amp;")
                           .Replace("<", "&lt;")
-                          .Replace(">", "&gt;");
+                          .Replace(">", "&gt;")
+                          .Replace("\"", "&quot;");
 #endif
     }
 }
