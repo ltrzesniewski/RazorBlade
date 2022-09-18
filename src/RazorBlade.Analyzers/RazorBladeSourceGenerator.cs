@@ -11,67 +11,69 @@ using RazorBlade.Analyzers.Support;
 namespace RazorBlade.Analyzers;
 
 [Generator]
-public class RazorBladeSourceGenerator : IIncrementalGenerator
+public partial class RazorBladeSourceGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var razorOptions = context.AnalyzerConfigOptionsProvider
-                                  .Combine(context.ParseOptionsProvider)
-                                  .Select((pair, _) => GetRazorOptions(pair.Left, pair.Right));
+        var globalOptions = context.AnalyzerConfigOptionsProvider
+                                   .Combine(context.ParseOptionsProvider)
+                                   .Select(static (pair, _) => GetGlobalOptions(pair.Left, pair.Right));
 
         var inputFiles = context.AdditionalTextsProvider
                                 .Where(static i => i.Path.EndsWith(".cshtml", StringComparison.OrdinalIgnoreCase))
                                 .Combine(context.AnalyzerConfigOptionsProvider)
-                                .Select(static (item, _) =>
-                                {
-                                    var (additionalText, optionsProvider) = item;
-                                    var options = optionsProvider.GetOptions(additionalText);
-
-                                    options.TryGetValue("build_metadata.AdditionalFiles.IsRazorBlade", out var isTargetFile);
-                                    if (!string.Equals(isTargetFile, bool.TrueString, StringComparison.OrdinalIgnoreCase))
-                                        return null;
-
-                                    options.TryGetValue("build_metadata.AdditionalFiles.Namespace", out var ns);
-
-                                    return new RazorFile(additionalText, ns, Path.GetFileNameWithoutExtension(additionalText.Path));
-                                })
+                                .Select(static (pair, _) => GetInputFile(pair.Left, pair.Right))
                                 .WhereNotNull()
-                                .Combine(razorOptions);
+                                .Combine(globalOptions);
 
-        context.RegisterSourceOutput(
-            inputFiles,
-            static (context, args) =>
-            {
-                try
-                {
-                    Generate(context, args.Left, args.Right);
-                }
-                catch (Exception ex)
-                {
-                    context.ReportDiagnostic(Diagnostics.InternalError(ex.Message, Location.Create(args.Left.AdditionalText.Path, default, default)));
-                }
-            }
-        );
+        context.RegisterSourceOutput(inputFiles, static (context, args) => GenerateSafe(context, args.Left, args.Right));
     }
 
-    private static RazorOptions GetRazorOptions(AnalyzerConfigOptionsProvider configOptionsProvider, ParseOptions parseOptions)
+    private static GlobalOptions GetGlobalOptions(AnalyzerConfigOptionsProvider configOptionsProvider, ParseOptions parseOptions)
     {
         configOptionsProvider.GlobalOptions.TryGetValue("build_property.RootNamespace", out var rootNamespace);
 
-        return new RazorOptions(
+        return new GlobalOptions(
             rootNamespace ?? "Razor",
             ((CSharpParseOptions)parseOptions).LanguageVersion
         );
     }
 
-    private static void Generate(SourceProductionContext context, RazorFile file, RazorOptions razorOptions)
+    private static InputFile? GetInputFile(AdditionalText additionalText, AnalyzerConfigOptionsProvider optionsProvider)
     {
+        var options = optionsProvider.GetOptions(additionalText);
+
+        options.TryGetValue("build_metadata.AdditionalFiles.IsRazorBlade", out var isTargetFile);
+        if (!string.Equals(isTargetFile, bool.TrueString, StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        options.TryGetValue("build_metadata.AdditionalFiles.Namespace", out var ns);
+
+        return new InputFile(additionalText, ns, Path.GetFileNameWithoutExtension(additionalText.Path));
+    }
+
+    private static void GenerateSafe(SourceProductionContext context, InputFile file, GlobalOptions globalOptions)
+    {
+        try
+        {
+            Generate(context, file, globalOptions);
+        }
+        catch (Exception ex)
+        {
+            context.ReportDiagnostic(Diagnostics.InternalError(ex.Message, Location.Create(file.AdditionalText.Path, default, default)));
+        }
+    }
+
+    private static void Generate(SourceProductionContext context, InputFile file, GlobalOptions globalOptions)
+    {
+        OnGenerate();
+
         var engine = RazorProjectEngine.Create(
             RazorConfiguration.Default,
             RazorProjectFileSystem.Create(Path.GetDirectoryName(file.AdditionalText.Path)),
             cfg =>
             {
-                cfg.SetCSharpLanguageVersion(razorOptions.LanguageVersion);
+                cfg.SetCSharpLanguageVersion(globalOptions.LanguageVersion);
 
                 cfg.SetNamespace(file.Namespace ?? "Razor"); // TODO: Use SetRootNamespace instead?
 
@@ -106,7 +108,9 @@ public class RazorBladeSourceGenerator : IIncrementalGenerator
         context.AddSource($"{file.Namespace}.{file.ClassName}.g.cs", csharpDoc.GeneratedCode);
     }
 
-    private record RazorFile(AdditionalText AdditionalText, string? Namespace, string ClassName);
+    static partial void OnGenerate();
 
-    private record RazorOptions(string RootNamespace, LanguageVersion LanguageVersion);
+    private record InputFile(AdditionalText AdditionalText, string? Namespace, string ClassName);
+
+    private record GlobalOptions(string RootNamespace, LanguageVersion LanguageVersion);
 }
