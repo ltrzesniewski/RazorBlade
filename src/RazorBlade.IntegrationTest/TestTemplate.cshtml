@@ -1,3 +1,4 @@
+@using RazorBlade.IntegrationTest
 @inherits RazorBlade.HtmlTemplate
 
 <b>Hello, @Name!</b>
@@ -5,6 +6,8 @@
 @{ var br = "<br>"; }
 @br
 @Html.Raw("<br>")
+
+@(new Footer())
 
 @functions {
     public string? Name { get; set; }

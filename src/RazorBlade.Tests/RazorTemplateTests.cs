@@ -64,6 +64,20 @@ public class RazorTemplateTests
         template.Output.ToString().ShouldEqual("bar");
     }
 
+    [Test]
+    public async Task should_compose_templates()
+    {
+        var templateFoo = new Template(t => t.WriteLiteral("foo"));
+        var templateBar = new Template(t =>
+        {
+            t.Write(templateFoo);
+            t.WriteLiteral("bar");
+        });
+
+        var result = await templateBar.RenderAsync();
+        result.ShouldEqual("foobar");
+    }
+
     private class Template : RazorTemplate
     {
         private readonly Action<Template> _executeAction;
@@ -78,6 +92,10 @@ public class RazorTemplateTests
         {
             _executeAction(this);
             return base.ExecuteAsync();
+        }
+
+        protected internal override void Write(object? value)
+        {
         }
     }
 }

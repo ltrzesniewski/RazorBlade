@@ -97,4 +97,17 @@ public abstract class RazorTemplate
     /// <param name="value">The value to write.</param>
     protected internal void WriteLiteral(string? value)
         => Output.Write(value);
+
+    /// <summary>
+    /// Write a value to the output.
+    /// </summary>
+    /// <param name="value">The value to write.</param>
+    protected internal abstract void Write(object? value);
+
+    /// <summary>
+    /// Render another template to the output.
+    /// </summary>
+    /// <param name="template">The template to render.</param>
+    protected internal void Write(RazorTemplate? template)
+        => template?.Render(Output);
 }
