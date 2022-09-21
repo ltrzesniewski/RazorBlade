@@ -21,8 +21,8 @@ public sealed class HtmlHelper
     /// Returns markup that is not HTML encoded.
     /// </summary>
     /// <param name="value">The HTML markup.</param>
-    public IHtmlString Raw(object? value)
-        => new HtmlString(value?.ToString());
+    public HtmlString Raw(object? value)
+        => new(value?.ToString());
 
     /// <summary>
     /// HTML-encodes the provided value.

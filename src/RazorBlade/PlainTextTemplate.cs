@@ -10,5 +10,10 @@ public abstract class PlainTextTemplate : RazorTemplate
 {
     /// <inheritdoc />
     protected internal override void Write(object? value)
-        => Output.Write(value);
+    {
+        if (value is IEncodedContent encodedContent)
+            encodedContent.WriteTo(Output);
+        else
+            Output.Write(value);
+    }
 }

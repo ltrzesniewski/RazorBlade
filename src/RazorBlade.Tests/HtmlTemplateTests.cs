@@ -22,12 +22,21 @@ public class HtmlTemplateTests
     }
 
     [Test]
-    public void should_not_escape_IHtmlString()
+    public void should_write_IEncodedContent()
     {
         var template = new Template(_ => { });
-        var htmlString = new TestHtmlString();
-        template.Write(htmlString);
-        template.Output.ToString().ShouldEqual(htmlString.ToHtmlString());
+        var encodedContent = new TestEncodedContent();
+        template.Write(encodedContent);
+        template.Output.ToString().ShouldEqual("<br>");
+    }
+
+    [Test]
+    public void should_write_IEncodedContent_as_object()
+    {
+        var template = new Template(_ => { });
+        var encodedContent = new TestEncodedContent();
+        template.Write((object)encodedContent);
+        template.Output.ToString().ShouldEqual("<br>");
     }
 
     private class Template : HtmlTemplate
@@ -47,9 +56,9 @@ public class HtmlTemplateTests
         }
     }
 
-    private class TestHtmlString : IHtmlString
+    private class TestEncodedContent : IEncodedContent
     {
-        public string ToHtmlString()
-            => "<br>";
+        public void WriteTo(TextWriter textWriter)
+            => textWriter.Write("<br>");
     }
 }

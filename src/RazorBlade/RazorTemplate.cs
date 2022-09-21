@@ -9,7 +9,7 @@ namespace RazorBlade;
 /// <remarks>
 /// This class lacks <c>Write</c> methods. Use one of the derived classes in your templates.
 /// </remarks>
-public abstract class RazorTemplate
+public abstract class RazorTemplate : IEncodedContent
 {
     /// <summary>
     /// The <see cref="TextWriter"/> which receives the output.
@@ -105,9 +105,12 @@ public abstract class RazorTemplate
     protected internal abstract void Write(object? value);
 
     /// <summary>
-    /// Render another template to the output.
+    /// Write already encoded content to the output.
     /// </summary>
-    /// <param name="template">The template to render.</param>
-    protected internal void Write(RazorTemplate? template)
-        => template?.Render(Output);
+    /// <param name="content">The template to render.</param>
+    protected internal void Write(IEncodedContent? content)
+        => content?.WriteTo(Output);
+
+    void IEncodedContent.WriteTo(TextWriter textWriter)
+        => Render(textWriter);
 }

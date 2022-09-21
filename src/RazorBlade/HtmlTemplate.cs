@@ -23,9 +23,9 @@ public abstract class HtmlTemplate : RazorTemplate
     /// <inheritdoc />
     protected internal override void Write(object? value)
     {
-        if (value is IHtmlString htmlString)
+        if (value is IEncodedContent encodedContent)
         {
-            Output.Write(htmlString.ToHtmlString());
+            encodedContent.WriteTo(Output);
             return;
         }
 

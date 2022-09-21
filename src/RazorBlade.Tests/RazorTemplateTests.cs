@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using NUnit.Framework;
-using NUnit.Framework.Internal;
 using RazorBlade.Tests.Support;
 
 namespace RazorBlade.Tests;
@@ -76,6 +75,15 @@ public class RazorTemplateTests
 
         var result = await templateBar.RenderAsync();
         result.ShouldEqual("foobar");
+    }
+
+    [Test]
+    public void should_write_encoded_content()
+    {
+        var template = new Template(t => t.WriteLiteral("foo & bar"));
+        var writer = new StringWriter();
+        ((IEncodedContent)template).WriteTo(writer);
+        writer.ToString().ShouldEqual("foo & bar");
     }
 
     private class Template : RazorTemplate

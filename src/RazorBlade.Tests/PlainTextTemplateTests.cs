@@ -16,6 +16,24 @@ public class PlainTextTemplateTests
         template.Render().ShouldEqual("foo & bar < baz > foobar");
     }
 
+    [Test]
+    public void should_write_IEncodedContent()
+    {
+        var template = new Template(_ => { });
+        var encodedContent = new TestEncodedContent();
+        template.Write(encodedContent);
+        template.Output.ToString().ShouldEqual("<br>");
+    }
+
+    [Test]
+    public void should_write_IEncodedContent_as_object()
+    {
+        var template = new Template(_ => { });
+        var encodedContent = new TestEncodedContent();
+        template.Write((object)encodedContent);
+        template.Output.ToString().ShouldEqual("<br>");
+    }
+
     private class Template : PlainTextTemplate
     {
         private readonly Action<Template> _executeAction;
@@ -31,5 +49,11 @@ public class PlainTextTemplateTests
             _executeAction(this);
             return base.ExecuteAsync();
         }
+    }
+
+    private class TestEncodedContent : IEncodedContent
+    {
+        public void WriteTo(TextWriter textWriter)
+            => textWriter.Write("<br>");
     }
 }

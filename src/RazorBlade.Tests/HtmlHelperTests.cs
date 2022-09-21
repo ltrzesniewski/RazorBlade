@@ -10,7 +10,7 @@ public class HtmlHelperTests
     public void should_return_html_string()
     {
         var result = HtmlHelper.Instance.Raw("&<>");
-        result.ToHtmlString().ShouldEqual("&<>");
+        result.ToString().ShouldEqual("&<>");
     }
 
     [Test]
