@@ -47,6 +47,17 @@ Hello, @Name!
         return Verifier.Verify(result);
     }
 
+    [Test]
+    public Task should_generate_model_constructor()
+    {
+        var result = Generate(@"
+@using System
+@inherits RazorBlade.HtmlTemplate<Tuple<DateTime, bool>>
+");
+
+        return Verifier.Verify(result);
+    }
+
     private static GeneratedSourceResult Generate(string input)
     {
         var compilation = CSharpCompilation.Create("TestAssembly")

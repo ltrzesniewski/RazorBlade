@@ -11,6 +11,13 @@
     <ProjectReference Include="../RazorBlade.Analyzers/RazorBlade.Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="TestTemplateWithModel.cshtml">
+      <Namespace>RazorBlade.IntegrationTest</Namespace>
+      <IsRazorBlade>True</IsRazorBlade>
+    </Content>
+  </ItemGroup>
+
   <Import Project="../RazorBlade/Build/RazorBlade.targets" />
 
 </Project>

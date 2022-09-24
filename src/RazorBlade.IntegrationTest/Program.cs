@@ -12,3 +12,9 @@ public static class Program
         Console.WriteLine(result);
     }
 }
+
+public class FooBarModelClass
+{
+    public string? Foo { get; set; }
+    public string? Bar { get; set; }
+}

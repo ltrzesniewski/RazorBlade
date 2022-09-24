@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using RazorBlade.Support;
 
 namespace RazorBlade;
 
@@ -67,5 +68,38 @@ public abstract class HtmlTemplate : RazorTemplate
                        .Replace("\"", "&quot;")
         );
 #endif
+    }
+}
+
+/// <summary>
+/// Base class for HTML templates with a model.
+/// </summary>
+/// <remarks>
+/// Special HTML characters will be escaped.
+/// </remarks>
+/// <typeparam name="TModel">The model type.</typeparam>
+public abstract class HtmlTemplate<TModel> : HtmlTemplate
+{
+    /// <summary>
+    /// The model for the template.
+    /// </summary>
+    public TModel Model { get; }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HtmlTemplate{TModel}"/> class.
+    /// </summary>
+    /// <param name="model">The model for the template.</param>
+    [TemplateConstructor]
+    protected HtmlTemplate(TModel model)
+    {
+        Model = model;
+    }
+
+    /// <summary>
+    /// This constructor is provided for the designer only. Do not use.
+    /// </summary>
+    protected HtmlTemplate()
+    {
+        throw new NotSupportedException("Use the constructor overload that takes a model.");
     }
 }

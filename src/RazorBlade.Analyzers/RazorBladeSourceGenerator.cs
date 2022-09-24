@@ -2,11 +2,13 @@
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Razor;
+using Microsoft.CodeAnalysis.Text;
 using RazorBlade.Analyzers.Support;
 
 namespace RazorBlade.Analyzers;
@@ -23,16 +25,32 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                                 .Where(static i => i.Path.EndsWith(".cshtml", StringComparison.OrdinalIgnoreCase))
                                 .Combine(context.AnalyzerConfigOptionsProvider)
                                 .Select(static (pair, _) => GetInputFile(pair.Left, pair.Right))
-                                .WhereNotNull()
-                                .Combine(globalOptions);
+                                .WhereNotNull();
 
-        context.RegisterSourceOutput(inputFiles, static (context, args) => GenerateSafe(context, args.Left, args.Right));
+        context.RegisterSourceOutput(
+            inputFiles.Combine(globalOptions)
+                      .Combine(context.CompilationProvider)
+                      .WithLambdaComparer((a, b) => a.Left.Equals(b.Left), pair => pair.Left.GetHashCode()), // Ignore the compilation for updates
+            static (context, pair) =>
+            {
+                var ((inputFile, globalOptions), compilation) = pair;
+
+                try
+                {
+                    Generate(context, inputFile, globalOptions, compilation);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    context.ReportDiagnostic(Diagnostics.InternalError(ex.Message, Location.Create(inputFile.AdditionalText.Path, default, default)));
+                }
+            }
+        );
     }
 
     private static GlobalOptions GetGlobalOptions(ParseOptions parseOptions)
     {
         return new GlobalOptions(
-            ((CSharpParseOptions)parseOptions).LanguageVersion
+            (CSharpParseOptions)parseOptions
         );
     }
 
@@ -54,28 +72,37 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         );
     }
 
-    private static void GenerateSafe(SourceProductionContext context, InputFile file, GlobalOptions globalOptions)
-    {
-        try
-        {
-            Generate(context, file, globalOptions);
-        }
-        catch (Exception ex)
-        {
-            context.ReportDiagnostic(Diagnostics.InternalError(ex.Message, Location.Create(file.AdditionalText.Path, default, default)));
-        }
-    }
-
-    private static void Generate(SourceProductionContext context, InputFile file, GlobalOptions globalOptions)
+    private static void Generate(SourceProductionContext context, InputFile file, GlobalOptions globalOptions, Compilation compilation)
     {
         OnGenerate();
 
+        var sourceText = file.AdditionalText.GetText();
+        if (sourceText is null)
+            return;
+
+        var csharpDoc = GenerateRazorCode(sourceText, file, globalOptions);
+        var libraryCode = GenerateLibrarySpecificCode(csharpDoc, globalOptions, compilation, context.CancellationToken);
+
+        foreach (var diagnostic in csharpDoc.Diagnostics)
+            context.ReportDiagnostic(diagnostic.ToDiagnostic());
+
+        context.AddSource(
+            $"{file.Namespace}.{file.ClassName}.g.cs",
+            string.Concat(
+                csharpDoc.GeneratedCode,
+                libraryCode
+            )
+        );
+    }
+
+    private static RazorCSharpDocument GenerateRazorCode(SourceText sourceText, InputFile file, GlobalOptions globalOptions)
+    {
         var engine = RazorProjectEngine.Create(
             RazorConfiguration.Default,
             RazorProjectFileSystem.Empty,
             cfg =>
             {
-                cfg.SetCSharpLanguageVersion(globalOptions.LanguageVersion);
+                cfg.SetCSharpLanguageVersion(globalOptions.ParseOptions.LanguageVersion);
 
                 var configurationFeature = cfg.Features.OfType<DefaultDocumentClassifierPassFeature>().Single();
 
@@ -106,10 +133,6 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             }
         );
 
-        var sourceText = file.AdditionalText.GetText();
-        if (sourceText is null)
-            return;
-
         var codeDoc = engine.Process(
             RazorSourceDocument.Create(sourceText.ToString(), file.AdditionalText.Path, sourceText.Encoding ?? Encoding.UTF8),
             FileKinds.Legacy,
@@ -117,17 +140,18 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             Array.Empty<TagHelperDescriptor>()
         );
 
-        var csharpDoc = codeDoc.GetCSharpDocument();
+        return codeDoc.GetCSharpDocument();
+    }
 
-        foreach (var diagnostic in csharpDoc.Diagnostics)
-            context.ReportDiagnostic(diagnostic.ToDiagnostic());
-
-        context.AddSource($"{file.Namespace}.{file.ClassName}.g.cs", csharpDoc.GeneratedCode);
+    private static string GenerateLibrarySpecificCode(RazorCSharpDocument generatedDoc, GlobalOptions globalOptions, Compilation compilation, CancellationToken cancellationToken)
+    {
+        var generator = new LibraryCodeGenerator(generatedDoc, compilation, globalOptions.ParseOptions);
+        return generator.Generate(cancellationToken);
     }
 
     static partial void OnGenerate();
 
     private record InputFile(AdditionalText AdditionalText, string? Namespace, string ClassName);
 
-    private record GlobalOptions(LanguageVersion LanguageVersion);
+    private record GlobalOptions(CSharpParseOptions ParseOptions);
 }

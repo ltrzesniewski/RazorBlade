@@ -1,13 +1,11 @@
-// ReSharper disable CheckNamespace
+using System;
 
-#if !NETCOREAPP
+namespace RazorBlade.Support;
 
-namespace System.Diagnostics.CodeAnalysis
+/// <summary>
+/// Specifies that this constructor needs to be provided by the generated template class.
+/// </summary>
+[AttributeUsage(AttributeTargets.Constructor)]
+public sealed class TemplateConstructorAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue)]
-    internal sealed class NotNullAttribute : Attribute
-    {
-    }
 }
-
-#endif
