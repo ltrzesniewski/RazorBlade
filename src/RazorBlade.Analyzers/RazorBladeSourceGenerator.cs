@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Microsoft.AspNetCore.Razor.Language;
+using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -121,6 +122,9 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                     node.Modifiers.Clear();
                     node.Modifiers.Add("internal");
                     node.Modifiers.Add("partial");
+
+                    // Enable nullable reference types for the class definition node, as they may be needed for the base class.
+                    node.Annotations[CommonAnnotations.NullableContext] = CommonAnnotations.NullableContext;
                 });
 
                 configurationFeature.ConfigureMethod.Add((_, node) =>

@@ -10,6 +10,8 @@ public static class Program
         var result = template.Render();
 
         Console.WriteLine(result);
+
+        _ = new TestTemplateWithModel(new FooBarModelClass());
     }
 }
 

@@ -39,8 +39,14 @@ internal class LibraryCodeGenerator
             _writer.WriteLine("// RazorSharp-specific code");
             _writer.WriteLine();
 
+            if (!_generatedDoc.Options.SuppressNullabilityEnforcement)
+            {
+                _writer.WriteLine("#nullable restore");
+                _writer.WriteLine();
+            }
+
             using (_writer.BuildNamespace(classSymbol.ContainingNamespace.ToDisplayString()))
-            using (_writer.BuildClassDeclaration(new[] { "partial" }, classSymbol.Name, null, Array.Empty<string>(), Array.Empty<TypeParameter>()))
+            using (_writer.BuildClassDeclaration(new[] { "partial" }, classSymbol.Name, null, Array.Empty<string>(), Array.Empty<TypeParameter>(), useNullableContext: false))
             {
                 GenerateConstructors(classSymbol);
             }
@@ -97,9 +103,9 @@ internal class LibraryCodeGenerator
                 if (param.Ordinal != 0)
                     _writer.WriteParameterSeparator();
 
-                _writer.Write(param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+                _writer.Write(param.Type.ToFullyQualifiedName())
                        .Write(" ")
-                       .Write(param.Name);
+                       .Write(param.Name.EscapeCSharpKeyword());
             }
 
             _writer.WriteLine(")");
@@ -112,7 +118,7 @@ internal class LibraryCodeGenerator
                 if (param.Ordinal != 0)
                     _writer.WriteParameterSeparator();
 
-                _writer.Write(param.Name);
+                _writer.Write(param.Name.EscapeCSharpKeyword());
             }
 
             _writer.WriteLine(")");

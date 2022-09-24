@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
+using Basic.Reference.Assemblies;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
@@ -52,19 +53,49 @@ Hello, @Name!
     {
         var result = Generate(@"
 @using System
-@inherits RazorBlade.HtmlTemplate<Tuple<DateTime, bool>>
+@inherits RazorBlade.HtmlTemplate<Tuple<DateTime, string?>>
 ");
 
         return Verifier.Verify(result);
     }
 
-    private static GeneratedSourceResult Generate(string input)
+    [Test]
+    public Task should_forward_constructor_from_compilation()
+    {
+        var result = Generate(@"
+@inherits Foo.BaseClass
+", @"
+using RazorBlade.Support;
+
+namespace Foo;
+
+public abstract class BaseClass : RazorBlade.HtmlTemplate
+{
+    protected BaseClass(int notIncluded)
+    {
+    }
+
+    [TemplateConstructor]
+    protected BaseClass(int? foo, string? bar)
+    {
+    }
+
+    [TemplateConstructor]
+    protected BaseClass(float @double)
+    {
+    }
+}
+");
+
+        return Verifier.Verify(result);
+    }
+
+    private static GeneratedSourceResult Generate(string input, string? csharpCode = null)
     {
         var compilation = CSharpCompilation.Create("TestAssembly")
-                                           .AddReferences(
-                                               MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                                               MetadataReference.CreateFromFile(typeof(RazorTemplate).Assembly.Location)
-                                           );
+                                           .AddReferences(NetStandard20.All)
+                                           .AddReferences(MetadataReference.CreateFromFile(typeof(RazorTemplate).Assembly.Location))
+                                           .AddSyntaxTrees(CSharpSyntaxTree.ParseText(csharpCode ?? string.Empty));
 
         var result = CSharpGeneratorDriver.Create(new RazorBladeSourceGenerator())
                                           .AddAdditionalTexts(ImmutableArray.Create<AdditionalText>(new AdditionalTextMock(input)))
