@@ -9,15 +9,25 @@
 
 Compile Razor templates at build-time without a dependency on ASP.NET.
 
-:warning: **This is a work-in-progress.** The API is unstable and could change in the future. More features will be added over time.
+This is a work-in-progress. Feedback is welcome.
 
 ## Usage
 
 This package will generate a template class for every `.cshtml` file in your project.
 
-You can use a `@functions { ... }` block to add properties to your template (instead of a model), which the IDE will see.
+The generated classes will inherit from `RazorBlade.HtmlTemplate` by default, though it is advised to specify the base class explicitly to get the best IDE experience:
 
-The generated template class will inherit from `RazorBlade.HtmlTemplate` by default, but you can customize this with an `@inherits` directive. Specifying the base class explicitly will give you access to its members in the IDE (IntelliSense).
+````Razor
+@inherits RazorBlade.HtmlTemplate
+````
+
+A version with a model is also available for convenience. The following will add a `Model` property and a constructor with a `TModel` parameter:
+
+```Razor
+@inherits RazorBlade.HtmlTemplate<TModel>
+```
+
+Generated templates are *not* thread-safe. Always use new instances.
 
 ## Example
 
@@ -26,9 +36,10 @@ The following template, in the `TestTemplate.cshtml` file:
 ```Razor
 @inherits RazorBlade.HtmlTemplate
 
-Hello, @Name!
+Hello, <i>@Name</i>!
 
-@functions {
+@functions
+{
     public string? Name { get; set; }
 }
 ```
@@ -55,9 +66,28 @@ var template = new TestTemplate
 var result = template.Render();
 ```
 
-## Features
+### With a model
 
-As of v0.0.2:
+A similar template with a model would be:
 
-- Use the `@namespace` directive to override the namespace of the generated class.
-- You can compose templates by writing them as values: use the `@(new Footer())` syntax for instance.
+```Razor
+@using MyApplication.Models
+@inherits RazorBlade.HtmlTemplate<GreetingModel>
+
+Hello, <i>@Model.Name</i>!
+```
+
+Instantiating the generated class requires a model argument:
+
+```C#
+var model = new GreetingModel { Name = "World" };
+var template = new TestTemplate(model);
+var result = template.Render();
+```
+
+## Additional Features
+
+- The namespace of generated classes is deduced from the file location. This can be overriden with the `@namespace` directive.
+- Templates can be composed by writing them as values: `@(new Footer())` for instance.
+- A rudimentary HTML helper is provided mostly for `@Html.Raw`
+- You can write custom base classes. Constructors decorated with `[TemplateConstructor]` will be available through the generated class.
