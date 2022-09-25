@@ -38,6 +38,11 @@ namespace TestNamespace
             : base(@double)
         {
         }
+
+        public TestFile(in int foo, ref int bar, out int baz, params int[] qux)
+            : base(in foo, ref bar, out baz, qux)
+        {
+        }
     }
 }
 

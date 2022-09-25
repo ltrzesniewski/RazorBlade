@@ -84,6 +84,12 @@ public abstract class BaseClass : RazorBlade.HtmlTemplate
     protected BaseClass(float @double)
     {
     }
+
+    [TemplateConstructor]
+    protected BaseClass(in int foo, ref int bar, out int baz, params int[] qux)
+    {
+        baz = 42;
+    }
 }
 ");
 

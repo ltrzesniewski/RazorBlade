@@ -103,6 +103,11 @@ internal class LibraryCodeGenerator
                 if (param.Ordinal != 0)
                     _writer.WriteParameterSeparator();
 
+                WriteRefKind(param.RefKind);
+
+                if (param.IsParams)
+                    _writer.Write("params ");
+
                 _writer.Write(param.Type.ToFullyQualifiedName())
                        .Write(" ")
                        .Write(param.Name.EscapeCSharpKeyword());
@@ -118,6 +123,7 @@ internal class LibraryCodeGenerator
                 if (param.Ordinal != 0)
                     _writer.WriteParameterSeparator();
 
+                WriteRefKind(param.RefKind);
                 _writer.Write(param.Name.EscapeCSharpKeyword());
             }
 
@@ -126,6 +132,17 @@ internal class LibraryCodeGenerator
 
             _writer.WriteLine("{")
                    .WriteLine("}");
+        }
+
+        void WriteRefKind(RefKind refKind)
+        {
+            _writer.Write(refKind switch
+            {
+                RefKind.Ref => "ref ",
+                RefKind.Out => "out ",
+                RefKind.In  => "in ",
+                _           => string.Empty
+            });
         }
     }
 
