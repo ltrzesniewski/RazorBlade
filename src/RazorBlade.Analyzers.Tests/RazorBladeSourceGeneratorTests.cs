@@ -1,7 +1,7 @@
 ﻿using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Basic.Reference.Assemblies;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
@@ -30,7 +30,7 @@ public class RazorBladeSourceGeneratorTests
     {
         var result = Generate(@"
 Hello, @Name!
-@functions {{ public string Name; }}
+@functions { public string? Name { get; set; } }
 ");
 
         result.SourceText.ToString().ShouldContain("Write(Name)");
@@ -92,17 +92,26 @@ public abstract class BaseClass : RazorBlade.HtmlTemplate
 
     private static GeneratedSourceResult Generate(string input, string? csharpCode = null)
     {
+        var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
+
         var compilation = CSharpCompilation.Create("TestAssembly")
-                                           .AddReferences(NetStandard20.All)
-                                           .AddReferences(MetadataReference.CreateFromFile(typeof(RazorTemplate).Assembly.Location))
-                                           .AddSyntaxTrees(CSharpSyntaxTree.ParseText(csharpCode ?? string.Empty));
+                                           .AddReferences(
+                                               MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                                               MetadataReference.CreateFromFile(Path.Combine(runtimeDir, "netstandard.dll")),
+                                               MetadataReference.CreateFromFile(Path.Combine(runtimeDir, "System.Runtime.dll")),
+                                               MetadataReference.CreateFromFile(typeof(RazorTemplate).Assembly.Location)
+                                           )
+                                           .AddSyntaxTrees(CSharpSyntaxTree.ParseText(csharpCode ?? string.Empty))
+                                           .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithNullableContextOptions(NullableContextOptions.Enable));
 
         var result = CSharpGeneratorDriver.Create(new RazorBladeSourceGenerator())
                                           .AddAdditionalTexts(ImmutableArray.Create<AdditionalText>(new AdditionalTextMock(input)))
                                           .WithUpdatedAnalyzerConfigOptions(new AnalyzerConfigOptionsProviderMock())
-                                          .RunGenerators(compilation)
+                                          .RunGeneratorsAndUpdateCompilation(compilation, out var updatedCompilation, out var diagnostics)
                                           .GetRunResult();
 
+        updatedCompilation.GetDiagnostics().ShouldBeEmpty();
+        diagnostics.ShouldBeEmpty();
         result.Diagnostics.ShouldBeEmpty();
         return result.Results.Single().GeneratedSources.Single();
     }
