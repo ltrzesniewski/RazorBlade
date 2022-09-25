@@ -4,8 +4,6 @@ using System.Text;
 
 namespace RazorBlade;
 
-#nullable enable
-
 // ReSharper disable once RedundantDisableWarningComment
 #pragma warning disable CA1822
 

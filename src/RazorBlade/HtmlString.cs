@@ -2,8 +2,6 @@
 
 namespace RazorBlade;
 
-#nullable enable
-
 /// <summary>
 /// Represents an HTML-encoded string that should not be encoded again.
 /// </summary>

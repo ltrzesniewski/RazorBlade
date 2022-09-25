@@ -4,7 +4,7 @@ using RazorBlade.Support;
 namespace RazorBlade;
 
 /// <summary>
-/// Base class for plaint text templates.
+/// Base class for plain text templates.
 /// </summary>
 /// <remarks>
 /// Values will be written as-is, without escaping.
@@ -22,7 +22,7 @@ public abstract class PlainTextTemplate : RazorTemplate
 }
 
 /// <summary>
-/// Base class for plaint text templates with a model.
+/// Base class for plain text templates with a model.
 /// </summary>
 /// <remarks>
 /// Values will be written as-is, without escaping.
