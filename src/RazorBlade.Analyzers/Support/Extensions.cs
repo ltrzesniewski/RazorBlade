@@ -7,10 +7,6 @@ namespace RazorBlade.Analyzers.Support;
 
 internal static class Extensions
 {
-    private static readonly SymbolDisplayFormat _fullyQualifiedFormat
-        = SymbolDisplayFormat.FullyQualifiedFormat
-                             .WithMiscellaneousOptions(SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions | SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
-
     public static IncrementalValuesProvider<T> WhereNotNull<T>(this IncrementalValuesProvider<T?> provider)
         where T : class
         => provider.Where(static item => item is not null)!;
@@ -28,9 +24,6 @@ internal static class Extensions
 
         return false;
     }
-
-    public static string ToFullyQualifiedName(this ISymbol symbol)
-        => symbol.ToDisplayString(_fullyQualifiedFormat);
 
     public static string EscapeCSharpKeyword(this string name)
         => SyntaxFacts.GetKeywordKind(name) != SyntaxKind.None

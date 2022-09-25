@@ -65,6 +65,7 @@ Hello, @Name!
         var result = Generate(@"
 @inherits Foo.BaseClass
 ", @"
+using System;
 using RazorBlade.Support;
 
 namespace Foo;
@@ -81,7 +82,7 @@ public abstract class BaseClass : RazorBlade.HtmlTemplate
     }
 
     [TemplateConstructor]
-    protected BaseClass(float @double)
+    protected BaseClass(float @double, string str = @""foo\""""bar"", DayOfWeek day = DayOfWeek.Friday)
     {
     }
 

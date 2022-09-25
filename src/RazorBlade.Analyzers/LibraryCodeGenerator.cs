@@ -14,6 +14,21 @@ namespace RazorBlade.Analyzers;
 
 internal class LibraryCodeGenerator
 {
+    private static readonly SymbolDisplayFormat _paramSignatureFormat
+        = new(
+            globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Included,
+            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+            genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+            memberOptions: SymbolDisplayMemberOptions.IncludeContainingType, // For enums
+            parameterOptions: SymbolDisplayParameterOptions.IncludeName
+                              | SymbolDisplayParameterOptions.IncludeType
+                              | SymbolDisplayParameterOptions.IncludeParamsRefOut
+                              | SymbolDisplayParameterOptions.IncludeDefaultValue,
+            miscellaneousOptions: SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers
+                                  | SymbolDisplayMiscellaneousOptions.UseSpecialTypes
+                                  | SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
+        );
+
     private readonly RazorCSharpDocument _generatedDoc;
     private readonly Compilation _compilation;
     private readonly CSharpParseOptions _parseOptions;
@@ -103,14 +118,7 @@ internal class LibraryCodeGenerator
                 if (param.Ordinal != 0)
                     _writer.WriteParameterSeparator();
 
-                WriteRefKind(param.RefKind);
-
-                if (param.IsParams)
-                    _writer.Write("params ");
-
-                _writer.Write(param.Type.ToFullyQualifiedName())
-                       .Write(" ")
-                       .Write(param.Name.EscapeCSharpKeyword());
+                _writer.Write(param.ToDisplayString(_paramSignatureFormat));
             }
 
             _writer.WriteLine(")");
@@ -123,7 +131,14 @@ internal class LibraryCodeGenerator
                 if (param.Ordinal != 0)
                     _writer.WriteParameterSeparator();
 
-                WriteRefKind(param.RefKind);
+                _writer.Write(param.RefKind switch
+                {
+                    RefKind.Ref => "ref ",
+                    RefKind.Out => "out ",
+                    RefKind.In  => "in ",
+                    _           => string.Empty
+                });
+
                 _writer.Write(param.Name.EscapeCSharpKeyword());
             }
 
@@ -132,17 +147,6 @@ internal class LibraryCodeGenerator
 
             _writer.WriteLine("{")
                    .WriteLine("}");
-        }
-
-        void WriteRefKind(RefKind refKind)
-        {
-            _writer.Write(refKind switch
-            {
-                RefKind.Ref => "ref ",
-                RefKind.Out => "out ",
-                RefKind.In  => "in ",
-                _           => string.Empty
-            });
         }
     }
 

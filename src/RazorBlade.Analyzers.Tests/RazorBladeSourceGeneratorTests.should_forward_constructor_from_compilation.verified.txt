@@ -34,8 +34,8 @@ namespace TestNamespace
         {
         }
 
-        public TestFile(float @double)
-            : base(@double)
+        public TestFile(float @double, string str = "foo\\\"bar", global::System.DayOfWeek day = global::System.DayOfWeek.Friday)
+            : base(@double, str, day)
         {
         }
 
