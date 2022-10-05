@@ -86,6 +86,19 @@ public class RazorTemplateTests
         writer.ToString().ShouldEqual("foo & bar");
     }
 
+    [Test]
+    public void should_support_attributes()
+    {
+        var template = new Template(t =>
+        {
+            t.BeginWriteAttribute("foo", "foo[", 0, "]", 0, 0);
+            t.WriteAttributeValue("bar ", 0, "baz", 0, 0, true);
+            t.EndWriteAttribute();
+        });
+
+        template.Render().ShouldEqual("foo[bar baz]");
+    }
+
     private class Template : RazorTemplate
     {
         private readonly Action<Template> _executeAction;

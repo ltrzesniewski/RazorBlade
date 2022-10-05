@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace RazorBlade;
@@ -110,6 +111,40 @@ public abstract class RazorTemplate : IEncodedContent
     /// <param name="content">The template to render.</param>
     protected internal void Write(IEncodedContent? content)
         => content?.WriteTo(Output);
+
+    private string? _attributeSuffix;
+
+    /// <summary>
+    /// Begins writing an attribute.
+    /// </summary>
+    [SuppressMessage("ReSharper", "UnusedParameter.Global")]
+    protected internal void BeginWriteAttribute(string name, string prefix, int prefixOffset, string suffix, int suffixOffset, int attributeValuesCount)
+    {
+        WriteLiteral(prefix);
+        _attributeSuffix = suffix;
+    }
+
+    /// <summary>
+    /// Writes part of an attribute.
+    /// </summary>
+    [SuppressMessage("ReSharper", "UnusedParameter.Global")]
+    protected internal void WriteAttributeValue(string prefix, int prefixOffset, object? value, int valueOffset, int valueLength, bool isLiteral)
+    {
+        WriteLiteral(prefix);
+
+        if (isLiteral)
+            WriteLiteral(value?.ToString());
+        else
+            Write(value);
+    }
+
+    /// <summary>
+    /// Ends writing an attribute.
+    /// </summary>
+    protected internal void EndWriteAttribute()
+    {
+        WriteLiteral(_attributeSuffix);
+    }
 
     void IEncodedContent.WriteTo(TextWriter textWriter)
         => Render(textWriter);

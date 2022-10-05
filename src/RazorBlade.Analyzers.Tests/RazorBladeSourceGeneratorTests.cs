@@ -38,6 +38,17 @@ Hello, @Name!
     }
 
     [Test]
+    public Task should_write_attributes()
+    {
+        var result = Generate(@"
+Hello, <a href=""@Link"">World</a>!
+@functions { public string? Link { get; set; } }
+");
+
+        return Verifier.Verify(result);
+    }
+
+    [Test]
     public Task should_set_namespace()
     {
         var result = Generate(@"
@@ -64,7 +75,8 @@ Hello, @Name!
     {
         var result = Generate(@"
 @inherits Foo.BaseClass
-", @"
+",
+                              @"
 using System;
 using RazorBlade.Support;
 

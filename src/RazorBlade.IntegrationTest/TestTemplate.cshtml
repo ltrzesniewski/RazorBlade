@@ -3,6 +3,8 @@
 
 <b>Hello, @Name!</b>
 
+<a href="https://@HostName/hello.txt?q=@Name&t=test">Hello</a>
+
 @{ var br = "<br>"; }
 @br
 @Html.Raw("<br>")
@@ -11,4 +13,5 @@
 
 @functions {
     public string? Name { get; set; }
+    public string? HostName { get; set; } = "example.com";
 }
