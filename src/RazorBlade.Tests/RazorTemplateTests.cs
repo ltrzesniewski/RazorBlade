@@ -86,19 +86,6 @@ public class RazorTemplateTests
         writer.ToString().ShouldEqual("foo & bar");
     }
 
-    [Test]
-    public void should_support_attributes()
-    {
-        var template = new Template(t =>
-        {
-            t.BeginWriteAttribute("foo", "foo[", 0, "]", 0, 0);
-            t.WriteAttributeValue("bar ", 0, "baz", 0, 0, true);
-            t.EndWriteAttribute();
-        });
-
-        template.Render().ShouldEqual("foo[bar baz]");
-    }
-
     private class Template : RazorTemplate
     {
         private readonly Action<Template> _executeAction;
@@ -116,6 +103,18 @@ public class RazorTemplateTests
         }
 
         protected internal override void Write(object? value)
+        {
+        }
+
+        protected internal override void BeginWriteAttribute(string name, string prefix, int prefixOffset, string suffix, int suffixOffset, int attributeValuesCount)
+        {
+        }
+
+        protected internal override void WriteAttributeValue(string prefix, int prefixOffset, object? value, int valueOffset, int valueLength, bool isLiteral)
+        {
+        }
+
+        protected internal override void EndWriteAttribute()
         {
         }
     }

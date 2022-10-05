@@ -112,39 +112,22 @@ public abstract class RazorTemplate : IEncodedContent
     protected internal void Write(IEncodedContent? content)
         => content?.WriteTo(Output);
 
-    private string? _attributeSuffix;
-
     /// <summary>
     /// Begins writing an attribute.
     /// </summary>
     [SuppressMessage("ReSharper", "UnusedParameter.Global")]
-    protected internal void BeginWriteAttribute(string name, string prefix, int prefixOffset, string suffix, int suffixOffset, int attributeValuesCount)
-    {
-        WriteLiteral(prefix);
-        _attributeSuffix = suffix;
-    }
+    protected internal abstract void BeginWriteAttribute(string name, string prefix, int prefixOffset, string suffix, int suffixOffset, int attributeValuesCount);
 
     /// <summary>
     /// Writes part of an attribute.
     /// </summary>
     [SuppressMessage("ReSharper", "UnusedParameter.Global")]
-    protected internal void WriteAttributeValue(string prefix, int prefixOffset, object? value, int valueOffset, int valueLength, bool isLiteral)
-    {
-        WriteLiteral(prefix);
-
-        if (isLiteral)
-            WriteLiteral(value?.ToString());
-        else
-            Write(value);
-    }
+    protected internal abstract void WriteAttributeValue(string prefix, int prefixOffset, object? value, int valueOffset, int valueLength, bool isLiteral);
 
     /// <summary>
     /// Ends writing an attribute.
     /// </summary>
-    protected internal void EndWriteAttribute()
-    {
-        WriteLiteral(_attributeSuffix);
-    }
+    protected internal abstract void EndWriteAttribute();
 
     void IEncodedContent.WriteTo(TextWriter textWriter)
         => Render(textWriter);

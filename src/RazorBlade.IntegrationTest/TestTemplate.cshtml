@@ -3,7 +3,7 @@
 
 <b>Hello, @Name!</b>
 
-<a href="https://@HostName/hello.txt?q=@Name&t=test">Hello</a>
+<a id="hello" href="https://@HostName/hello.txt?q=@Name&t=test" foo="@true" bar="@false">Hello</a>
 
 @{ var br = "<br>"; }
 @br
@@ -12,6 +12,8 @@
 @(new Footer())
 
 @functions {
+
     public string? Name { get; set; }
     public string? HostName { get; set; } = "example.com";
+
 }

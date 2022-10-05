@@ -12,6 +12,8 @@ namespace RazorBlade;
 /// </remarks>
 public abstract class HtmlTemplate : RazorTemplate
 {
+    private AttributeInfo _currentAttribute;
+
     // ReSharper disable once RedundantDisableWarningComment
 #pragma warning disable CA1822
 
@@ -68,6 +70,74 @@ public abstract class HtmlTemplate : RazorTemplate
                        .Replace("\"", "&quot;")
         );
 #endif
+    }
+
+    /// <inheritdoc />
+    protected internal override void BeginWriteAttribute(string name, string prefix, int prefixOffset, string suffix, int suffixOffset, int attributeValuesCount)
+    {
+        _currentAttribute = new(name, prefix, suffix, attributeValuesCount);
+
+        if (_currentAttribute.AttributeValuesCount != 1)
+            WriteLiteral(prefix);
+    }
+
+    /// <inheritdoc />
+    protected internal override void WriteAttributeValue(string prefix, int prefixOffset, object? value, int valueOffset, int valueLength, bool isLiteral)
+    {
+        if (_currentAttribute.AttributeValuesCount == 1)
+        {
+            if (string.IsNullOrEmpty(prefix))
+            {
+                if (value is null or false)
+                {
+                    _currentAttribute.Suppressed = true;
+                    return;
+                }
+
+                if (value is true)
+                {
+                    value = _currentAttribute.Name;
+                }
+            }
+
+            WriteLiteral(_currentAttribute.Prefix);
+        }
+
+        if (value is not null)
+        {
+            WriteLiteral(prefix);
+
+            if (isLiteral)
+                WriteLiteral(value.ToString());
+            else
+                Write(value);
+        }
+    }
+
+    /// <inheritdoc />
+    protected internal override void EndWriteAttribute()
+    {
+        if (!_currentAttribute.Suppressed)
+            WriteLiteral(_currentAttribute.Suffix);
+    }
+
+    private struct AttributeInfo
+    {
+        public readonly string? Name;
+        public readonly string? Prefix;
+        public readonly string? Suffix;
+        public readonly int AttributeValuesCount;
+        public bool Suppressed;
+
+        public AttributeInfo(string name, string prefix, string suffix, int attributeValuesCount)
+        {
+            Name = name;
+            Prefix = prefix;
+            Suffix = suffix;
+            AttributeValuesCount = attributeValuesCount;
+
+            Suppressed = false;
+        }
     }
 }
 
