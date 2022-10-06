@@ -87,7 +87,7 @@ var result = template.Render();
 
 ### Base template classes
 
-Use one of the following base classes for HTML templates: 
+For HTML templates, specify one of the following base classes with an `@inherits` directive:
 
 - `RazorBlade.HtmlTemplate`
 - `RazorBlade.HtmlTemplate<TModel>`
@@ -105,7 +105,7 @@ You can also write your own base classes. Marking a constructor with `[TemplateC
 
 HTML escaping can be avoided by using the `@Html.Raw(value)` method, just like in ASP.NET. The `IEncodedContent` interface represents content which does not need to be escaped. The `HtmlString` class is a simple implementation of this interface.
 
-Templates can be included in other templates by evaluating them, since they implement `IEncodedContent`. For instance, a `Footer` template can be included by writing `@(new Footer())`. Remember to always create a new instance of the template to include, even if they don't contain custom code, as they are not thread-safe.
+Templates can be included in other templates by evaluating them, since they implement `IEncodedContent`. For instance, a `Footer` template can be included by writing `@(new Footer())`. Remember to always create a new instance of the template to include, even if it doesn't contain custom code, as templates are stateful and not thread-safe.
 
 The namespace of the generated class can be customized with the `@namespace` directive. The default value is deduced from the file location.
 
