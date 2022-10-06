@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -115,18 +116,33 @@ public abstract class RazorTemplate : IEncodedContent
     /// <summary>
     /// Begins writing an attribute.
     /// </summary>
+    /// <param name="name">The attribute name.</param>
+    /// <param name="prefix">The attribute prefix, which is the text from the whitespace preceding the attribute name to the quote before the attribute value.</param>
+    /// <param name="prefixOffset">The prefix offset in the Razor file.</param>
+    /// <param name="suffix">The suffix, consisting of the end quote.</param>
+    /// <param name="suffixOffset">The suffix offset in the Razor file.</param>
+    /// <param name="attributeValuesCount">The count of attribute value parts, which is the count of subsequent <see cref="WriteAttributeValue"/> calls.</param>
     [SuppressMessage("ReSharper", "UnusedParameter.Global")]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     protected internal abstract void BeginWriteAttribute(string name, string prefix, int prefixOffset, string suffix, int suffixOffset, int attributeValuesCount);
 
     /// <summary>
-    /// Writes part of an attribute.
+    /// Writes part of an attribute value.
     /// </summary>
+    /// <param name="prefix">The value prefix, consisting of the whitespace preceding the value.</param>
+    /// <param name="prefixOffset">The prefix offset in the Razor file.</param>
+    /// <param name="value">The value to write.</param>
+    /// <param name="valueOffset">The value offset in the Razor file.</param>
+    /// <param name="valueLength">The value length in the Razor file.</param>
+    /// <param name="isLiteral">Whether the value is a literal.</param>
     [SuppressMessage("ReSharper", "UnusedParameter.Global")]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     protected internal abstract void WriteAttributeValue(string prefix, int prefixOffset, object? value, int valueOffset, int valueLength, bool isLiteral);
 
     /// <summary>
     /// Ends writing an attribute.
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     protected internal abstract void EndWriteAttribute();
 
     void IEncodedContent.WriteTo(TextWriter textWriter)

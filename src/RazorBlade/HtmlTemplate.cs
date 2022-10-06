@@ -84,19 +84,31 @@ public abstract class HtmlTemplate : RazorTemplate
     /// <inheritdoc />
     protected internal override void WriteAttributeValue(string prefix, int prefixOffset, object? value, int valueOffset, int valueLength, bool isLiteral)
     {
+        // This implements the Razor semantics of ASP.NET (conditional attributes):
+
+        // When an attribute consists of a single value part (without whitespace): foo="@bar"
+        //  - if bar evaluates to false or null, omit the attribute entirely
+        //  - if bar evaluates to true, write the attribute name as the value: foo="foo"
+        //  - otherwise, write the value of bar as usual
+
+        // When an attribute contains multiple value parts: class="foo @bar"
+        //  - if bar evaluates to null, omit it and its whitespace prefix: class="foo"
+        //  - otherwise, write the value of bar as usual (even if it evaluates to a boolean)
+
+        // Note that if an attribute name starts with "data-", these attribute-specific methods are not called,
+        // and Write is used instead, effectively bypassing these rules and always writing the attribute value as-is.
+
         if (_currentAttribute.AttributeValuesCount == 1)
         {
             if (string.IsNullOrEmpty(prefix))
             {
-                if (value is null or false)
+                if (value is bool boolValue)
+                    value = boolValue ? _currentAttribute.Name : null;
+
+                if (value is null)
                 {
                     _currentAttribute.Suppressed = true;
                     return;
-                }
-
-                if (value is true)
-                {
-                    value = _currentAttribute.Name;
                 }
             }
 
