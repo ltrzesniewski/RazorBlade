@@ -9,8 +9,6 @@
 
 Compile Razor templates at build-time without a dependency on ASP.NET.
 
-This is a work-in-progress. Feedback is welcome.
-
 ## Usage
 
 This package will generate a template class for every `.cshtml` file in your project.
@@ -27,7 +25,7 @@ A version with a model is also available for convenience. The following will add
 @inherits RazorBlade.HtmlTemplate<TModel>
 ```
 
-Generated templates are *not* thread-safe. Always use new instances.
+Further [documentation](#Documentation) is provided below.
 
 ## Example
 
@@ -85,9 +83,40 @@ var template = new TestTemplate(model);
 var result = template.Render();
 ```
 
-## Additional Features
+## Documentation
 
-- The namespace of generated classes is deduced from the file location. This can be overriden with the `@namespace` directive.
-- Templates can be composed by writing them as values: `@(new Footer())` for instance.
-- A rudimentary HTML helper is provided mostly for `@Html.Raw`
-- You can write custom base classes. Constructors decorated with `[TemplateConstructor]` will be available through the generated class.
+### Base template classes
+
+Use one of the following base classes for HTML templates: 
+
+- `RazorBlade.HtmlTemplate`
+- `RazorBlade.HtmlTemplate<TModel>`
+
+If you'd like to write a plain text template (which never escapes HTML), the following classes are available:
+
+- `RazorBlade.PlainTextTemplate`
+- `RazorBlade.PlainTextTemplate<TModel>`
+
+They all derive from `RazorBlade.RazorTemplate`, which provides the base functionality.
+
+You can also write your own base classes. Marking a constructor with `[TemplateConstructor]` will forward it to the generated template class. 
+
+### Writing templates
+
+HTML escaping can be avoided by using the `@Html.Raw(value)` method, just like in ASP.NET. The `IEncodedContent` interface represents content which does not need to be escaped. The `HtmlString` class is a simple implementation of this interface.
+
+Templates can be included in other templates by evaluating them, since they implement `IEncodedContent`. For instance, a `Footer` template can be included by writing `@(new Footer())`. Remember to always create a new instance of the template to include, even if they don't contain custom code, as they are not thread-safe.
+
+The namespace of the generated class can be customized with the `@namespace` directive. The default value is deduced from the file location.
+
+### Executing templates
+
+The `RazorTemplate` base class provides `Render` and `RenderAsync` methods to execute the template.
+
+Templates are stateful and not thread-safe, so it is advised to always create new instances of the templates to render.
+
+### MSBuild
+
+The source generator will process `RazorBlade` MSBuild items which have the `.cshtml` file extension.
+
+By default, all `.cshtml` files are included, unless one of the `EnableDefaultRazorBladeItems` or `EnableDefaultItems` properties are set to `false`. You can also manually customize this set.

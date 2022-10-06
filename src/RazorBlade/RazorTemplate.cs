@@ -8,9 +8,6 @@ namespace RazorBlade;
 /// <summary>
 /// Base class for Razor templates.
 /// </summary>
-/// <remarks>
-/// This class lacks <c>Write</c> methods. Use one of the derived classes in your templates.
-/// </remarks>
 public abstract class RazorTemplate : IEncodedContent
 {
     /// <summary>
