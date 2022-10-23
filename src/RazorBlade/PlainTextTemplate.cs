@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 using RazorBlade.Support;
 
 namespace RazorBlade;
@@ -60,6 +61,7 @@ public abstract class PlainTextTemplate<TModel> : PlainTextTemplate
     /// <summary>
     /// The model for the template.
     /// </summary>
+    [UsedImplicitly]
     public TModel Model { get; }
 
     /// <summary>
