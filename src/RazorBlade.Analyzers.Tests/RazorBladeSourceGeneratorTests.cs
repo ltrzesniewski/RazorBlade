@@ -16,60 +16,51 @@ public class RazorBladeSourceGeneratorTests
     [Test]
     public Task should_generate_source()
     {
-        var sourceResult = Generate("Hello!");
-        return Verifier.Verify(sourceResult);
+        return Verify("Hello!");
     }
 
     [Test]
     public Task should_write_members()
     {
-        var result = Generate(@"
+        return Verify(@"
 Hello, @Name!
 @functions { public string? Name { get; set; } }
 ");
-
-        return Verifier.Verify(result);
     }
 
     [Test]
     public Task should_write_attributes()
     {
-        var result = Generate(@"
+        return Verify(@"
 Hello, <a href=""@Link"">World</a>!
 @functions { public string? Link { get; set; } }
 ");
-
-        return Verifier.Verify(result);
     }
 
     [Test]
     public Task should_set_namespace()
     {
-        var result = Generate(@"
+        return Verify(@"
 @namespace CustomNamespace
 ");
-
-        return Verifier.Verify(result);
     }
 
     [Test]
     public Task should_generate_model_constructor()
     {
-        var result = Generate(@"
+        return Verify(@"
 @using System
 @inherits RazorBlade.HtmlTemplate<Tuple<DateTime, string?>>
 ");
-
-        return Verifier.Verify(result);
     }
 
     [Test]
     public Task should_forward_constructor_from_compilation()
     {
-        var result = Generate(@"
+        return Verify(@"
 @inherits Foo.BaseClass
 ",
-                              @"
+                      @"
 using System;
 using RazorBlade.Support;
 
@@ -98,18 +89,14 @@ public abstract class BaseClass : RazorBlade.HtmlTemplate
     }
 }
 ");
-
-        return Verifier.Verify(result);
     }
 
     [Test]
     public Task should_reject_model_directive()
     {
-        var result = Generate(@"
+        return Verify(@"
 @model FooBar
 ");
-
-        return Verifier.Verify(result);
     }
 
     private static GeneratorDriverRunResult Generate(string input, string? csharpCode = null)
@@ -134,5 +121,11 @@ public abstract class BaseClass : RazorBlade.HtmlTemplate
 
         updatedCompilation.GetDiagnostics().ShouldBeEmpty();
         return result;
+    }
+
+    private static Task Verify(string input, string? csharpCode = null)
+    {
+        var result = Generate(input, csharpCode);
+        return Verifier.Verify(result);
     }
 }
