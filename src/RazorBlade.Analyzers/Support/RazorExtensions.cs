@@ -13,7 +13,7 @@ internal static class RazorExtensions
             razorDiagnostic.Id,
             razorDiagnostic.GetMessage(CultureInfo.CurrentCulture),
             razorDiagnostic.GetMessage(CultureInfo.CurrentCulture),
-            "Razor",
+            Diagnostics.Category,
             razorDiagnostic.Severity switch
             {
                 RazorDiagnosticSeverity.Error   => DiagnosticSeverity.Error,

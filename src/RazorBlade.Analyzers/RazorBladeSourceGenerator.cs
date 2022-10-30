@@ -103,6 +103,8 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             RazorProjectFileSystem.Empty,
             cfg =>
             {
+                ModelDirective.Register(cfg);
+
                 cfg.SetCSharpLanguageVersion(globalOptions.ParseOptions.LanguageVersion);
 
                 var configurationFeature = cfg.Features.OfType<DefaultDocumentClassifierPassFeature>().Single();
