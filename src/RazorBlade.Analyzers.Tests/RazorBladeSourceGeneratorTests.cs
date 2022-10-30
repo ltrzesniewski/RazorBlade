@@ -1,6 +1,5 @@
 ﻿using System.Collections.Immutable;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -18,10 +17,6 @@ public class RazorBladeSourceGeneratorTests
     public Task should_generate_source()
     {
         var sourceResult = Generate("Hello!");
-        var result = sourceResult.SourceText.ToString();
-
-        result.ShouldContain("namespace TestNamespace");
-        result.ShouldContain("internal partial class TestFile : global::RazorBlade.HtmlTemplate");
         return Verifier.Verify(sourceResult);
     }
 
@@ -33,7 +28,6 @@ Hello, @Name!
 @functions { public string? Name { get; set; } }
 ");
 
-        result.SourceText.ToString().ShouldContain("Write(Name)");
         return Verifier.Verify(result);
     }
 
@@ -55,7 +49,6 @@ Hello, <a href=""@Link"">World</a>!
 @namespace CustomNamespace
 ");
 
-        result.SourceText.ToString().ShouldContain("namespace CustomNamespace");
         return Verifier.Verify(result);
     }
 
@@ -109,7 +102,17 @@ public abstract class BaseClass : RazorBlade.HtmlTemplate
         return Verifier.Verify(result);
     }
 
-    private static GeneratedSourceResult Generate(string input, string? csharpCode = null)
+    [Test]
+    public Task should_reject_model_directive()
+    {
+        var result = Generate(@"
+@model FooBar
+");
+
+        return Verifier.Verify(result);
+    }
+
+    private static GeneratorDriverRunResult Generate(string input, string? csharpCode = null)
     {
         var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
 
@@ -126,12 +129,10 @@ public abstract class BaseClass : RazorBlade.HtmlTemplate
         var result = CSharpGeneratorDriver.Create(new RazorBladeSourceGenerator())
                                           .AddAdditionalTexts(ImmutableArray.Create<AdditionalText>(new AdditionalTextMock(input)))
                                           .WithUpdatedAnalyzerConfigOptions(new AnalyzerConfigOptionsProviderMock())
-                                          .RunGeneratorsAndUpdateCompilation(compilation, out var updatedCompilation, out var diagnostics)
+                                          .RunGeneratorsAndUpdateCompilation(compilation, out var updatedCompilation, out _)
                                           .GetRunResult();
 
         updatedCompilation.GetDiagnostics().ShouldBeEmpty();
-        diagnostics.ShouldBeEmpty();
-        result.Diagnostics.ShouldBeEmpty();
-        return result.Results.Single().GeneratedSources.Single();
+        return result;
     }
 }

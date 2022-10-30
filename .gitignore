@@ -16,3 +16,4 @@ Thumbs.db
 *.orig
 
 *.received.txt
+*.received.cs
