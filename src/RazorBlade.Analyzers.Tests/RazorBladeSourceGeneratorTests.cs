@@ -1,5 +1,7 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -99,6 +101,15 @@ public abstract class BaseClass : RazorBlade.HtmlTemplate
 ");
     }
 
+    [Test]
+    public Task should_mark_sync_methods_as_obsolete_on_async_templates()
+    {
+        return Verify(@"
+@using System.Threading.Tasks
+@await Task.FromResult(42)
+");
+    }
+
     private static GeneratorDriverRunResult Generate(string input, string? csharpCode = null)
     {
         var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
@@ -119,7 +130,13 @@ public abstract class BaseClass : RazorBlade.HtmlTemplate
                                           .RunGeneratorsAndUpdateCompilation(compilation, out var updatedCompilation, out _)
                                           .GetRunResult();
 
-        updatedCompilation.GetDiagnostics().ShouldBeEmpty();
+        var diagnostics = updatedCompilation.GetDiagnostics();
+
+        if (!diagnostics.IsEmpty)
+            Console.WriteLine(result.GeneratedTrees.FirstOrDefault());
+
+        diagnostics.ShouldBeEmpty();
+
         return result;
     }
 

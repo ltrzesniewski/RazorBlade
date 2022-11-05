@@ -170,7 +170,7 @@ public abstract class HtmlTemplate<TModel> : HtmlTemplate
     public TModel Model { get; }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="HtmlTemplate{TModel}"/> class.
+    /// Initializes a new instance of the template.
     /// </summary>
     /// <param name="model">The model for the template.</param>
     [TemplateConstructor]

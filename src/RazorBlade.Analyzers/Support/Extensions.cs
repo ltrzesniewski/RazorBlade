@@ -14,16 +14,19 @@ internal static class Extensions
     public static IncrementalValuesProvider<T> WithLambdaComparer<T>(this IncrementalValuesProvider<T> source, Func<T, T, bool> equals, Func<T, int> getHashCode)
         => source.WithComparer(new LambdaComparer<T>(equals, getHashCode));
 
-    public static bool HasAttribute(this ISymbol symbol, INamedTypeSymbol attributeType)
+    public static AttributeData? GetAttribute(this ISymbol symbol, INamedTypeSymbol attributeType)
     {
         foreach (var attribute in symbol.GetAttributes())
         {
             if (SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, attributeType))
-                return true;
+                return attribute;
         }
 
-        return false;
+        return null;
     }
+
+    public static bool HasAttribute(this ISymbol symbol, INamedTypeSymbol attributeType)
+        => symbol.GetAttribute(attributeType) is not null;
 
     public static string EscapeCSharpKeyword(this string name)
         => SyntaxFacts.GetKeywordKind(name) != SyntaxKind.None

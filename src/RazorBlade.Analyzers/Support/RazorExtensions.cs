@@ -1,5 +1,7 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 using Microsoft.AspNetCore.Razor.Language;
+using Microsoft.AspNetCore.Razor.Language.CodeGeneration;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -45,4 +47,29 @@ internal static class RazorExtensions
 
     private static TextSpan ToTextSpan(this SourceSpan sourceSpan)
         => new(sourceSpan.AbsoluteIndex, sourceSpan.Length);
+
+    public static IndentDisposable IndentScope(this CodeWriter writer)
+    {
+        writer.CurrentIndent += writer.TabSize;
+        return new IndentDisposable(writer);
+    }
+
+    public struct IndentDisposable : IDisposable
+    {
+        private CodeWriter? _writer;
+
+        public IndentDisposable(CodeWriter writer)
+        {
+            _writer = writer;
+        }
+
+        public void Dispose()
+        {
+            if (_writer is null)
+                return;
+
+            _writer.CurrentIndent -= _writer.TabSize;
+            _writer = null;
+        }
+    }
 }

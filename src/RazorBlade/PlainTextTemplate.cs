@@ -65,7 +65,7 @@ public abstract class PlainTextTemplate<TModel> : PlainTextTemplate
     public TModel Model { get; }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PlainTextTemplate{TModel}"/> class.
+    /// Initializes a new instance of the template.
     /// </summary>
     /// <param name="model">The model for the template.</param>
     [TemplateConstructor]

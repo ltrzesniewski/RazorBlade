@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using RazorBlade.Support;
 
 namespace RazorBlade;
 
@@ -28,6 +29,7 @@ public abstract class RazorTemplate : IEncodedContent
     /// <remarks>
     /// Use this only if the template does not use <c>@async</c> directives.
     /// </remarks>
+    [ConditionalOnAsync(false)]
     public string Render(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -47,6 +49,7 @@ public abstract class RazorTemplate : IEncodedContent
     /// <remarks>
     /// Use this only if the template does not use <c>@async</c> directives.
     /// </remarks>
+    [ConditionalOnAsync(false)]
     public void Render(TextWriter textWriter, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
