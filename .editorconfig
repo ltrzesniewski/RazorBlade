@@ -94,3 +94,5 @@ resharper_csharp_stick_comment = false
 resharper_wrap_before_arrow_with_expressions = true
 resharper_csharp_wrap_before_binary_opsign = true
 resharper_csharp_wrap_multiple_type_parameter_constraints_style = chop_always
+
+resharper_wrap_tags_and_pi = false

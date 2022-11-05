@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using RazorBlade.Tests.Support;
@@ -86,20 +87,69 @@ public class RazorTemplateTests
         writer.ToString().ShouldEqual("foo & bar");
     }
 
+    [Test, Timeout(10_000)]
+    public async Task should_support_cancellation()
+    {
+        var cts = new CancellationTokenSource();
+        var semaphore = new SemaphoreSlim(0);
+
+        var template = new Template(async t =>
+        {
+            semaphore.Release();
+            await Task.Delay(Timeout.InfiniteTimeSpan, t.CancellationToken);
+        });
+
+        var task = template.RenderAsync(cts.Token);
+
+        // Make sure we enter the template execution before we cancel
+        await semaphore.WaitAsync(CancellationToken.None);
+        cts.Cancel();
+
+        var exception = Assert.CatchAsync<OperationCanceledException>(async () => await task);
+        task.IsCanceled.ShouldBeTrue();
+        exception.ShouldNotBeNull().CancellationToken.ShouldEqual(cts.Token);
+    }
+
+    [Test]
+    public void should_not_execute_template_when_already_cancelled()
+    {
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var semaphore = new SemaphoreSlim(0);
+        var template = new Template(_ => semaphore.Release());
+
+        Assert.Catch<OperationCanceledException>(() => template.Render(cts.Token));
+        Assert.Catch<OperationCanceledException>(() => template.Render(StreamWriter.Null, cts.Token));
+        Assert.CatchAsync<OperationCanceledException>(() => template.RenderAsync(cts.Token));
+        Assert.CatchAsync<OperationCanceledException>(() => template.RenderAsync(StreamWriter.Null, cts.Token));
+
+        semaphore.CurrentCount.ShouldEqual(0);
+    }
+
     private class Template : RazorTemplate
     {
-        private readonly Action<Template> _executeAction;
+        private readonly Func<Template, Task> _executeAction;
 
-        public Template(Action<Template> executeAction)
+        public Template(Func<Template, Task> executeAction)
         {
             _executeAction = executeAction;
             Output = new StringWriter();
         }
 
-        protected internal override Task ExecuteAsync()
+        public Template(Action<Template> executeAction)
+            : this(t =>
+            {
+                executeAction(t);
+                return Task.CompletedTask;
+            })
         {
-            _executeAction(this);
-            return base.ExecuteAsync();
+        }
+
+        protected internal override async Task ExecuteAsync()
+        {
+            await _executeAction(this);
+            await base.ExecuteAsync();
         }
 
         protected internal override void Write(object? value)
