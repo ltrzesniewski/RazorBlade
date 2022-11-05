@@ -10,14 +10,17 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <RazorLanguageDir>../../lib/razor-compiler/src/Microsoft.AspNetCore.Razor.Language/src</RazorLanguageDir>
-    <RazorCodeAnalysisDir>../../lib/razor-compiler/src/Microsoft.CodeAnalysis.Razor/src</RazorCodeAnalysisDir>
+    <RazorLanguageDir>../../lib/razor/src/Compiler/Microsoft.AspNetCore.Razor.Language/src</RazorLanguageDir>
+    <RazorCodeAnalysisDir>../../lib/razor/src/Compiler/Microsoft.CodeAnalysis.Razor/src</RazorCodeAnalysisDir>
+    <RazorCommonDir>../../lib/razor/src/Razor/src/Microsoft.AspNetCore.Razor.Common</RazorCommonDir>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="$(RazorLanguageDir)/**/*.cs" Exclude="$(RazorLanguageDir)/obj/**/*.cs" Link="RazorLanguage/Language/%(RecursiveDir)%(FileName)%(Extension)" />
     <Compile Remove="$(RazorLanguageDir)/Properties/AssemblyInfo.cs" />
+
     <Compile Include="$(RazorCodeAnalysisDir)/RazorProjectEngineBuilderExtensions.cs" Link="RazorLanguage/CodeAnalysis/%(FileName)%(Extension)" />
+    <Compile Include="$(RazorCommonDir)/LanguageSupport/NullableAttributes.cs" Link="RazorLanguage/Common/%(FileName)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
