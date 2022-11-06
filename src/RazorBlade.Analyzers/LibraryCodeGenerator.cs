@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.AspNetCore.Razor.Language.CodeGeneration;
@@ -30,8 +32,18 @@ internal class LibraryCodeGenerator
                                   | SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
         );
 
+    private static readonly SymbolDisplayFormat _paramFootprintFormat
+        = new(
+            globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Omitted,
+            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+            genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+            memberOptions: SymbolDisplayMemberOptions.IncludeContainingType,
+            parameterOptions: SymbolDisplayParameterOptions.IncludeType,
+            miscellaneousOptions: SymbolDisplayMiscellaneousOptions.UseSpecialTypes
+        );
+
     private readonly RazorCSharpDocument _generatedDoc;
-    private readonly Compilation _compilation;
+    private readonly Compilation _inputCompilation;
     private readonly CSharpParseOptions _parseOptions;
     private readonly CodeWriter _writer;
     private bool _hasCode;
@@ -42,7 +54,7 @@ internal class LibraryCodeGenerator
     public LibraryCodeGenerator(RazorCSharpDocument generatedDoc, Compilation compilation, CSharpParseOptions parseOptions)
     {
         _generatedDoc = generatedDoc;
-        _compilation = compilation;
+        _inputCompilation = compilation;
         _parseOptions = parseOptions;
 
         _writer = new CodeWriter(Environment.NewLine, generatedDoc.Options);
@@ -85,8 +97,8 @@ internal class LibraryCodeGenerator
             cancellationToken: cancellationToken
         );
 
-        var compilation = _compilation.AddSyntaxTrees(syntaxTree)
-                                      .WithOptions(_compilation.Options.WithReportSuppressedDiagnostics(true));
+        var compilation = _inputCompilation.WithOptions(_inputCompilation.Options.WithReportSuppressedDiagnostics(true))
+                                           .AddSyntaxTrees(syntaxTree);
 
         var semanticModel = compilation.GetSemanticModel(syntaxTree);
 
@@ -106,7 +118,7 @@ internal class LibraryCodeGenerator
         if (_classSymbol?.BaseType is not { } baseType)
             return;
 
-        var templateCtorAttribute = _compilation.GetTypeByMetadataName("RazorBlade.Support.TemplateConstructorAttribute");
+        var templateCtorAttribute = _inputCompilation.GetTypeByMetadataName("RazorBlade.Support.TemplateConstructorAttribute");
         if (templateCtorAttribute is null)
             return;
 
@@ -121,6 +133,7 @@ internal class LibraryCodeGenerator
                    .Write(_classSymbol!.Name);
 
             WriteParametersSignature(ctor);
+            _writer.WriteLine();
 
             using (_writer.IndentScope())
             {
@@ -136,7 +149,7 @@ internal class LibraryCodeGenerator
 
     private void GenerateConditionalOnAsync()
     {
-        var conditionalOnAsyncAttribute = _compilation.GetTypeByMetadataName("RazorBlade.Support.ConditionalOnAsyncAttribute");
+        var conditionalOnAsyncAttribute = _inputCompilation.GetTypeByMetadataName("RazorBlade.Support.ConditionalOnAsyncAttribute");
         if (conditionalOnAsyncAttribute is null)
             return;
 
@@ -148,49 +161,76 @@ internal class LibraryCodeGenerator
         if (methodLocation is null)
             return;
 
+        // CS1998 = This async method lacks 'await' operators and will run synchronously.
         var isTemplateSync = _diagnostics.Any(i => i.Id == "CS1998" && i.Location == methodLocation);
 
-        var currentClass = _classSymbol?.BaseType;
-        while (currentClass is not null)
+        var hiddenMethodSignatures = new HashSet<string>(StringComparer.Ordinal);
+
+        for (var baseClass = _classSymbol?.BaseType; baseClass is not (null or { SpecialType: SpecialType.System_Object }); baseClass = baseClass.BaseType)
         {
-            if (currentClass.SpecialType == SpecialType.System_Object)
-                break;
-
-            foreach (var methodSymbol in currentClass.GetMembers().OfType<IMethodSymbol>().Where(i => i.DeclaredAccessibility == Accessibility.Public))
+            foreach (var methodSymbol in baseClass.GetMembers().OfType<IMethodSymbol>())
             {
-                var attributeData = methodSymbol.GetAttribute(conditionalOnAsyncAttribute);
-
-                if (attributeData?.ConstructorArguments.FirstOrDefault().Value is bool shouldBeUsedOnAsync && shouldBeUsedOnAsync == isTemplateSync)
+                if (methodSymbol.IsStatic
+                    || methodSymbol.DeclaredAccessibility != Accessibility.Public
+                    || !methodSymbol.CanBeReferencedByName)
                 {
-                    StartMember();
+                    continue;
+                }
 
-                    _writer.WriteLine("/// <inheritdoc />");
+                var attributeData = methodSymbol.GetAttribute(conditionalOnAsyncAttribute);
+                if (attributeData?.ConstructorArguments.FirstOrDefault().Value is not bool shouldBeUsedOnAsync || shouldBeUsedOnAsync != isTemplateSync)
+                    continue;
 
-                    // This currently doesn't have the intended effect :'(
-                    _writer.WriteLine("[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]");
+                if (!hiddenMethodSignatures.Add(GetMethodSignatureFootprint(methodSymbol)))
+                    continue;
 
-                    var message = attributeData.NamedArguments.FirstOrDefault(i => i.Key == "Message").Value.Value as string
-                                  ?? $"This method should not be used on {(isTemplateSync ? "a synchronous" : "an asynchronous")} template.";
+                StartMember();
 
-                    _writer.WriteLine($@"[global::System.Obsolete({SyntaxFactory.Literal(message).ToString()}, DiagnosticId = ""{Diagnostics.GetDiagnosticId(Diagnostics.Id.ConditionalOnAsync)}"")]");
+                var cref = DocumentationCommentId.CreateDeclarationId(methodSymbol.OriginalDefinition);
+                if (!string.IsNullOrEmpty(cref))
+                    _writer.WriteLine($@"/// <inheritdoc cref=""{cref}"" />");
 
-                    _writer.Write("public new ")
-                           .Write(methodSymbol.ReturnType.ToDisplayString(_paramSignatureFormat))
-                           .Write(" ")
-                           .Write(methodSymbol.Name);
+                // This currently doesn't have the intended effect, but leave it anyway :'(
+                _writer.WriteLine("[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]");
 
-                    WriteParametersSignature(methodSymbol);
+                var message = attributeData.NamedArguments.FirstOrDefault(i => i.Key == "Message").Value.Value as string
+                              ?? $"This method should not be used on {(isTemplateSync ? "a synchronous" : "an asynchronous")} template.";
 
-                    using (_writer.IndentScope())
-                    {
-                        _writer.Write("=> base.").Write(methodSymbol.Name);
-                        WriteParametersCall(methodSymbol);
-                        _writer.WriteLine(";");
-                    }
+                _writer.WriteLine($@"[global::System.Obsolete({SyntaxFactory.Literal(message).ToString()}, DiagnosticId = ""{Diagnostics.GetDiagnosticId(Diagnostics.Id.ConditionalOnAsync)}"")]");
+
+                _writer.Write("public new ")
+                       .Write(methodSymbol.ReturnType.ToDisplayString(_paramSignatureFormat))
+                       .Write(" ")
+                       .Write(methodSymbol.Name.EscapeCSharpKeyword());
+
+                WriteGenericParameters(methodSymbol);
+                WriteParametersSignature(methodSymbol);
+                _writer.WriteLine();
+
+                using (_writer.IndentScope())
+                {
+                    _writer.Write("=> base.").Write(methodSymbol.Name.EscapeCSharpKeyword());
+                    WriteGenericParameters(methodSymbol);
+                    WriteParametersCall(methodSymbol);
+                    _writer.WriteLine(";");
                 }
             }
+        }
 
-            currentClass = currentClass.BaseType;
+        static string GetMethodSignatureFootprint(IMethodSymbol methodSymbol)
+        {
+            var sb = new StringBuilder();
+
+            foreach (var parameterSymbol in methodSymbol.Parameters)
+            {
+                if (parameterSymbol.RefKind != RefKind.None)
+                    sb.Append("ref ");
+
+                sb.Append(parameterSymbol.Type.ToDisplayString(_paramFootprintFormat));
+                sb.Append(';');
+            }
+
+            return sb.ToString();
         }
     }
 
@@ -200,6 +240,24 @@ internal class LibraryCodeGenerator
             _writer.WriteLine();
         else
             _hasCode = true;
+    }
+
+    private void WriteGenericParameters(IMethodSymbol methodSymbol)
+    {
+        if (!methodSymbol.IsGenericMethod)
+            return;
+
+        _writer.Write("<");
+
+        foreach (var typeParam in methodSymbol.TypeParameters)
+        {
+            if (typeParam.Ordinal != 0)
+                _writer.WriteParameterSeparator();
+
+            _writer.Write(typeParam.ToDisplayString(_paramSignatureFormat));
+        }
+
+        _writer.Write(">");
     }
 
     private void WriteParametersSignature(IMethodSymbol methodSymbol)
@@ -214,7 +272,7 @@ internal class LibraryCodeGenerator
             _writer.Write(param.ToDisplayString(_paramSignatureFormat));
         }
 
-        _writer.WriteLine(")");
+        _writer.Write(")");
     }
 
     private void WriteParametersCall(IMethodSymbol methodSymbol)

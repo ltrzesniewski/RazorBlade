@@ -110,6 +110,60 @@ public abstract class BaseClass : RazorBlade.HtmlTemplate
 ");
     }
 
+    [Test]
+    public Task should_handle_conditional_on_async_attribute()
+    {
+        return Verify(@"
+@inherits Foo.BaseClassC
+@using System.Threading.Tasks
+@await Task.FromResult(42)
+",
+                      @"
+using System;
+using System.Threading.Tasks;
+using RazorBlade.Support;
+
+namespace Foo;
+
+public abstract class BaseClassA<TModel>
+{
+    protected abstract Task ExecuteAsync();
+    protected void Write(object? value) {}
+    protected void WriteLiteral(object? value) {}
+
+    [ConditionalOnAsyncAttribute(false, Message = ""Hello!"")]
+    public void OnlyOnSync(int i) {}
+
+    [ConditionalOnAsyncAttribute(true, Message = ""Hello"")]
+    public void OnlyOnAsync(int i) {}
+
+    [ConditionalOnAsyncAttribute(false, Message = ""Hello!"")]
+    public void Generic(TModel i) {}
+
+    [ConditionalOnAsyncAttribute(false, Message = ""Hello!"")]
+    public void Generic<TValueA, @int>(TModel i, TValueA j) {}
+}
+
+public abstract class BaseClassB : BaseClassA<string>
+{
+    [ConditionalOnAsyncAttribute(false, Message = ""Hello"")]
+    public void SomeParams(float @double, string? str = @""foo\""""bar"", DayOfWeek day = DayOfWeek.Friday) {}
+
+    [ConditionalOnAsyncAttribute(false, Message = @""\""""\"")]
+    public void SomeParams(in int foo, ref int bar, out int baz, params int[] qux) { baz = 42; }
+}
+
+public abstract class BaseClassC : BaseClassB
+{
+    [ConditionalOnAsyncAttribute(false, Message = ""Hello, world!"")]
+    public new void OnlyOnSync(int i) {}
+
+    [ConditionalOnAsyncAttribute(false, Message = ""Hello, double"")]
+    public void OnlyOnSync(double i) {}
+}
+");
+    }
+
     private static GeneratorDriverRunResult Generate(string input, string? csharpCode = null)
     {
         var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
