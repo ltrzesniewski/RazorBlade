@@ -160,7 +160,7 @@ internal class LibraryCodeGenerator
             {
                 var attributeData = methodSymbol.GetAttribute(conditionalOnAsyncAttribute);
 
-                if (attributeData?.ConstructorArguments.FirstOrDefault().Value is bool onlyOnAsync && onlyOnAsync == isTemplateSync)
+                if (attributeData?.ConstructorArguments.FirstOrDefault().Value is bool shouldBeUsedOnAsync && shouldBeUsedOnAsync == isTemplateSync)
                 {
                     StartMember();
 
@@ -169,8 +169,10 @@ internal class LibraryCodeGenerator
                     // This currently doesn't have the intended effect :'(
                     _writer.WriteLine("[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]");
 
-                    if (!isTemplateSync)
-                        _writer.WriteLine($@"[global::System.Obsolete(""This method should not be used on an asynchronous template."", DiagnosticId = ""{Diagnostics.GetDiagnosticId(Diagnostics.Id.SyncMethodOnAsyncTemplate)}"")]");
+                    var message = attributeData.NamedArguments.FirstOrDefault(i => i.Key == "Message").Value.Value as string
+                                  ?? $"This method should not be used on {(isTemplateSync ? "a synchronous" : "an asynchronous")} template.";
+
+                    _writer.WriteLine($@"[global::System.Obsolete({SyntaxFactory.Literal(message).ToString()}, DiagnosticId = ""{Diagnostics.GetDiagnosticId(Diagnostics.Id.ConditionalOnAsync)}"")]");
 
                     _writer.Write("public new ")
                            .Write(methodSymbol.ReturnType.ToDisplayString(_paramSignatureFormat))

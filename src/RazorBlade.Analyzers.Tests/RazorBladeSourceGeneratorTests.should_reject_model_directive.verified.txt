@@ -1,7 +1,7 @@
 ﻿{
   Diagnostics: [
     {
-      Id: RB002,
+      Id: RB0002,
       Title: The @model directive is not supported in RazorBlade due to lack of IDE support. Use the @inherits directive instead: @inherits RazorBlade.HtmlTemplate<FooBar>,
       Severity: Error,
       WarningLevel: 0,

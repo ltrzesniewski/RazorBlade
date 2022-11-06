@@ -11,7 +11,7 @@ internal static class Diagnostics
     {
         InternalError = 1,
         ModelDirectiveNotSupported = 2,
-        SyncMethodOnAsyncTemplate = 3
+        ConditionalOnAsync = 3
     }
 
     private static readonly DiagnosticDescriptor _internalErrorDescriptor
@@ -33,5 +33,5 @@ internal static class Diagnostics
         => new(GetDiagnosticId(id), () => messageFormat, RazorDiagnosticSeverity.Error);
 
     public static string GetDiagnosticId(Id id)
-        => $"RB{(int)id:D3}";
+        => $"RB{(int)id:D4}";
 }

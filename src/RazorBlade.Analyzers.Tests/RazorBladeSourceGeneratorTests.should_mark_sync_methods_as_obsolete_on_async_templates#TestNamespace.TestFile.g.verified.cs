@@ -44,13 +44,13 @@ namespace TestNamespace
     {
         /// <inheritdoc />
         [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
-        [global::System.Obsolete("This method should not be used on an asynchronous template.", DiagnosticId = "RB003")]
+        [global::System.Obsolete("The generated template is async. Use RenderAsync instead.", DiagnosticId = "RB0003")]
         public new string Render(global::System.Threading.CancellationToken cancellationToken = default(global::System.Threading.CancellationToken))
             => base.Render(cancellationToken);
 
         /// <inheritdoc />
         [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
-        [global::System.Obsolete("This method should not be used on an asynchronous template.", DiagnosticId = "RB003")]
+        [global::System.Obsolete("The generated template is async. Use RenderAsync instead.", DiagnosticId = "RB0003")]
         public new void Render(global::System.IO.TextWriter textWriter, global::System.Threading.CancellationToken cancellationToken = default(global::System.Threading.CancellationToken))
             => base.Render(textWriter, cancellationToken);
     }
