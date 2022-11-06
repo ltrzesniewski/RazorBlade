@@ -129,6 +129,8 @@ internal class LibraryCodeGenerator
 
             StartMember();
 
+            WriteInheritDoc(ctor);
+
             _writer.Write("public ")
                    .Write(_classSymbol!.Name);
 
@@ -186,9 +188,7 @@ internal class LibraryCodeGenerator
 
                 StartMember();
 
-                var cref = DocumentationCommentId.CreateDeclarationId(methodSymbol.OriginalDefinition);
-                if (!string.IsNullOrEmpty(cref))
-                    _writer.WriteLine($@"/// <inheritdoc cref=""{cref}"" />");
+                WriteInheritDoc(methodSymbol);
 
                 // This currently doesn't have the intended effect, but leave it anyway :'(
                 _writer.WriteLine("[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]");
@@ -240,6 +240,14 @@ internal class LibraryCodeGenerator
             _writer.WriteLine();
         else
             _hasCode = true;
+    }
+
+    private void WriteInheritDoc(ISymbol symbol)
+    {
+        var cref = DocumentationCommentId.CreateDeclarationId(symbol.OriginalDefinition);
+
+        if (!string.IsNullOrEmpty(cref))
+            _writer.WriteLine($@"/// <inheritdoc cref=""{cref}"" />");
     }
 
     private void WriteGenericParameters(IMethodSymbol methodSymbol)

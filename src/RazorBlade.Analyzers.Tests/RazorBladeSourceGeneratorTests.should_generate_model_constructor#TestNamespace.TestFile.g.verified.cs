@@ -34,6 +34,7 @@ namespace TestNamespace
 {
     partial class TestFile
     {
+        /// <inheritdoc cref="M:RazorBlade.HtmlTemplate`1.#ctor(`0)" />
         public TestFile(global::System.Tuple<global::System.DateTime, string?> model)
             : base(model)
         {

@@ -27,16 +27,19 @@ namespace TestNamespace
 {
     partial class TestFile
     {
+        /// <inheritdoc cref="M:Foo.BaseClass.#ctor(System.Nullable{System.Int32},System.String)" />
         public TestFile(int? foo, string? bar)
             : base(foo, bar)
         {
         }
 
+        /// <inheritdoc cref="M:Foo.BaseClass.#ctor(System.Single,System.String,System.DayOfWeek)" />
         public TestFile(float @double, string str = "foo\\\"bar", global::System.DayOfWeek day = global::System.DayOfWeek.Friday)
             : base(@double, str, day)
         {
         }
 
+        /// <inheritdoc cref="M:Foo.BaseClass.#ctor(System.Int32@,System.Int32@,System.Int32@,System.Int32[])" />
         public TestFile(in int foo, ref int bar, out int baz, params int[] qux)
             : base(in foo, ref bar, out baz, qux)
         {
