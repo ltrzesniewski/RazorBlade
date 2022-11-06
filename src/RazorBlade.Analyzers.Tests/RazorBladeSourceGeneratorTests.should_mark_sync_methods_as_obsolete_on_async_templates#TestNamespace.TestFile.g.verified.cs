@@ -34,7 +34,7 @@ Write(await Task.FromResult(42));
 }
 #pragma warning restore 1591
 
-// RazorSharp-specific code
+// RazorBlade-specific code
 
 #nullable restore
 

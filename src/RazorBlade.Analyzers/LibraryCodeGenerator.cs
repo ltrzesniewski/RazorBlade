@@ -55,7 +55,7 @@ internal class LibraryCodeGenerator
         if (_classSymbol is not null)
         {
             _writer.WriteLine();
-            _writer.WriteLine("// RazorSharp-specific code");
+            _writer.WriteLine("// RazorBlade-specific code");
             _writer.WriteLine();
 
             if (!_generatedDoc.Options.SuppressNullabilityEnforcement)

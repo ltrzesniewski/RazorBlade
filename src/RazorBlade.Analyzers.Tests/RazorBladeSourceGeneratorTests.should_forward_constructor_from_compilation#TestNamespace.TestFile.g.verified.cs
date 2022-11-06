@@ -19,7 +19,7 @@ namespace TestNamespace
 }
 #pragma warning restore 1591
 
-// RazorSharp-specific code
+// RazorBlade-specific code
 
 #nullable restore
 
