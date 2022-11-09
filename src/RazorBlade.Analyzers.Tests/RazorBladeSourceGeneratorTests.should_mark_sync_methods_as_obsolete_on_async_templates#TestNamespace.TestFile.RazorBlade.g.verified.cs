@@ -7,7 +7,7 @@ namespace TestNamespace
 {
     partial class TestFile
     {
-        /// <inheritdoc cref="M:RazorBlade.RazorTemplate.Render(System.Threading.CancellationToken)~System.String" />
+        /// <inheritdoc cref="M:RazorBlade.RazorTemplate.Render(System.Threading.CancellationToken)" />
         [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
         [global::System.Obsolete("The generated template is async. Use RenderAsync instead.", DiagnosticId = "RB0003")]
         public new string Render(global::System.Threading.CancellationToken cancellationToken = default(global::System.Threading.CancellationToken))

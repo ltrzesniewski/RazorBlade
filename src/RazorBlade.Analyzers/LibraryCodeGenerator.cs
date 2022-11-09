@@ -244,9 +244,14 @@ internal class LibraryCodeGenerator
     private void WriteInheritDoc(ISymbol symbol)
     {
         var cref = DocumentationCommentId.CreateDeclarationId(symbol.OriginalDefinition);
+        if (string.IsNullOrEmpty(cref))
+            return;
 
-        if (!string.IsNullOrEmpty(cref))
-            _writer.WriteLine($@"/// <inheritdoc cref=""{cref}"" />");
+        // Work around https://youtrack.jetbrains.com/issue/RIDER-84751
+        if (cref.IndexOf('~') is >= 0 and var index)
+            cref = cref.Substring(0, index);
+
+        _writer.WriteLine($@"/// <inheritdoc cref=""{cref}"" />");
     }
 
     private void WriteGenericParameters(IMethodSymbol methodSymbol)
