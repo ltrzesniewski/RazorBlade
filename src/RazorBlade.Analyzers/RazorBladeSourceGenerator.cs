@@ -88,12 +88,17 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             context.ReportDiagnostic(diagnostic.ToDiagnostic());
 
         context.AddSource(
-            $"{file.Namespace}.{file.ClassName}.g.cs",
-            string.Concat(
-                csharpDoc.GeneratedCode,
-                libraryCode
-            )
+            $"{file.Namespace}.{file.ClassName}.Razor.g.cs",
+            csharpDoc.GeneratedCode
         );
+
+        if (!string.IsNullOrEmpty(libraryCode))
+        {
+            context.AddSource(
+                $"{file.Namespace}.{file.ClassName}.RazorBlade.g.cs",
+                libraryCode
+            );
+        }
     }
 
     private static RazorCSharpDocument GenerateRazorCode(SourceText sourceText, InputFile file, GlobalOptions globalOptions)
