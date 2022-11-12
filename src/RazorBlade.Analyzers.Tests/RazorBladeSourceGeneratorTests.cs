@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -24,144 +25,160 @@ public class RazorBladeSourceGeneratorTests
     [Test]
     public Task should_write_members()
     {
-        return Verify(@"
-Hello, @Name!
-@functions { public string? Name { get; set; } }
-");
+        return Verify(
+            """
+            Hello, @Name!
+            @functions { public string? Name { get; set; } }
+            """
+        );
     }
 
     [Test]
     public Task should_write_attributes()
     {
-        return Verify(@"
-Hello, <a href=""@Link"">World</a>!
-@functions { public string? Link { get; set; } }
-");
+        return Verify(
+            """
+            Hello, <a href="@Link">World</a>!
+            @functions { public string? Link { get; set; } }
+            """
+        );
     }
 
     [Test]
     public Task should_set_namespace()
     {
-        return Verify(@"
-@namespace CustomNamespace
-");
+        return Verify(
+            """
+            @namespace CustomNamespace
+            """
+        );
     }
 
     [Test]
     public Task should_generate_model_constructor()
     {
-        return Verify(@"
-@using System
-@inherits RazorBlade.HtmlTemplate<Tuple<DateTime, string?>>
-");
+        return Verify(
+            """
+            @using System
+            @inherits RazorBlade.HtmlTemplate<Tuple<DateTime, string?>>
+            """
+        );
     }
 
     [Test]
     public Task should_forward_constructor_from_compilation()
     {
-        return Verify(@"
-@inherits Foo.BaseClass
-",
-                      @"
-using System;
-using RazorBlade.Support;
+        return Verify(
+            """
+            @inherits Foo.BaseClass
+            """,
+            """
+            using System;
+            using RazorBlade.Support;
 
-namespace Foo;
+            namespace Foo;
 
-public abstract class BaseClass : RazorBlade.HtmlTemplate
-{
-    protected BaseClass(int notIncluded)
-    {
-    }
+            public abstract class BaseClass : RazorBlade.HtmlTemplate
+            {
+                protected BaseClass(int notIncluded)
+                {
+                }
 
-    [TemplateConstructor]
-    protected BaseClass(int? foo, string? bar)
-    {
-    }
+                [TemplateConstructor]
+                protected BaseClass(int? foo, string? bar)
+                {
+                }
 
-    [TemplateConstructor]
-    protected BaseClass(float @double, string str = @""foo\""""bar"", DayOfWeek day = DayOfWeek.Friday)
-    {
-    }
+                [TemplateConstructor]
+                protected BaseClass(float @double, string str = @"foo\""bar", DayOfWeek day = DayOfWeek.Friday)
+                {
+                }
 
-    [TemplateConstructor]
-    protected BaseClass(in int foo, ref int bar, out int baz, params int[] qux)
-    {
-        baz = 42;
-    }
-}
-");
+                [TemplateConstructor]
+                protected BaseClass(in int foo, ref int bar, out int baz, params int[] qux)
+                {
+                    baz = 42;
+                }
+            }
+            """
+        );
     }
 
     [Test]
     public Task should_reject_model_directive()
     {
-        return Verify(@"
-@model FooBar
-");
+        return Verify(
+            """
+            @model FooBar
+            """
+        );
     }
 
     [Test]
     public Task should_mark_sync_methods_as_obsolete_on_async_templates()
     {
-        return Verify(@"
-@using System.Threading.Tasks
-@await Task.FromResult(42)
-");
+        return Verify(
+            """
+            @using System.Threading.Tasks
+            @await Task.FromResult(42)
+            """
+        );
     }
 
     [Test]
     public Task should_handle_conditional_on_async_attribute()
     {
-        return Verify(@"
-@inherits Foo.BaseClassC
-@using System.Threading.Tasks
-@await Task.FromResult(42)
-",
-                      @"
-using System;
-using System.Threading.Tasks;
-using RazorBlade.Support;
+        return Verify(
+            """
+            @inherits Foo.BaseClassC
+            @using System.Threading.Tasks
+            @await Task.FromResult(42)
+            """,
+            """
+            using System;
+            using System.Threading.Tasks;
+            using RazorBlade.Support;
 
-namespace Foo;
+            namespace Foo;
 
-public abstract class BaseClassA<TModel>
-{
-    protected abstract Task ExecuteAsync();
-    protected void Write(object? value) {}
-    protected void WriteLiteral(object? value) {}
+            public abstract class BaseClassA<TModel>
+            {
+                protected abstract Task ExecuteAsync();
+                protected void Write(object? value) {}
+                protected void WriteLiteral(object? value) {}
 
-    [ConditionalOnAsyncAttribute(false, Message = ""Hello!"")]
-    public void OnlyOnSync(int i) {}
+                [ConditionalOnAsyncAttribute(false, Message = "Hello!")]
+                public void OnlyOnSync(int i) {}
 
-    [ConditionalOnAsyncAttribute(true, Message = ""Hello"")]
-    public void OnlyOnAsync(int i) {}
+                [ConditionalOnAsyncAttribute(true, Message = "Hello")]
+                public void OnlyOnAsync(int i) {}
 
-    [ConditionalOnAsyncAttribute(false, Message = ""Hello!"")]
-    public void Generic(TModel i) {}
+                [ConditionalOnAsyncAttribute(false, Message = "Hello!")]
+                public void Generic(TModel i) {}
 
-    [ConditionalOnAsyncAttribute(false, Message = ""Hello!"")]
-    public void Generic<TValueA, @int>(TModel i, TValueA j) {}
-}
+                [ConditionalOnAsyncAttribute(false, Message = "Hello!")]
+                public void Generic<TValueA, @int>(TModel i, TValueA j) {}
+            }
 
-public abstract class BaseClassB : BaseClassA<string>
-{
-    [ConditionalOnAsyncAttribute(false, Message = ""Hello"")]
-    public void SomeParams(float @double, string? str = @""foo\""""bar"", DayOfWeek day = DayOfWeek.Friday) {}
+            public abstract class BaseClassB : BaseClassA<string>
+            {
+                [ConditionalOnAsyncAttribute(false, Message = "Hello")]
+                public void SomeParams(float @double, string? str = @"foo\""bar", DayOfWeek day = DayOfWeek.Friday) {}
 
-    [ConditionalOnAsyncAttribute(false, Message = @""\""""\"")]
-    public void SomeParams(in int foo, ref int bar, out int baz, params int[] qux) { baz = 42; }
-}
+                [ConditionalOnAsyncAttribute(false, Message = @"\""\")]
+                public void SomeParams(in int foo, ref int bar, out int baz, params int[] qux) { baz = 42; }
+            }
 
-public abstract class BaseClassC : BaseClassB
-{
-    [ConditionalOnAsyncAttribute(false, Message = ""Hello, world!"")]
-    public new void OnlyOnSync(int i) {}
+            public abstract class BaseClassC : BaseClassB
+            {
+                [ConditionalOnAsyncAttribute(false, Message = "Hello, world!")]
+                public new void OnlyOnSync(int i) {}
 
-    [ConditionalOnAsyncAttribute(false, Message = ""Hello, double"")]
-    public void OnlyOnSync(double i) {}
-}
-");
+                [ConditionalOnAsyncAttribute(false, Message = "Hello, double")]
+                public void OnlyOnSync(double i) {}
+            }
+            """
+        );
     }
 
     private static GeneratorDriverRunResult Generate(string input, string? csharpCode = null)
@@ -194,7 +211,7 @@ public abstract class BaseClassC : BaseClassB
         return result;
     }
 
-    private static Task Verify(string input, string? csharpCode = null)
+    private static Task Verify([StringSyntax("razor")] string input, [StringSyntax("csharp")] string? csharpCode = null)
     {
         var result = Generate(input, csharpCode);
         return Verifier.Verify(result);
