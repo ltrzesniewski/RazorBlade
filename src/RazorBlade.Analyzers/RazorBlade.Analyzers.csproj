@@ -12,7 +12,7 @@
   <PropertyGroup>
     <RazorLanguageDir>../../lib/razor/src/Compiler/Microsoft.AspNetCore.Razor.Language/src</RazorLanguageDir>
     <RazorCodeAnalysisDir>../../lib/razor/src/Compiler/Microsoft.CodeAnalysis.Razor/src</RazorCodeAnalysisDir>
-    <RazorCommonDir>../../lib/razor/src/Razor/src/Microsoft.AspNetCore.Razor.Common</RazorCommonDir>
+    <RazorLanguageSupportDir>../../lib/razor/src/Shared/Microsoft.AspNetCore.Razor.LanguageSupport</RazorLanguageSupportDir>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,7 +20,7 @@
     <Compile Remove="$(RazorLanguageDir)/Properties/AssemblyInfo.cs" />
 
     <Compile Include="$(RazorCodeAnalysisDir)/RazorProjectEngineBuilderExtensions.cs" Link="RazorLanguage/CodeAnalysis/%(FileName)%(Extension)" />
-    <Compile Include="$(RazorCommonDir)/LanguageSupport/NullableAttributes.cs" Link="RazorLanguage/Common/%(FileName)%(Extension)" />
+    <Compile Include="$(RazorLanguageSupportDir)/NullableAttributes.cs" Link="RazorLanguage/LanguageSupport/%(FileName)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
