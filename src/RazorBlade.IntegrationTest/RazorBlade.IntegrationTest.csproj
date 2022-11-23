@@ -4,13 +4,13 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
 
-  <Import Project="../RazorBlade/Build/RazorBlade.props" />
+  <Import Project="../RazorBlade/RazorBlade.props" />
 
   <ItemGroup>
     <ProjectReference Include="../RazorBlade/RazorBlade.csproj" />
     <ProjectReference Include="../RazorBlade.Analyzers/RazorBlade.Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
 
-  <Import Project="../RazorBlade/Build/RazorBlade.targets" />
+  <Import Project="../RazorBlade/RazorBlade.targets" />
 
 </Project>
