@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <Compile Include="../RazorBlade.Analyzers/Support/Extensions.cs" Link="Support/%(FileName)%(Extension)" />
+    <Compile Include="../RazorBlade.Analyzers/Support/IsExternalInit.cs" Link="Support/%(FileName)%(Extension)" />
   </ItemGroup>
 
 </Project>

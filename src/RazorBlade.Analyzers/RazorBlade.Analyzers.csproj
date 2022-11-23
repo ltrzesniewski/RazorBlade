@@ -26,7 +26,8 @@
   <ItemGroup>
     <ProjectReference Include="../RazorBlade.MetaAnalyzers/RazorBlade.MetaAnalyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Role" Visible="false" />
-    <AdditionalFiles Include="$(RazorLanguageDir)/*.resx" Role="Resource" Visible="false" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Namespace" Visible="false" />
+    <AdditionalFiles Include="$(RazorLanguageDir)/*.resx" Role="Resource" Namespace="Microsoft.AspNetCore.Razor.Language" Visible="false" />
   </ItemGroup>
 
 </Project>
