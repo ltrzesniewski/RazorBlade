@@ -1,8 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net6.0;netstandard2.0</TargetFrameworks>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>Build/key.snk</AssemblyOriginatorKeyFile>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <DebugType>embedded</DebugType>
   </PropertyGroup>
@@ -15,8 +13,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../RazorBlade.Library/RazorBlade.Library.csproj" ReferenceOutputAssembly="false" />
+    <Compile Include="../RazorBlade.Library/**/*.cs" Exclude="../RazorBlade.Library/obj/**/*.cs" Visible="false" />
+  </ItemGroup>
+  
+  <ItemGroup>
     <ProjectReference Include="../RazorBlade.Analyzers/RazorBlade.Analyzers.csproj" ReferenceOutputAssembly="false" />
     <None Include="../RazorBlade.Analyzers/bin/$(Configuration)/netstandard2.0/RazorBlade.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="Build/RazorBlade.props" Pack="true" PackagePath="build" />
     <None Include="Build/RazorBlade.targets" Pack="true" PackagePath="build" />
     <None Include="Build/RazorBlade.MT.props" Pack="true" PackagePath="buildMultiTargeting/RazorBlade.props" />
