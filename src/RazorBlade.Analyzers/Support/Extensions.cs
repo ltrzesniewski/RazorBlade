@@ -44,8 +44,10 @@ internal static class Extensions
             _getHashCode = getHashCode;
         }
 
-        public bool Equals(T x, T y)
-            => _equals(x, y);
+        public bool Equals(T? x, T? y)
+            => x is not null
+                ? y is not null && _equals(x, y)
+                : y is null;
 
         public int GetHashCode(T obj)
             => _getHashCode(obj);

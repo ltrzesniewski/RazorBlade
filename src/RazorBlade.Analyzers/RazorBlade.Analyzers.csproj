@@ -24,15 +24,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="RazorLanguage/Resources.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.tt</DependentUpon>
-    </Compile>
-    <None Update="RazorLanguage/Resources.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>Resources.cs</LastGenOutput>
-    </None>
+    <ProjectReference Include="../RazorBlade.MetaAnalyzers/RazorBlade.MetaAnalyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Role" Visible="false" />
+    <AdditionalFiles Include="$(RazorLanguageDir)/*.resx" Role="Resource" Visible="false" />
   </ItemGroup>
 
 </Project>
