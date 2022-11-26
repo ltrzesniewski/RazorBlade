@@ -1,30 +1,40 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace RazorBlade.Analyzers.Tests.Support;
 
-internal class AnalyzerConfigOptionsProviderMock : AnalyzerConfigOptionsProvider
+internal class AnalyzerConfigOptionsProviderMock : AnalyzerConfigOptionsProvider, IEnumerable
 {
+    private readonly Dictionary<string, string> _values = new();
+
+    public override AnalyzerConfigOptions GlobalOptions { get; }
+
+    public AnalyzerConfigOptionsProviderMock()
+        => GlobalOptions = new AnalyzerConfigOptionsMock(this);
+
+    public void Add(string key, string value)
+        => _values.Add($"build_metadata.AdditionalFiles.{key}", value);
+
     public override AnalyzerConfigOptions GetOptions(SyntaxTree tree)
-        => new AnalyzerConfigOptionsMock();
+        => GlobalOptions;
 
     public override AnalyzerConfigOptions GetOptions(AdditionalText textFile)
-        => new AnalyzerConfigOptionsMock();
+        => GlobalOptions;
 
-    public override AnalyzerConfigOptions GlobalOptions { get; } = new AnalyzerConfigOptionsMock();
+    public IEnumerator GetEnumerator()
+        => throw new NotSupportedException();
 
     private class AnalyzerConfigOptionsMock : AnalyzerConfigOptions
     {
-        public override bool TryGetValue(string key, out string value)
-        {
-            value = key switch
-            {
-                "build_metadata.AdditionalFiles.IsRazorBlade" => "true",
-                "build_metadata.AdditionalFiles.Namespace"    => "TestNamespace",
-                _                                             => string.Empty
-            };
+        private readonly AnalyzerConfigOptionsProviderMock _mock;
 
-            return !string.IsNullOrEmpty(value);
-        }
+        public AnalyzerConfigOptionsMock(AnalyzerConfigOptionsProviderMock mock)
+            => _mock = mock;
+
+        public override bool TryGetValue(string key, out string value)
+            => _mock._values.TryGetValue(key, out value!);
     }
 }
