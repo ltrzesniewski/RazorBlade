@@ -5,23 +5,28 @@ namespace RazorBlade.Analyzers;
 
 internal static partial class EmbeddedLibrary
 {
-    private static string TestFile => /*language=csharp*/ """
-internal abstract class TestClass
-{
-    class InnerClass { }
-    public class InnerPublicClass { }
-    private class InnerPrivateClass { }
-
-    public delegate void InnerDelegate();
-}
-
-class TestClass2 { }
-
-internal readonly struct TestStruct { }
-internal interface TestInterface { }
-internal record TestRecordClass { }
-internal record struct TestRecordStruct { }
-internal enum TestEnum { }
-internal delegate void TestDelegate();
-""";
+    //language=csharp
+    private static string TestFile => """
+        // This file is part of the RazorBlade library.
+        
+        #nullable enable
+        
+        internal abstract class TestClass
+        {
+            class InnerClass { }
+            public class InnerPublicClass { }
+            private class InnerPrivateClass { }
+        
+            public delegate void InnerDelegate();
+        }
+        
+        class TestClass2 { }
+        
+        internal readonly struct TestStruct { }
+        internal interface TestInterface { }
+        internal record TestRecordClass { }
+        internal record struct TestRecordStruct { }
+        internal enum TestEnum { }
+        internal delegate void TestDelegate();
+        """;
 }

@@ -5,11 +5,11 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+using JetBrains.Annotations;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.Text;
 using RazorBlade.Analyzers.Support;
 using RazorBlade.MetaAnalyzers.Support;
 
@@ -18,6 +18,9 @@ namespace RazorBlade.MetaAnalyzers;
 [Generator]
 public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
 {
+    private static readonly Regex _newlineRegex = new(@"\r?\n", RegexOptions.Compiled);
+    private static readonly Regex _doubleQuotesRegex = new(@"""+", RegexOptions.Compiled);
+
     internal bool SkipSummary { get; init; }
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -53,7 +56,7 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
         if (sourceText is null)
             return;
 
-        var inputText = TransformSource(sourceText, context.CancellationToken);
+        var inputText = TransformSource(sourceText.ToString(), context.CancellationToken);
         var memberName = inputFile.GetMemberName();
 
         var writer = new SourceWriter();
@@ -63,12 +66,15 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
         {
             var escapeQuotes = GetRawStringLiteralQuotes(inputText);
 
-            writer.WriteLine($"private static string {memberName} => /*language=csharp*/ {escapeQuotes}");
-            var indent = writer.Indent;
-            writer.Indent = 0;
-            writer.WriteLine(inputText);
-            writer.WriteLine($"{escapeQuotes};");
-            writer.Indent = indent;
+            writer.WriteLine("//language=csharp");
+            writer.WriteLine($"private static string {memberName} => {escapeQuotes}");
+            using (writer.IndentScope())
+            {
+                foreach (var line in _newlineRegex.Split(inputText))
+                    writer.WriteLine(line);
+
+                writer.WriteLine($"{escapeQuotes};");
+            }
         }
 
         context.AddSource($"{memberName}.g.cs", writer.ToString());
@@ -104,16 +110,24 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
         writer.WriteLine("internal static partial class EmbeddedLibrary");
     }
 
-    private static string TransformSource(SourceText sourceText, CancellationToken cancellationToken)
+    private static string TransformSource([LanguageInjection("csharp")] string sourceText, CancellationToken cancellationToken)
     {
-        var syntaxTree = CSharpSyntaxTree.ParseText(sourceText, CSharpParseOptions.Default, cancellationToken: cancellationToken);
-        var root = syntaxTree.GetRoot(cancellationToken);
-
         // - Add header comment
         // - Add #nullable enable
         // - Make public top-level types internal
         // - Remove JetBrains annotations
         // - Replace file-scoped namespaces with block-scoped ones
+
+        sourceText = $"""
+            // This file is part of the RazorBlade library.
+
+            #nullable enable
+
+            {sourceText}
+            """;
+
+        var syntaxTree = CSharpSyntaxTree.ParseText(sourceText, CSharpParseOptions.Default, cancellationToken: cancellationToken);
+        var root = syntaxTree.GetRoot(cancellationToken);
 
         root = new TopLevelTypesVisibilityRewriter().Rewrite(root);
 
@@ -123,7 +137,7 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
     private static string GetRawStringLiteralQuotes(string value)
     {
         var escapeQuotesLength = 3;
-        foreach (Match match in Regex.Matches(value, @"""+"))
+        foreach (Match match in _doubleQuotesRegex.Matches(value))
             escapeQuotesLength = Math.Max(escapeQuotesLength, match.Length + 1);
 
         return new string('"', escapeQuotesLength);
