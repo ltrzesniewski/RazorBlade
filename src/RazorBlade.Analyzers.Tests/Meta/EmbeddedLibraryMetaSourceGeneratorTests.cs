@@ -15,7 +15,7 @@ using VerifyNUnit;
 namespace RazorBlade.Analyzers.Tests.Meta;
 
 [TestFixture]
-public class EmbeddedLibrarySourceGeneratorTests
+public class EmbeddedLibraryMetaSourceGeneratorTests
 {
     [Test]
     public Task should_make_public_types_internal()
@@ -53,7 +53,7 @@ public class EmbeddedLibrarySourceGeneratorTests
                                            )
                                            .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithNullableContextOptions(NullableContextOptions.Enable));
 
-        var result = CSharpGeneratorDriver.Create(new EmbeddedLibrarySourceGenerator
+        var result = CSharpGeneratorDriver.Create(new EmbeddedLibraryMetaSourceGenerator
                                           {
                                               SkipSummary = true
                                           })

@@ -23,4 +23,10 @@
     <Compile Include="../RazorBlade.Tests/Support/AssertExtensions.cs" Link="Support/%(Filename)%(Extension)" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Meta\EmbeddedLibrarySourceGeneratorTests.should_make_public_types_internal#TestFile.g.verified.cs">
+      <DependentUpon>EmbeddedLibraryMetaSourceGeneratorTests.cs</DependentUpon>
+    </None>
+  </ItemGroup>
+
 </Project>

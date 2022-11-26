@@ -16,7 +16,7 @@ using RazorBlade.MetaAnalyzers.Support;
 namespace RazorBlade.MetaAnalyzers;
 
 [Generator]
-public class EmbeddedLibrarySourceGenerator : IIncrementalGenerator
+public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
 {
     internal bool SkipSummary { get; init; }
 
