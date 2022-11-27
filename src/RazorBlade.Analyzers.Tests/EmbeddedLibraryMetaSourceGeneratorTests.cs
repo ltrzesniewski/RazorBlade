@@ -41,6 +41,41 @@ public class EmbeddedLibraryMetaSourceGeneratorTests
             """);
     }
 
+    [Test]
+    public Task should_remove_jetbrains_annotations()
+    {
+        return Verify("""
+            using System;
+            using JetBrains.Annotations;
+            using System.Text;
+
+            public class TestClass
+            {
+                [PublicAPI, Obsolete, UsedImplicitly]
+                public string TestMethodA([NotNull, UsedImplicitly] StringBuilder sb)
+                    => sb.ToString();
+
+                [Obsolete, UsedImplicitly]
+                public string TestMethodB(StringBuilder sb)
+                    => sb.ToString();
+
+                [UsedImplicitly, Obsolete]
+                public string TestMethodC(StringBuilder sb)
+                    => sb.ToString();
+
+                [UsedImplicitly]
+                public string TestMethodD(StringBuilder sb)
+                    => sb.ToString();
+
+                [PublicAPI]
+                [Obsolete]
+                [UsedImplicitly]
+                public string TestMethodE([NotNull, UsedImplicitly] StringBuilder sb)
+                    => sb.ToString();
+            }
+            """);
+    }
+
     private static GeneratorDriverRunResult Generate(string input)
     {
         var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location)!;

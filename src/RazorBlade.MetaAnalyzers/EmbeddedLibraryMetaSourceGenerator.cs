@@ -127,7 +127,8 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
         var syntaxTree = CSharpSyntaxTree.ParseText(sourceText, CSharpParseOptions.Default, cancellationToken: cancellationToken);
         var root = syntaxTree.GetRoot(cancellationToken);
 
-        root = new TopLevelTypesVisibilityRewriter().Rewrite(root);
+        root = new TopLevelTypesVisibilityRewriter().Visit(root);
+        root = new RemoveJetBrainsAnnotationsRewriter().Visit(root);
 
         return root.ToFullString();
     }
@@ -151,10 +152,10 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
     {
         private readonly List<SyntaxToken> _toReplace = new();
 
-        public SyntaxNode Rewrite(SyntaxNode root)
+        public new SyntaxNode Visit(SyntaxNode root)
         {
             _toReplace.Clear();
-            Visit(root);
+            base.Visit(root);
 
             return root.ReplaceTokens(
                 _toReplace,
@@ -184,6 +185,60 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
                 if (modifier.IsKind(SyntaxKind.PublicKeyword))
                     _toReplace.Add(modifier);
             }
+        }
+    }
+
+    private class RemoveJetBrainsAnnotationsRewriter : CSharpSyntaxRewriter
+    {
+        private static readonly HashSet<string> _attributes = new()
+        {
+            "CanBeNull", "NotNull", "ItemNotNull", "ItemCanBeNull", "StringFormatMethod", "StructuredMessageTemplate", "ValueProvider", "ValueRange",
+            "NonNegativeValue", "InvokerParameterName", "NotifyPropertyChangedInvocator", "ContractAnnotation", "LocalizationRequired",
+            "CannotApplyEqualityOperator", "Component", "BaseTypeRequired", "UsedImplicitly", "MeansImplicitUse", "PublicAPI", "InstantHandle",
+            "MustUseReturnValue", "RequireStaticDelegate", "ProvidesContext", "PathReference", "SourceTemplate", "Macro", "CollectionAccess", "AssertionMethod",
+            "AssertionCondition", "TerminatesProgram", "LinqTunnel", "NoEnumeration", "RegexPattern", "LanguageInjection", "NoReorder", "CodeTemplate",
+            "AspChildControlType", "AspDataField", "AspDataFields", "AspMethodProperty", "AspRequiredAttribute", "AspTypeProperty", "AspMvcAreaMasterLocationFormat",
+            "AspMvcAreaPartialViewLocationFormat", "AspMvcAreaViewLocationFormat", "AspMvcMasterLocationFormat", "AspMvcPartialViewLocationFormat",
+            "AspMvcViewLocationFormat", "AspMvcAction", "AspMvcArea", "AspMvcController", "AspMvcMaster", "AspMvcModelType", "AspMvcPartialView",
+            "AspMvcSuppressViewError", "AspMvcDisplayTemplate", "AspMvcEditorTemplate", "AspMvcTemplate", "AspMvcView", "AspMvcViewComponent",
+            "AspMvcViewComponentView", "AspMvcActionSelector", "RouteTemplate", "RouteParameterConstraint", "UriString", "AspRouteConvention",
+            "AspDefaultRouteValues", "AspRouteValuesConstraints", "AspRouteOrder", "AspRouteVerbs", "AspAttributeRouting", "AspMinimalApiDeclaration",
+            "AspMinimalApiHandler", "HtmlElementAttributes", "HtmlAttributeValue", "RazorSection", "RazorImportNamespace", "RazorInjection",
+            "RazorDirective", "RazorPageBaseType", "RazorHelperCommon", "RazorLayout", "RazorWriteLiteralMethod", "RazorWriteMethod", "RazorWriteMethodParameter",
+            "XamlItemsControl", "XamlItemBindingOfItemsControl", "XamlItemStyleOfItemsControl", "XamlOneWayBindingModeByDefault", "XamlTwoWayBindingModeByDefault"
+
+            // "Pure" can be confused with System.Diagnostics.Contracts.PureAttribute, so we don't remove it.
+        };
+
+        public override SyntaxNode? VisitUsingDirective(UsingDirectiveSyntax node)
+        {
+            if (node.Name.ToString() == "JetBrains.Annotations")
+                return null;
+
+            return node;
+        }
+
+        public override SyntaxNode? VisitAttribute(AttributeSyntax node)
+        {
+            if (_attributes.Contains(node.Name.ToString()))
+                return null;
+
+            return node;
+        }
+
+        public override SyntaxNode? VisitAttributeList(AttributeListSyntax node)
+        {
+            var newAttributes = node.Attributes;
+
+            for (var i = node.Attributes.Count - 1; i >= 0; i--)
+            {
+                if (VisitListElement(node.Attributes[i]) is null)
+                    newAttributes = newAttributes.RemoveAt(i);
+            }
+
+            return newAttributes.Count != 0
+                ? node.WithAttributes(newAttributes)
+                : null;
         }
     }
 }

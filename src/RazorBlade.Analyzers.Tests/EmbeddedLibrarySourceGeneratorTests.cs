@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
@@ -10,7 +11,7 @@ namespace RazorBlade.Analyzers.Tests;
 [TestFixture]
 public class EmbeddedLibrarySourceGeneratorTests
 {
-    [Test, Explicit] // TODO: Make this pass
+    [Test]
     public void should_generate_valid_source()
     {
         var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
@@ -31,7 +32,8 @@ public class EmbeddedLibrarySourceGeneratorTests
                              .RunGeneratorsAndUpdateCompilation(compilation, out var updatedCompilation, out _)
                              .GetRunResult();
 
-        var diagnostics = updatedCompilation.GetDiagnostics();
-        diagnostics.ShouldBeEmpty();
+        updatedCompilation.GetDiagnostics()
+                          .Where(i => i.Severity >= DiagnosticSeverity.Warning)
+                          .ShouldBeEmpty();
     }
 }
