@@ -12,7 +12,7 @@ using RazorBlade.MetaAnalyzers;
 using RazorBlade.Tests.Support;
 using VerifyNUnit;
 
-namespace RazorBlade.Analyzers.Tests.Meta;
+namespace RazorBlade.Analyzers.Tests;
 
 [TestFixture]
 public class EmbeddedLibraryMetaSourceGeneratorTests
@@ -55,7 +55,7 @@ public class EmbeddedLibraryMetaSourceGeneratorTests
 
         var result = CSharpGeneratorDriver.Create(new EmbeddedLibraryMetaSourceGenerator
                                           {
-                                              SkipSummary = true
+                                              SkipAddSource = true
                                           })
                                           .AddAdditionalTexts(ImmutableArray.Create<AdditionalText>(new AdditionalTextMock(input, "./TestFile.cs")))
                                           .WithUpdatedAnalyzerConfigOptions(new AnalyzerConfigOptionsProviderMock

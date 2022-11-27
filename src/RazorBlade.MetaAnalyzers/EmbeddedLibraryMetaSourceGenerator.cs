@@ -21,7 +21,7 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
     private static readonly Regex _newlineRegex = new(@"\r?\n", RegexOptions.Compiled);
     private static readonly Regex _doubleQuotesRegex = new(@"""+", RegexOptions.Compiled);
 
-    internal bool SkipSummary { get; init; }
+    internal bool SkipAddSource { get; init; }
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -36,8 +36,8 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
 
         context.RegisterImplementationSourceOutput(inputFiles, GenerateContent);
 
-        if (!SkipSummary)
-            context.RegisterSourceOutput(memberNames, GenerateSummary);
+        if (!SkipAddSource)
+            context.RegisterSourceOutput(memberNames, GenerateAddSource);
     }
 
     private static InputFile? GetInputFile(AdditionalText additionalText, AnalyzerConfigOptionsProvider analyzerConfigOptions)
@@ -80,25 +80,23 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
         context.AddSource($"{memberName}.g.cs", writer.ToString());
     }
 
-    private static void GenerateSummary(SourceProductionContext context, ImmutableArray<string> memberNames)
+    private static void GenerateAddSource(SourceProductionContext context, ImmutableArray<string> memberNames)
     {
         var writer = new SourceWriter();
         WriteHeader(writer);
 
         using (writer.BlockScope())
         {
-            writer.WriteLine("public static readonly string[] SourceFiles = {");
+            writer.WriteLine("public static void AddSource(Microsoft.CodeAnalysis.SourceProductionContext context)");
 
-            using (writer.IndentScope())
+            using (writer.BlockScope())
             {
                 foreach (var memberName in memberNames.OrderBy(i => i, StringComparer.OrdinalIgnoreCase))
-                    writer.WriteLine($"{memberName},");
+                    writer.WriteLine($"""context.AddSource("{memberName}.g.cs", {memberName});""");
             }
-
-            writer.WriteLine("};");
         }
 
-        context.AddSource("SourceFiles.g.cs", writer.ToString());
+        context.AddSource("AddSource.g.cs", writer.ToString());
     }
 
     private static void WriteHeader(SourceWriter writer)
