@@ -47,6 +47,9 @@ internal static class AssertExtensions
     public static void ShouldContain(this string actual, string expected)
         => Assert.That(actual, Contains.Substring(expected));
 
+    public static void ShouldContain<T>(this IEnumerable<T> actual, T expected)
+        => Assert.That(actual, Contains.Item(expected));
+
     public static void ShouldBeEquivalentTo<T>(this IEnumerable<T>? actual, IEnumerable<T> expected)
         => Assert.That(actual, Is.EquivalentTo(expected));
 }
