@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -16,7 +17,7 @@ using RazorBlade.MetaAnalyzers.Support;
 namespace RazorBlade.MetaAnalyzers;
 
 [Generator]
-public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
+public sealed class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
 {
     private static readonly Regex _newlineRegex = new(@"\r?\n", RegexOptions.Compiled);
     private static readonly Regex _doubleQuotesRegex = new(@"""+", RegexOptions.Compiled);
@@ -148,7 +149,7 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
             => Path.GetFileNameWithoutExtension(AdditionalText.Path);
     }
 
-    private class AccessibilityLevelRewriter : CSharpSyntaxWalker
+    private sealed class AccessibilityLevelRewriter : CSharpSyntaxWalker
     {
         private readonly HashSet<SyntaxToken> _toReplace = new();
         private bool _isTopLevel;
@@ -225,8 +226,9 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
         }
     }
 
-    private class RemoveJetBrainsAnnotationsRewriter : CSharpSyntaxRewriter
+    private sealed class RemoveJetBrainsAnnotationsRewriter : CSharpSyntaxRewriter
     {
+        [SuppressMessage("ReSharper", "StringLiteralTypo")]
         private static readonly HashSet<string> _attributes = new()
         {
             "CanBeNull", "NotNull", "ItemNotNull", "ItemCanBeNull", "StringFormatMethod", "StructuredMessageTemplate", "ValueProvider", "ValueRange",

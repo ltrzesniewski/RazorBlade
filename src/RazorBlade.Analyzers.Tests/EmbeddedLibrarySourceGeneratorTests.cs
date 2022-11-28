@@ -13,12 +13,15 @@ namespace RazorBlade.Analyzers.Tests;
 public class EmbeddedLibrarySourceGeneratorTests
 {
     [Test]
-    public void should_generate_valid_source()
+    [TestCase(LanguageVersion.CSharp10)]
+    [TestCase(LanguageVersion.CSharp11)]
+    [TestCase(EmbeddedLibrarySourceGenerator.MinimumSupportedLanguageVersion)]
+    public void should_generate_valid_source(LanguageVersion languageVersion)
     {
         // C# 7.3 is the latest version officially supported for the netstandard2.0 target,
         // but it's really old at this point. We'll ask the user to upgrade to a newer version.
 
-        var (generatorDiagnostics, compilationDiagnostics) = RunGenerator(EmbeddedLibrarySourceGenerator.MinimumSupportedLanguageVersion);
+        var (generatorDiagnostics, compilationDiagnostics) = RunGenerator(languageVersion);
 
         generatorDiagnostics.ShouldBeEmpty();
         compilationDiagnostics.Where(i => i.Severity >= DiagnosticSeverity.Warning).ShouldBeEmpty();
