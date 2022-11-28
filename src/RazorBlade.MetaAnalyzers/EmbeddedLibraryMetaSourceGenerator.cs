@@ -114,7 +114,6 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
         // - Add #nullable enable
         // - Make public top-level types internal
         // - Remove JetBrains annotations
-        // - Replace file-scoped namespaces with block-scoped ones
 
         sourceText = $"""
             // This file is part of the RazorBlade library.

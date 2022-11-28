@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -14,36 +15,26 @@ public class EmbeddedLibrarySourceGeneratorTests
     [Test]
     public void should_generate_valid_source()
     {
-        var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
+        // C# 7.3 is the latest version officially supported for the netstandard2.0 target,
+        // but it's really old at this point. We'll ask the user to upgrade to a newer version.
 
-        var compilation = CSharpCompilation.Create("TestAssembly")
-                                           .AddReferences(
-                                               MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                                               MetadataReference.CreateFromFile(Path.Combine(runtimeDir, "netstandard.dll")),
-                                               MetadataReference.CreateFromFile(Path.Combine(runtimeDir, "System.Runtime.dll"))
-                                           )
-                                           .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithNullableContextOptions(NullableContextOptions.Enable));
+        var (generatorDiagnostics, compilationDiagnostics) = RunGenerator(EmbeddedLibrarySourceGenerator.MinimumSupportedLanguageVersion);
 
-        CSharpGeneratorDriver.Create(new EmbeddedLibrarySourceGenerator())
-                             .WithUpdatedAnalyzerConfigOptions(new AnalyzerConfigOptionsProviderMock
-                             {
-                                 { "RazorBladeEmbeddedLibrary", "True" }
-                             })
-                             .RunGeneratorsAndUpdateCompilation(compilation, out var updatedCompilation, out _)
-                             .GetRunResult();
-
-        updatedCompilation.GetDiagnostics()
-                          .Where(i => i.Severity >= DiagnosticSeverity.Warning)
-                          .ShouldBeEmpty();
+        generatorDiagnostics.ShouldBeEmpty();
+        compilationDiagnostics.Where(i => i.Severity >= DiagnosticSeverity.Warning).ShouldBeEmpty();
     }
 
     [Test]
     public void should_generate_diagnostic_on_unsupported_language_version()
     {
-        // C# 7.3 is the latest version officially supported for the netstandard2.0 target,
-        // but it's really old at this point. We'll ask the user to upgrade to a newer version.
+        var (generatorDiagnostics, _) = RunGenerator(LanguageVersion.CSharp9);
 
-        var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.CSharp9);
+        generatorDiagnostics.ShouldContain(Diagnostics.EmbeddedLibraryUnsupportedCSharpVersion(EmbeddedLibrarySourceGenerator.MinimumSupportedLanguageVersion));
+    }
+
+    private static (ImmutableArray<Diagnostic> generatorDiagnostics, ImmutableArray<Diagnostic> compilationDiagnostics) RunGenerator(LanguageVersion languageVersion)
+    {
+        var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(languageVersion);
 
         var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
 
@@ -61,9 +52,9 @@ public class EmbeddedLibrarySourceGeneratorTests
                                              {
                                                  { "RazorBladeEmbeddedLibrary", "True" }
                                              })
-                                             .RunGeneratorsAndUpdateCompilation(compilation, out _, out _)
+                                             .RunGeneratorsAndUpdateCompilation(compilation, out var updatedCompilation, out _)
                                              .GetRunResult();
 
-        runResult.Diagnostics.ShouldContain(Diagnostics.EmbeddedLibraryUnsupportedCSharpVersion(EmbeddedLibrarySourceGenerator.MinimumSupportedLanguageVersion));
+        return (runResult.Diagnostics, updatedCompilation.GetDiagnostics());
     }
 }
