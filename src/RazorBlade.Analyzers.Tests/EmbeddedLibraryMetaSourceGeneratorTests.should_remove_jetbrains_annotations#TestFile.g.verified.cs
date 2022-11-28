@@ -27,8 +27,16 @@ internal static partial class EmbeddedLibrary
             [Obsolete]
             public string TestMethodC(StringBuilder sb)
                 => sb.ToString();
+        
+            /// <summary>
+            /// Trivia.
+            /// </summary>
             public string TestMethodD(StringBuilder sb)
                 => sb.ToString();
+        
+            /// <summary>
+            /// Trivia.
+            /// </summary>
             [Obsolete]
             public string TestMethodE(StringBuilder sb)
                 => sb.ToString();

@@ -63,10 +63,16 @@ public class EmbeddedLibraryMetaSourceGeneratorTests
                 public string TestMethodC(StringBuilder sb)
                     => sb.ToString();
 
+                /// <summary>
+                /// Trivia.
+                /// </summary>
                 [UsedImplicitly]
                 public string TestMethodD(StringBuilder sb)
                     => sb.ToString();
 
+                /// <summary>
+                /// Trivia.
+                /// </summary>
                 [PublicAPI]
                 [Obsolete]
                 [UsedImplicitly]

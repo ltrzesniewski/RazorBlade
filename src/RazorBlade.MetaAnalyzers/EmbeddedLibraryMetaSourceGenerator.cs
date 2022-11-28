@@ -209,6 +209,8 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
             // "Pure" can be confused with System.Diagnostics.Contracts.PureAttribute, so we don't remove it.
         };
 
+        private SyntaxTriviaList _pendingLeadingTrivia = SyntaxTriviaList.Empty;
+
         public override SyntaxNode? VisitUsingDirective(UsingDirectiveSyntax node)
         {
             if (node.Name.ToString() == "JetBrains.Annotations")
@@ -227,6 +229,8 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
 
         public override SyntaxNode? VisitAttributeList(AttributeListSyntax node)
         {
+            node = node.WithOpenBracketToken(VisitToken(node.OpenBracketToken));
+
             var newAttributes = node.Attributes;
 
             for (var i = node.Attributes.Count - 1; i >= 0; i--)
@@ -235,9 +239,23 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
                     newAttributes = newAttributes.RemoveAt(i);
             }
 
-            return newAttributes.Count != 0
-                ? node.WithAttributes(newAttributes)
-                : null;
+            if (newAttributes.Count != 0)
+                return node.WithAttributes(newAttributes);
+
+            _pendingLeadingTrivia = node.GetLeadingTrivia();
+            return null;
+        }
+
+        public override SyntaxToken VisitToken(SyntaxToken token)
+        {
+            if (_pendingLeadingTrivia.Any())
+            {
+                var trivia = _pendingLeadingTrivia;
+                _pendingLeadingTrivia = SyntaxTriviaList.Empty;
+                return token.WithLeadingTrivia(trivia);
+            }
+
+            return token;
         }
     }
 }
