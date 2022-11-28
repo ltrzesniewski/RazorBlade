@@ -18,7 +18,7 @@ namespace RazorBlade.Analyzers.Tests;
 public class EmbeddedLibraryMetaSourceGeneratorTests
 {
     [Test]
-    public Task should_make_public_types_internal()
+    public Task should_update_accessibility_levels()
     {
         return Verify("""
             public abstract class TestClass
@@ -28,6 +28,8 @@ public class EmbeddedLibraryMetaSourceGeneratorTests
                 private class InnerPrivateClass { }
 
                 public delegate void InnerDelegate();
+
+                protected internal Method() { }
             }
 
             class TestClass2 { }

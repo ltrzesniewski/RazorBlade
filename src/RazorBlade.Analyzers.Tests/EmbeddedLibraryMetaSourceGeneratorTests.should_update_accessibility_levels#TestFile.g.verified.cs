@@ -18,6 +18,8 @@ internal static partial class EmbeddedLibrary
             private class InnerPrivateClass { }
         
             public delegate void InnerDelegate();
+        
+            protected Method() { }
         }
         
         class TestClass2 { }

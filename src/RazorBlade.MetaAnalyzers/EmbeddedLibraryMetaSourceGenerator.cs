@@ -113,6 +113,7 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
         // - Add header comment
         // - Add #nullable enable
         // - Make public top-level types internal
+        // - Make protected internal members protected
         // - Remove JetBrains annotations
 
         sourceText = $"""
@@ -126,7 +127,7 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
         var syntaxTree = CSharpSyntaxTree.ParseText(sourceText, CSharpParseOptions.Default, cancellationToken: cancellationToken);
         var root = syntaxTree.GetRoot(cancellationToken);
 
-        root = new TopLevelTypesVisibilityRewriter().Visit(root);
+        root = new AccessibilityLevelRewriter().Visit(root);
         root = new RemoveJetBrainsAnnotationsRewriter().Visit(root);
 
         return root.ToFullString();
@@ -147,42 +148,69 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
             => Path.GetFileNameWithoutExtension(AdditionalText.Path);
     }
 
-    private class TopLevelTypesVisibilityRewriter : CSharpSyntaxWalker
+    private class AccessibilityLevelRewriter : CSharpSyntaxWalker
     {
         private readonly List<SyntaxToken> _toReplace = new();
+        private bool _isTopLevel;
 
         public new SyntaxNode Visit(SyntaxNode root)
         {
             _toReplace.Clear();
+            _isTopLevel = true;
+
             base.Visit(root);
 
             return root.ReplaceTokens(
                 _toReplace,
-                static (token, _) => SyntaxFactory.Token(SyntaxKind.InternalKeyword)
-                                                  .WithTriviaFrom(token)
+                static (token, _) => token.Kind() switch
+                {
+                    SyntaxKind.PublicKeyword   => SyntaxFactory.Token(SyntaxKind.InternalKeyword).WithTriviaFrom(token),
+                    SyntaxKind.InternalKeyword => default,
+                    _                          => throw new InvalidOperationException("Unexpected token type")
+                }
             );
         }
 
         public override void DefaultVisit(SyntaxNode node)
         {
-            if (node is BaseTypeDeclarationSyntax type)
+            if (node is MemberDeclarationSyntax member)
             {
-                HandleTopLevelMember(type);
-                return;
+                HandleMember(member);
+
+                if (_isTopLevel && node is BaseTypeDeclarationSyntax)
+                {
+                    _isTopLevel = false;
+                    base.DefaultVisit(node);
+                    _isTopLevel = true;
+                    return;
+                }
             }
 
             base.DefaultVisit(node);
         }
 
-        public override void VisitDelegateDeclaration(DelegateDeclarationSyntax node)
-            => HandleTopLevelMember(node);
-
-        private void HandleTopLevelMember(MemberDeclarationSyntax node)
+        private void HandleMember(MemberDeclarationSyntax node)
         {
+            var hasProtected = false;
+
             foreach (var modifier in node.Modifiers)
             {
-                if (modifier.IsKind(SyntaxKind.PublicKeyword))
-                    _toReplace.Add(modifier);
+                switch (modifier.Kind())
+                {
+                    case SyntaxKind.PublicKeyword:
+                        if (_isTopLevel)
+                            _toReplace.Add(modifier);
+                        break;
+
+                    case SyntaxKind.ProtectedKeyword:
+                        hasProtected = true;
+                        break;
+
+                    case SyntaxKind.InternalKeyword:
+                        if (hasProtected)
+                            _toReplace.Add(modifier);
+                        break;
+                }
             }
         }
     }
