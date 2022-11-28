@@ -6,9 +6,18 @@
 
     <None Remove="@(RazorBlade)" />
     <AdditionalFiles Include="@(RazorBlade)" />
+  </ItemGroup>
 
+  <ItemGroup>
+    <CompilerVisibleProperty Include="RazorBladeEmbeddedLibrary" />
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="IsRazorBlade" />
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Namespace" />
   </ItemGroup>
+
+  <Target Name="RazorBladePrepareAnalyzerInput" BeforeTargets="GenerateMSBuildEditorConfigFileCore">
+    <PropertyGroup>
+      <RazorBladeEmbeddedLibrary Condition="'$(RazorBladeEmbeddedLibrary)' == '' and @(PackageReference->WithMetadataValue('Identity', 'RazorBlade')->AnyHaveMetadataValue('PrivateAssets', 'all'))">True</RazorBladeEmbeddedLibrary>
+    </PropertyGroup>
+  </Target>
 
 </Project>

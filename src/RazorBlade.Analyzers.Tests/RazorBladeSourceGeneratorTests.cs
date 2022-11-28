@@ -196,8 +196,12 @@ public class RazorBladeSourceGeneratorTests
                                            .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithNullableContextOptions(NullableContextOptions.Enable));
 
         var result = CSharpGeneratorDriver.Create(new RazorBladeSourceGenerator())
-                                          .AddAdditionalTexts(ImmutableArray.Create<AdditionalText>(new AdditionalTextMock(input)))
-                                          .WithUpdatedAnalyzerConfigOptions(new AnalyzerConfigOptionsProviderMock())
+                                          .AddAdditionalTexts(ImmutableArray.Create<AdditionalText>(new AdditionalTextMock(input, "./TestFile.cshtml")))
+                                          .WithUpdatedAnalyzerConfigOptions(new AnalyzerConfigOptionsProviderMock
+                                          {
+                                              { "IsRazorBlade", "True" },
+                                              { "Namespace", "TestNamespace" }
+                                          })
                                           .RunGeneratorsAndUpdateCompilation(compilation, out var updatedCompilation, out _)
                                           .GetRunResult();
 

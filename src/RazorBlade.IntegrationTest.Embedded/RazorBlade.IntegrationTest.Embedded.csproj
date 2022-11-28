@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net7.0;net48</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>RazorBlade.IntegrationTest</RootNamespace>
+  </PropertyGroup>
+
+  <Import Project="../RazorBlade/RazorBlade.props" />
+
+  <PropertyGroup>
+    <RazorBladeEmbeddedLibrary>true</RazorBladeEmbeddedLibrary>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../RazorBlade.Analyzers/RazorBlade.Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+  </ItemGroup>
+
+  <Import Project="../RazorBlade/RazorBlade.targets" />
+
+</Project>

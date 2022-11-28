@@ -6,20 +6,27 @@
   <ItemGroup>
     <ProjectReference Include="../RazorBlade/RazorBlade.csproj" />
     <ProjectReference Include="../RazorBlade.Analyzers/RazorBlade.Analyzers.csproj" />
+    <ProjectReference Include="../RazorBlade.MetaAnalyzers/RazorBlade.MetaAnalyzers.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.4.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.0" />
     <PackageReference Include="NUnit" Version="3.13.3" />
-    <PackageReference Include="NUnit3TestAdapter" Version="4.3.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.3.1" />
     <PackageReference Include="Verify.DiffPlex" Version="2.0.0" />
-    <PackageReference Include="Verify.NUnit" Version="19.0.0" />
+    <PackageReference Include="Verify.NUnit" Version="19.1.0" />
     <PackageReference Include="Verify.SourceGenerators" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="../RazorBlade.Tests/Support/AssertExtensions.cs" Link="Support/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Meta\EmbeddedLibrarySourceGeneratorTests.should_make_public_types_internal#TestFile.g.verified.cs">
+      <DependentUpon>EmbeddedLibraryMetaSourceGeneratorTests.cs</DependentUpon>
+    </None>
   </ItemGroup>
 
 </Project>

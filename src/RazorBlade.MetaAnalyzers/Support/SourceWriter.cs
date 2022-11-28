@@ -11,6 +11,12 @@ internal class SourceWriter
 
     private readonly IndentedTextWriter _writer;
 
+    public int Indent
+    {
+        get => _writer.Indent;
+        set => _writer.Indent = value;
+    }
+
     public SourceWriter()
     {
         _writer = new IndentedTextWriter(new StringWriter(), _indentString);
@@ -33,6 +39,12 @@ internal class SourceWriter
 
     public override string ToString()
         => _writer.InnerWriter.ToString();
+
+    public IndentDisposable IndentScope()
+    {
+        _writer.Indent++;
+        return new IndentDisposable(this, null);
+    }
 
     public IndentDisposable BlockScope()
     {
