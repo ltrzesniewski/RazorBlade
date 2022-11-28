@@ -150,7 +150,7 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
 
     private class AccessibilityLevelRewriter : CSharpSyntaxWalker
     {
-        private readonly List<SyntaxToken> _toReplace = new();
+        private readonly HashSet<SyntaxToken> _toReplace = new();
         private bool _isTopLevel;
 
         public new SyntaxNode Visit(SyntaxNode root)
@@ -192,8 +192,18 @@ public class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
         private void HandleMember(MemberDeclarationSyntax node)
         {
             var hasProtected = false;
+            HandleModifiers(node.Modifiers, ref hasProtected);
 
-            foreach (var modifier in node.Modifiers)
+            if (hasProtected && node is PropertyDeclarationSyntax { AccessorList: { } accessorList })
+            {
+                foreach (var accessor in accessorList.Accessors)
+                    HandleModifiers(accessor.Modifiers, ref hasProtected);
+            }
+        }
+
+        private void HandleModifiers(SyntaxTokenList modifiers, ref bool hasProtected)
+        {
+            foreach (var modifier in modifiers)
             {
                 switch (modifier.Kind())
                 {

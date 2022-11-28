@@ -30,6 +30,7 @@ public class EmbeddedLibraryMetaSourceGeneratorTests
                 public delegate void InnerDelegate();
 
                 protected internal Method() { }
+                protected internal string Property { get; internal set; }
             }
 
             class TestClass2 { }

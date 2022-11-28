@@ -20,6 +20,7 @@ internal static partial class EmbeddedLibrary
             public delegate void InnerDelegate();
         
             protected Method() { }
+            protected string Property { get; set; }
         }
         
         class TestClass2 { }
