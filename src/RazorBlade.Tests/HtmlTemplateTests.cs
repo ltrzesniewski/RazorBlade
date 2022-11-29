@@ -94,6 +94,14 @@ public class HtmlTemplateTests
         template.Render().ShouldEqual("foo=\" a True b False c 42 e bar\"");
     }
 
+    [Test]
+    public void should_write_raw_string()
+    {
+        var template = new Template(t => t.Write(t.Raw("&<>")));
+
+        template.Render().ShouldEqual("&<>");
+    }
+
     private class Template : HtmlTemplate
     {
         private readonly Action<Template> _executeAction;

@@ -22,6 +22,11 @@ public abstract class HtmlTemplate : RazorTemplate
     [SuppressMessage("ReSharper", "MemberCanBeMadeStatic.Global")]
     protected HtmlHelper Html => HtmlHelper.Instance;
 
+    /// <inheritdoc cref="HtmlHelper.Raw"/>
+    [SuppressMessage("ReSharper", "MemberCanBeMadeStatic.Global")]
+    protected internal HtmlString Raw(object? value)
+        => HtmlHelper.Instance.Raw(value);
+
 #pragma warning restore CA1822
 
     /// <inheritdoc />
