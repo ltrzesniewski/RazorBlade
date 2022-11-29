@@ -21,10 +21,15 @@ public class EmbeddedLibrarySourceGeneratorTests
         // C# 7.3 is the latest version officially supported for the netstandard2.0 target,
         // but it's really old at this point. We'll ask the user to upgrade to a newer version.
 
-        var (generatorDiagnostics, compilationDiagnostics) = RunGenerator(languageVersion);
+        var (generatorDiagnostics, compilation) = RunGenerator(languageVersion);
 
         generatorDiagnostics.ShouldBeEmpty();
-        compilationDiagnostics.Where(i => i.Severity >= DiagnosticSeverity.Warning).ShouldBeEmpty();
+        compilation.GetDiagnostics().Where(i => i.Severity >= DiagnosticSeverity.Warning).ShouldBeEmpty();
+
+        compilation.Assembly.GetTypeByMetadataName(typeof(HtmlTemplate<>).FullName!).ShouldNotBeNull();
+
+        foreach (var exportedType in typeof(HtmlTemplate).Assembly.GetExportedTypes())
+            compilation.Assembly.GetTypeByMetadataName(exportedType.FullName!).ShouldNotBeNull();
     }
 
     [Test]
@@ -35,7 +40,7 @@ public class EmbeddedLibrarySourceGeneratorTests
         generatorDiagnostics.ShouldContain(Diagnostics.EmbeddedLibraryUnsupportedCSharpVersion(EmbeddedLibrarySourceGenerator.MinimumSupportedLanguageVersion));
     }
 
-    private static (ImmutableArray<Diagnostic> generatorDiagnostics, ImmutableArray<Diagnostic> compilationDiagnostics) RunGenerator(LanguageVersion languageVersion)
+    private static (ImmutableArray<Diagnostic> generatorDiagnostics, Compilation compilation) RunGenerator(LanguageVersion languageVersion)
     {
         var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(languageVersion);
 
@@ -58,6 +63,6 @@ public class EmbeddedLibrarySourceGeneratorTests
                                              .RunGeneratorsAndUpdateCompilation(compilation, out var updatedCompilation, out _)
                                              .GetRunResult();
 
-        return (runResult.Diagnostics, updatedCompilation.GetDiagnostics());
+        return (runResult.Diagnostics, updatedCompilation);
     }
 }
