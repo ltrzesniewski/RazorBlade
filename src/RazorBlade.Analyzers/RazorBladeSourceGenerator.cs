@@ -20,7 +20,16 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var globalOptions = context.ParseOptionsProvider
-                                   .Select(static (parseOptions, _) => GetGlobalOptions(parseOptions));
+                                   .Combine(EmbeddedLibrarySourceGenerator.EmbeddedLibraryFlagProvider(context))
+                                   .Select(static (pair, _) =>
+                                   {
+                                       var (parseOptions, embeddedLibrary) = pair;
+
+                                       return new GlobalOptions(
+                                           (CSharpParseOptions)parseOptions,
+                                           embeddedLibrary
+                                       );
+                                   });
 
         var inputFiles = context.AdditionalTextsProvider
                                 .Where(static i => i.Path.EndsWith(".cshtml", StringComparison.OrdinalIgnoreCase))
@@ -45,13 +54,6 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                     context.ReportDiagnostic(Diagnostics.InternalError(ex.Message, Location.Create(inputFile.AdditionalText.Path, default, default)));
                 }
             }
-        );
-    }
-
-    private static GlobalOptions GetGlobalOptions(ParseOptions parseOptions)
-    {
-        return new GlobalOptions(
-            (CSharpParseOptions)parseOptions
         );
     }
 
@@ -156,7 +158,13 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
 
     private static string GenerateLibrarySpecificCode(RazorCSharpDocument generatedDoc, GlobalOptions globalOptions, Compilation compilation, CancellationToken cancellationToken)
     {
-        var generator = new LibraryCodeGenerator(generatedDoc, compilation, globalOptions.ParseOptions);
+        var generator = new LibraryCodeGenerator(
+            generatedDoc,
+            compilation,
+            globalOptions.ParseOptions,
+            globalOptions.EmbeddedLibrary
+        );
+
         return generator.Generate(cancellationToken);
     }
 
@@ -164,5 +172,5 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
 
     private record InputFile(AdditionalText AdditionalText, string? Namespace, string ClassName);
 
-    private record GlobalOptions(CSharpParseOptions ParseOptions);
+    private record GlobalOptions(CSharpParseOptions ParseOptions, bool EmbeddedLibrary);
 }

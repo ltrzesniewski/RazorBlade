@@ -1,6 +1,6 @@
-@inherits RazorBlade.HtmlTemplate
+@inherits RazorBlade.HtmlTemplate<string>
 
-<b>Hello, @Name!</b>
+<b>Hello, @Name and @Model!</b>
 
 @functions {
     public string? Name { get; set; }

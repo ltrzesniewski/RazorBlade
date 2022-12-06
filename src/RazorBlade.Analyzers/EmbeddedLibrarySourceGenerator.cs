@@ -10,17 +10,12 @@ public class EmbeddedLibrarySourceGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var embedLibrary = context.AnalyzerConfigOptionsProvider
-                                  .Select(
-                                      static (i, _) => i.GlobalOptions.TryGetValue("build_property.RazorBladeEmbeddedLibrary", out var embedLibraryStr)
-                                                       && bool.TryParse(embedLibraryStr, out var embedLibrary)
-                                                       && embedLibrary
-                                  );
+        var embeddedLibrary = EmbeddedLibraryFlagProvider(context);
 
         var langVersion = context.ParseOptionsProvider
                                  .Select((parseOptions, _) => ((CSharpParseOptions)parseOptions).LanguageVersion);
 
-        var input = embedLibrary.Combine(langVersion);
+        var input = embeddedLibrary.Combine(langVersion);
 
         context.RegisterSourceOutput(input, static (context, input) =>
         {
@@ -35,7 +30,16 @@ public class EmbeddedLibrarySourceGenerator : IIncrementalGenerator
                 return;
             }
 
-            EmbeddedLibrary.AddSource(context);
+            foreach (var file in EmbeddedLibrary.Files)
+                context.AddSource($"{file.Name}.g.cs", file.Source);
         });
     }
+
+    public static IncrementalValueProvider<bool> EmbeddedLibraryFlagProvider(IncrementalGeneratorInitializationContext context)
+        => context.AnalyzerConfigOptionsProvider
+                  .Select(
+                      static (i, _) => i.GlobalOptions.TryGetValue("build_property.RazorBladeEmbeddedLibrary", out var embedLibraryStr)
+                                       && bool.TryParse(embedLibraryStr, out var embedLibrary)
+                                       && embedLibrary
+                  );
 }

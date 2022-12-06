@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -28,7 +27,7 @@ internal class AnalyzerConfigOptionsProviderMock : AnalyzerConfigOptionsProvider
         => GlobalOptions;
 
     public IEnumerator GetEnumerator()
-        => throw new NotSupportedException();
+        => _values.GetEnumerator();
 
     private class AnalyzerConfigOptionsMock : AnalyzerConfigOptions
     {

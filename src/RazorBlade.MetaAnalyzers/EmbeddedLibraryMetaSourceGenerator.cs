@@ -22,7 +22,7 @@ public sealed class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
     private static readonly Regex _newlineRegex = new(@"\r?\n", RegexOptions.Compiled);
     private static readonly Regex _doubleQuotesRegex = new(@"""+", RegexOptions.Compiled);
 
-    internal bool SkipAddSource { get; init; }
+    internal bool SkipGlobal { get; init; }
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -37,8 +37,8 @@ public sealed class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
 
         context.RegisterImplementationSourceOutput(inputFiles, GenerateContent);
 
-        if (!SkipAddSource)
-            context.RegisterSourceOutput(memberNames, GenerateAddSource);
+        if (!SkipGlobal)
+            context.RegisterSourceOutput(memberNames, GenerateGlobal);
     }
 
     private static InputFile? GetInputFile(AdditionalText additionalText, AnalyzerConfigOptionsProvider analyzerConfigOptions)
@@ -81,23 +81,27 @@ public sealed class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
         context.AddSource($"{memberName}.g.cs", writer.ToString());
     }
 
-    private static void GenerateAddSource(SourceProductionContext context, ImmutableArray<string> memberNames)
+    private static void GenerateGlobal(SourceProductionContext context, ImmutableArray<string> memberNames)
     {
         var writer = new SourceWriter();
         WriteHeader(writer);
 
         using (writer.BlockScope())
         {
-            writer.WriteLine("public static void AddSource(Microsoft.CodeAnalysis.SourceProductionContext context)");
+            writer.WriteLine("public static readonly File[] Files = {");
 
-            using (writer.BlockScope())
+            using (writer.IndentScope())
             {
                 foreach (var memberName in memberNames.OrderBy(i => i, StringComparer.OrdinalIgnoreCase))
-                    writer.WriteLine($"""context.AddSource("{memberName}.g.cs", {memberName});""");
+                    writer.WriteLine($"""new("{memberName}", {memberName}),""");
             }
+
+            writer.WriteLine("};");
+            writer.WriteLine();
+            writer.WriteLine("public record struct File(string Name, string Source);");
         }
 
-        context.AddSource("AddSource.g.cs", writer.ToString());
+        context.AddSource("Files.g.cs", writer.ToString());
     }
 
     private static void WriteHeader(SourceWriter writer)

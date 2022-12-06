@@ -45,18 +45,25 @@ internal class LibraryCodeGenerator
     private readonly RazorCSharpDocument _generatedDoc;
     private readonly Compilation _inputCompilation;
     private readonly CSharpParseOptions _parseOptions;
+    private readonly bool _embeddedLibrary;
     private readonly CodeWriter _writer;
     private bool _hasCode;
 
     private INamedTypeSymbol? _classSymbol;
     private ImmutableArray<Diagnostic> _diagnostics;
+    private Compilation _compilation;
 
-    public LibraryCodeGenerator(RazorCSharpDocument generatedDoc, Compilation compilation, CSharpParseOptions parseOptions)
+    public LibraryCodeGenerator(RazorCSharpDocument generatedDoc,
+                                Compilation compilation,
+                                CSharpParseOptions parseOptions,
+                                bool embeddedLibrary)
     {
         _generatedDoc = generatedDoc;
         _inputCompilation = compilation;
         _parseOptions = parseOptions;
+        _embeddedLibrary = embeddedLibrary;
 
+        _compilation = _inputCompilation;
         _writer = new CodeWriter(Environment.NewLine, generatedDoc.Options);
     }
 
@@ -96,10 +103,29 @@ internal class LibraryCodeGenerator
             cancellationToken: cancellationToken
         );
 
-        var compilation = _inputCompilation.WithOptions(_inputCompilation.Options.WithReportSuppressedDiagnostics(true))
-                                           .AddSyntaxTrees(syntaxTree);
+        var additionalSyntaxTrees = new List<SyntaxTree>
+        {
+            syntaxTree
+        };
 
-        var semanticModel = compilation.GetSemanticModel(syntaxTree);
+        if (_embeddedLibrary)
+        {
+            foreach (var file in EmbeddedLibrary.Files)
+            {
+                additionalSyntaxTrees.Add(
+                    CSharpSyntaxTree.ParseText(
+                        file.Source,
+                        _parseOptions,
+                        cancellationToken: cancellationToken
+                    )
+                );
+            }
+        }
+
+        _compilation = _inputCompilation.WithOptions(_inputCompilation.Options.WithReportSuppressedDiagnostics(true))
+                                        .AddSyntaxTrees(additionalSyntaxTrees);
+
+        var semanticModel = _compilation.GetSemanticModel(syntaxTree);
 
         var classDeclarationNode = syntaxTree.GetRoot(cancellationToken)
                                              .DescendantNodes()
@@ -117,7 +143,7 @@ internal class LibraryCodeGenerator
         if (_classSymbol?.BaseType is not { } baseType)
             return;
 
-        var templateCtorAttribute = _inputCompilation.GetTypeByMetadataName("RazorBlade.Support.TemplateConstructorAttribute");
+        var templateCtorAttribute = _compilation.GetTypeByMetadataName("RazorBlade.Support.TemplateConstructorAttribute");
         if (templateCtorAttribute is null)
             return;
 
@@ -150,7 +176,7 @@ internal class LibraryCodeGenerator
 
     private void GenerateConditionalOnAsync()
     {
-        var conditionalOnAsyncAttribute = _inputCompilation.GetTypeByMetadataName("RazorBlade.Support.ConditionalOnAsyncAttribute");
+        var conditionalOnAsyncAttribute = _compilation.GetTypeByMetadataName("RazorBlade.Support.ConditionalOnAsyncAttribute");
         if (conditionalOnAsyncAttribute is null)
             return;
 

@@ -99,7 +99,7 @@ public class EmbeddedLibraryMetaSourceGeneratorTests
 
         var result = CSharpGeneratorDriver.Create(new EmbeddedLibraryMetaSourceGenerator
                                           {
-                                              SkipAddSource = true
+                                              SkipGlobal = true
                                           })
                                           .AddAdditionalTexts(ImmutableArray.Create<AdditionalText>(new AdditionalTextMock(input, "./TestFile.cs")))
                                           .WithUpdatedAnalyzerConfigOptions(new AnalyzerConfigOptionsProviderMock
