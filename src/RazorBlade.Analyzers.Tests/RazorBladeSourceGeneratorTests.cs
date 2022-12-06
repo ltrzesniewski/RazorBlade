@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -109,26 +110,9 @@ public class RazorBladeSourceGeneratorTests
     {
         return Verify(
             """
-            @inherits Foo.BaseClass
+            @inherits RazorBlade.HtmlTemplate<string>
             """,
-            embeddedLibrary: """
-            using System;
-            using RazorBlade.Support;
-
-            namespace Foo;
-
-            public abstract class BaseClass : RazorBlade.HtmlTemplate
-            {
-                protected BaseClass(int notIncluded)
-                {
-                }
-
-                [TemplateConstructor]
-                protected BaseClass(int? foo, string? bar)
-                {
-                }
-            }
-            """
+            embeddedLibrary: true
         );
     }
 
@@ -209,26 +193,16 @@ public class RazorBladeSourceGeneratorTests
         );
     }
 
-    private static GeneratorDriverRunResult Generate(string input, string? csharpCode, string? embeddedLibrary)
+    private static GeneratorDriverRunResult Generate(string input, string? csharpCode, bool embeddedLibrary)
     {
         var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
 
-        var compilation = CSharpCompilation.Create("TestAssembly")
-                                           .AddReferences(new[]
-                                               {
-                                                   MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                                                   MetadataReference.CreateFromFile(Path.Combine(runtimeDir, "netstandard.dll")),
-                                                   MetadataReference.CreateFromFile(Path.Combine(runtimeDir, "System.Runtime.dll")),
-                                                   embeddedLibrary is null
-                                                       ? MetadataReference.CreateFromFile(typeof(RazorTemplate).Assembly.Location)
-                                                       : null
-                                               }.Where(i => i is not null)!
-                                           )
-                                           .AddSyntaxTrees(
-                                               CSharpSyntaxTree.ParseText(csharpCode ?? string.Empty),
-                                               CSharpSyntaxTree.ParseText(embeddedLibrary ?? string.Empty)
-                                           )
-                                           .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithNullableContextOptions(NullableContextOptions.Enable));
+        var metadataReferences = new List<MetadataReference>
+        {
+            MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+            MetadataReference.CreateFromFile(Path.Combine(runtimeDir, "netstandard.dll")),
+            MetadataReference.CreateFromFile(Path.Combine(runtimeDir, "System.Runtime.dll")),
+        };
 
         var analyzerConfigOptionsProvider = new AnalyzerConfigOptionsProviderMock
         {
@@ -236,8 +210,19 @@ public class RazorBladeSourceGeneratorTests
             { "Namespace", "TestNamespace" }
         };
 
-        if (embeddedLibrary is not null)
+        if (embeddedLibrary)
+        {
             analyzerConfigOptionsProvider.Add("RazorBladeEmbeddedLibrary", "true");
+        }
+        else
+        {
+            metadataReferences.Add(MetadataReference.CreateFromFile(typeof(RazorTemplate).Assembly.Location));
+        }
+
+        var compilation = CSharpCompilation.Create("TestAssembly")
+                                           .AddReferences(metadataReferences)
+                                           .AddSyntaxTrees(CSharpSyntaxTree.ParseText(csharpCode ?? string.Empty))
+                                           .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithNullableContextOptions(NullableContextOptions.Enable));
 
         var result = CSharpGeneratorDriver.Create(new RazorBladeSourceGenerator())
                                           .AddAdditionalTexts(ImmutableArray.Create<AdditionalText>(new AdditionalTextMock(input, "./TestFile.cshtml")))
@@ -247,7 +232,7 @@ public class RazorBladeSourceGeneratorTests
 
         var diagnostics = updatedCompilation.GetDiagnostics();
 
-        if (embeddedLibrary is null) // Don't validate the embedded library generator here, assume the output will compile.
+        if (!embeddedLibrary) // Don't validate the embedded library generator here, assume the final output will compile.
         {
             if (!diagnostics.IsEmpty)
                 Console.WriteLine(result.GeneratedTrees.FirstOrDefault());
@@ -260,7 +245,7 @@ public class RazorBladeSourceGeneratorTests
 
     private static Task Verify([StringSyntax("razor")] string input,
                                [StringSyntax("csharp")] string? csharpCode = null,
-                               [StringSyntax("csharp")] string? embeddedLibrary = null)
+                               bool embeddedLibrary = false)
     {
         var result = Generate(input, csharpCode, embeddedLibrary);
         return Verifier.Verify(result);

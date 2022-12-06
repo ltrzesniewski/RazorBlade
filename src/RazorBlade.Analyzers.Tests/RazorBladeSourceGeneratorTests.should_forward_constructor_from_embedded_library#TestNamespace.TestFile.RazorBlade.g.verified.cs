@@ -7,9 +7,9 @@ namespace TestNamespace
 {
     partial class TestFile
     {
-        /// <inheritdoc cref="M:Foo.BaseClass.#ctor(System.Nullable{System.Int32},System.String)" />
-        public TestFile(int? foo, string? bar)
-            : base(foo, bar)
+        /// <inheritdoc cref="M:RazorBlade.HtmlTemplate`1.#ctor(`0)" />
+        public TestFile(string model)
+            : base(model)
         {
         }
     }
