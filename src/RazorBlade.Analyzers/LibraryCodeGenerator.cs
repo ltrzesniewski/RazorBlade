@@ -45,7 +45,7 @@ internal class LibraryCodeGenerator
     private readonly RazorCSharpDocument _generatedDoc;
     private readonly Compilation _inputCompilation;
     private readonly CSharpParseOptions _parseOptions;
-    private readonly bool _embeddedLibrary;
+    private readonly ImmutableArray<SyntaxTree> _additionalSyntaxTrees;
     private readonly CodeWriter _writer;
     private bool _hasCode;
 
@@ -56,12 +56,12 @@ internal class LibraryCodeGenerator
     public LibraryCodeGenerator(RazorCSharpDocument generatedDoc,
                                 Compilation compilation,
                                 CSharpParseOptions parseOptions,
-                                bool embeddedLibrary)
+                                ImmutableArray<SyntaxTree> additionalSyntaxTrees)
     {
         _generatedDoc = generatedDoc;
         _inputCompilation = compilation;
         _parseOptions = parseOptions;
-        _embeddedLibrary = embeddedLibrary;
+        _additionalSyntaxTrees = additionalSyntaxTrees;
 
         _compilation = _inputCompilation;
         _writer = new CodeWriter(Environment.NewLine, generatedDoc.Options);
@@ -103,27 +103,9 @@ internal class LibraryCodeGenerator
             cancellationToken: cancellationToken
         );
 
-        var additionalSyntaxTrees = new List<SyntaxTree>
-        {
-            syntaxTree
-        };
-
-        if (_embeddedLibrary)
-        {
-            foreach (var file in EmbeddedLibrary.Files)
-            {
-                additionalSyntaxTrees.Add(
-                    CSharpSyntaxTree.ParseText(
-                        file.Source,
-                        _parseOptions,
-                        cancellationToken: cancellationToken
-                    )
-                );
-            }
-        }
-
         _compilation = _inputCompilation.WithOptions(_inputCompilation.Options.WithReportSuppressedDiagnostics(true))
-                                        .AddSyntaxTrees(additionalSyntaxTrees);
+                                        .AddSyntaxTrees(syntaxTree)
+                                        .AddSyntaxTrees(_additionalSyntaxTrees);
 
         var semanticModel = _compilation.GetSemanticModel(syntaxTree);
 

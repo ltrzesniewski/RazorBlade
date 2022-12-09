@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -20,7 +21,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var globalOptions = context.ParseOptionsProvider
-                                   .Combine(EmbeddedLibrarySourceGenerator.EmbeddedLibraryFlagProvider(context))
+                                   .Combine(EmbeddedLibrarySourceGenerator.EmbeddedLibraryProvider(context))
                                    .Select(static (pair, _) =>
                                    {
                                        var (parseOptions, embeddedLibrary) = pair;
@@ -162,7 +163,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             generatedDoc,
             compilation,
             globalOptions.ParseOptions,
-            globalOptions.EmbeddedLibrary
+            globalOptions.AdditionalSyntaxTrees
         );
 
         return generator.Generate(cancellationToken);
@@ -172,5 +173,5 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
 
     private record InputFile(AdditionalText AdditionalText, string? Namespace, string ClassName);
 
-    private record GlobalOptions(CSharpParseOptions ParseOptions, bool EmbeddedLibrary);
+    private record GlobalOptions(CSharpParseOptions ParseOptions, ImmutableArray<SyntaxTree> AdditionalSyntaxTrees);
 }
