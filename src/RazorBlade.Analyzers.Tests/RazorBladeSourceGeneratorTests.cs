@@ -138,6 +138,18 @@ public class RazorBladeSourceGeneratorTests
     }
 
     [Test]
+    public Task should_mark_sync_methods_as_obsolete_on_async_templates_netstandard()
+    {
+        return Verify(
+            """
+            @using System.Threading.Tasks
+            @await Task.FromResult(42)
+            """,
+            netstandard: true
+        );
+    }
+
+    [Test]
     public Task should_handle_conditional_on_async_attribute()
     {
         return Verify(
@@ -193,16 +205,33 @@ public class RazorBladeSourceGeneratorTests
         );
     }
 
-    private static GeneratorDriverRunResult Generate(string input, string? csharpCode, bool embeddedLibrary)
+    private static GeneratorDriverRunResult Generate(string input, string? csharpCode, bool embeddedLibrary, bool netstandard)
     {
-        var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
+        var metadataReferences = new List<MetadataReference>();
 
-        var metadataReferences = new List<MetadataReference>
+        if (netstandard)
         {
-            MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-            MetadataReference.CreateFromFile(Path.Combine(runtimeDir, "netstandard.dll")),
-            MetadataReference.CreateFromFile(Path.Combine(runtimeDir, "System.Runtime.dll")),
-        };
+            metadataReferences.Add(
+                MetadataReference.CreateFromFile(
+                    Path.Combine(
+                        Path.GetDirectoryName(typeof(RazorBladeSourceGeneratorTests).Assembly.Location)!,
+                        "netstandard",
+                        "netstandard.dll"
+                    )
+                )
+            );
+        }
+        else
+        {
+            var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
+
+            metadataReferences.AddRange(new[]
+            {
+                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                MetadataReference.CreateFromFile(Path.Combine(runtimeDir, "netstandard.dll")),
+                MetadataReference.CreateFromFile(Path.Combine(runtimeDir, "System.Runtime.dll"))
+            });
+        }
 
         var analyzerConfigOptionsProvider = new AnalyzerConfigOptionsProviderMock
         {
@@ -216,7 +245,22 @@ public class RazorBladeSourceGeneratorTests
         }
         else
         {
-            metadataReferences.Add(MetadataReference.CreateFromFile(typeof(RazorTemplate).Assembly.Location));
+            if (netstandard)
+            {
+                metadataReferences.Add(
+                    MetadataReference.CreateFromFile(
+                        Path.Combine(
+                            Path.GetDirectoryName(typeof(RazorBladeSourceGeneratorTests).Assembly.Location)!,
+                            "netstandard",
+                            "RazorBlade.dll"
+                        )
+                    )
+                );
+            }
+            else
+            {
+                metadataReferences.Add(MetadataReference.CreateFromFile(typeof(RazorTemplate).Assembly.Location));
+            }
         }
 
         var compilation = CSharpCompilation.Create("TestAssembly")
@@ -245,9 +289,10 @@ public class RazorBladeSourceGeneratorTests
 
     private static Task Verify([StringSyntax("razor")] string input,
                                [StringSyntax("csharp")] string? csharpCode = null,
-                               bool embeddedLibrary = false)
+                               bool embeddedLibrary = false,
+                               bool netstandard = false)
     {
-        var result = Generate(input, csharpCode, embeddedLibrary);
+        var result = Generate(input, csharpCode, embeddedLibrary, netstandard);
         return Verifier.Verify(result);
     }
 }

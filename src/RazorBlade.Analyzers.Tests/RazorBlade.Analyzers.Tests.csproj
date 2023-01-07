@@ -23,10 +23,18 @@
     <Compile Include="../RazorBlade.Tests/Support/AssertExtensions.cs" Link="Support/%(Filename)%(Extension)" />
   </ItemGroup>
 
+  <!-- netstandard2.0 -->
+
   <ItemGroup>
-    <None Update="Meta\EmbeddedLibrarySourceGeneratorTests.should_make_public_types_internal#TestFile.g.verified.cs">
-      <DependentUpon>EmbeddedLibraryMetaSourceGeneratorTests.cs</DependentUpon>
-    </None>
+    <ProjectReference Include="../RazorBlade/RazorBlade.csproj" SetTargetFramework="TargetFramework=netstandard2.0" OutputItemType="RazorBladeNetStdRef" ReferenceOutputAssembly="false" />
+    <PackageReference Include="NETStandard.Library" Version="2.0.3" IncludeAssets="none" GeneratePathProperty="true" />
+    <RazorBladeNetStdRef Include="$(PkgNETStandard_Library)/build/netstandard2.0/ref/netstandard.dll" Visible="false" />
   </ItemGroup>
+
+  <Target Name="RazorBladeCopyNetStdRef" BeforeTargets="AssignTargetPaths">
+    <ItemGroup>
+      <None Include="@(RazorBladeNetStdRef)" CopyToOutputDirectory="PreserveNewest" Link="netstandard/%(Filename)%(Extension)" />
+    </ItemGroup>
+  </Target>
 
 </Project>
