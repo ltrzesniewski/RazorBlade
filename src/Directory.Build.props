@@ -1,7 +1,7 @@
 <Project>
 
   <PropertyGroup>
-    <Version>0.4.1</Version>
+    <Version>0.4.2</Version>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -22,7 +22,7 @@
   <PropertyGroup>
     <Authors>Lucas Trzesniewski</Authors>
     <Description>Compile Razor templates at build-time without a dependency on ASP.NET.</Description>
-    <Copyright>Copyright © Lucas Trzesniewski $([System.DateTime]::Now.ToString('yyyy'))</Copyright>
+    <Copyright>Copyright © Lucas Trzesniewski 2022-$([System.DateTime]::Now.ToString('yyyy'))</Copyright>
     <PackageTags>Razor;Template</PackageTags>
     <PackageProjectUrl>https://github.com/ltrzesniewski/RazorBlade</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
