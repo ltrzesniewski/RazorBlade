@@ -200,10 +200,11 @@ internal class LibraryCodeGenerator
                 // This currently doesn't have the intended effect, but leave it anyway :'(
                 _writer.WriteLine("[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]");
 
-                var message = attributeData.NamedArguments.FirstOrDefault(i => i.Key == "Message").Value.Value as string
-                              ?? $"This method should not be used on {(isTemplateSync ? "a synchronous" : "an asynchronous")} template.";
-
-                _writer.WriteLine($@"[global::System.Obsolete({SyntaxFactory.Literal(message).ToString()}, DiagnosticId = ""{Diagnostics.GetDiagnosticId(Diagnostics.Id.ConditionalOnAsync)}"")]");
+                WriteObsoleteAttribute(
+                    attributeData.NamedArguments.FirstOrDefault(i => i.Key == "Message").Value.Value as string
+                    ?? $"This method should not be used on {(isTemplateSync ? "a synchronous" : "an asynchronous")} template.",
+                    Diagnostics.GetDiagnosticId(Diagnostics.Id.ConditionalOnAsync)
+                );
 
                 _writer.Write("public new ")
                        .Write(methodSymbol.ReturnType.ToDisplayString(_paramSignatureFormat))
@@ -238,6 +239,21 @@ internal class LibraryCodeGenerator
             }
 
             return sb.ToString();
+        }
+
+        void WriteObsoleteAttribute(string message, string diagnosticId)
+        {
+            var obsoleteAttributeType = _compilation.GetTypeByMetadataName("System.ObsoleteAttribute");
+            if (obsoleteAttributeType is null)
+                return; // Shouldn't happen
+
+            _writer.Write("[global::System.Obsolete(");
+            _writer.Write(SyntaxFactory.Literal(message).ToString());
+
+            if (obsoleteAttributeType.MemberNames.Contains("DiagnosticId"))
+                _writer.Write($@", DiagnosticId = ""{diagnosticId}""");
+
+            _writer.WriteLine(")]");
         }
     }
 

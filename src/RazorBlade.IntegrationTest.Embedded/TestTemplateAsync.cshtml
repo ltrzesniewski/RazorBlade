@@ -1,0 +1,9 @@
+@using System.Threading.Tasks
+@inherits RazorBlade.HtmlTemplate<string>
+
+<b>Hello, @Name and @Model!</b>
+@{ await Task.CompletedTask; }
+
+@functions {
+    public string? Name { get; set; }
+}
