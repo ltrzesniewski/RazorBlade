@@ -14,6 +14,7 @@ public class HtmlTemplateTests
     [TestCase("foo", "foo")]
     [TestCase("&foo", "&amp;foo")]
     [TestCase("foo&", "foo&amp;")]
+    [TestCase("foo's", "foo&#x27;s")]
     [TestCase("foo & bar < baz > foo\"bar", "foo &amp; bar &lt; baz &gt; foo&quot;bar")]
     public void should_escape_special_characters(string input, string expectedOutput)
     {
