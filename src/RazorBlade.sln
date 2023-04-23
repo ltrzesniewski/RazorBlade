@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorBlade.Library", "Razor
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorBlade.IntegrationTest.Embedded", "RazorBlade.IntegrationTest.Embedded\RazorBlade.IntegrationTest.Embedded.csproj", "{B4D42B3B-434D-4899-A17F-1B53AA7A94D0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorBlade.IntegrationTest.TagHelpers", "RazorBlade.IntegrationTest.TagHelpers\RazorBlade.IntegrationTest.TagHelpers.csproj", "{7198071A-0304-47FE-B5B0-005775F2B600}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,5 +65,9 @@ Global
 		{B4D42B3B-434D-4899-A17F-1B53AA7A94D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4D42B3B-434D-4899-A17F-1B53AA7A94D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B4D42B3B-434D-4899-A17F-1B53AA7A94D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7198071A-0304-47FE-B5B0-005775F2B600}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7198071A-0304-47FE-B5B0-005775F2B600}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7198071A-0304-47FE-B5B0-005775F2B600}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7198071A-0304-47FE-B5B0-005775F2B600}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

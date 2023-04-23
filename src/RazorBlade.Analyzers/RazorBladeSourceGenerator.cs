@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
@@ -38,17 +39,43 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                                 .Select(static (pair, _) => GetInputFile(pair.Left, pair.Right))
                                 .WhereNotNull();
 
+        var tagHelpersFromCompilation
+            = context.CompilationProvider
+                     .SelectMany(static (compilation, cancellationToken) =>
+                     {
+                         var tagHelperType = compilation.GetTypeByMetadataName(TagHelperTypes.ITagHelper);
+                         if (tagHelperType is not { TypeKind: TypeKind.Interface })
+                             return Array.Empty<TagHelperDescriptor>();
+
+                         var visitor = new TagHelperTypeVisitor(tagHelperType);
+                         visitor.VisitNamespace(compilation.GlobalNamespace);
+
+                         var context = TagHelperDescriptorProviderContext.Create();
+                         var factory = new DefaultTagHelperDescriptorFactory(compilation, context.IncludeDocumentation, context.ExcludeHidden);
+
+                         foreach (var resultType in visitor.Results)
+                         {
+                             cancellationToken.ThrowIfCancellationRequested();
+                             context.Results.Add(factory.CreateDescriptor(resultType));
+                         }
+
+                         return context.Results;
+                     });
+
+        var allTagHelpers = tagHelpersFromCompilation;
+
         context.RegisterSourceOutput(
             inputFiles.Combine(globalOptions)
                       .Combine(context.CompilationProvider)
-                      .WithLambdaComparer((a, b) => a.Left.Equals(b.Left), pair => pair.Left.GetHashCode()), // Ignore the compilation for updates
+                      .WithLambdaComparer((a, b) => a.Left.Equals(b.Left), pair => pair.Left.GetHashCode()) // Ignore the compilation for updates
+                      .Combine(allTagHelpers.Collect()),
             static (context, pair) =>
             {
-                var ((inputFile, globalOptions), compilation) = pair;
+                var (((inputFile, globalOptions), compilation), tagHelpers) = pair;
 
                 try
                 {
-                    Generate(context, inputFile, globalOptions, compilation);
+                    Generate(context, inputFile, globalOptions, compilation, tagHelpers.ToArray());
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
@@ -76,7 +103,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         );
     }
 
-    private static void Generate(SourceProductionContext context, InputFile file, GlobalOptions globalOptions, Compilation compilation)
+    private static void Generate(SourceProductionContext context, InputFile file, GlobalOptions globalOptions, Compilation compilation, TagHelperDescriptor[] tagHelpers)
     {
         OnGenerate();
 
@@ -84,7 +111,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         if (sourceText is null)
             return;
 
-        var csharpDoc = GenerateRazorCode(sourceText, file, globalOptions);
+        var csharpDoc = GenerateRazorCode(sourceText, file, globalOptions, tagHelpers);
         var libraryCode = GenerateLibrarySpecificCode(csharpDoc, globalOptions, compilation, context.CancellationToken);
 
         foreach (var diagnostic in csharpDoc.Diagnostics)
@@ -104,7 +131,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         }
     }
 
-    private static RazorCSharpDocument GenerateRazorCode(SourceText sourceText, InputFile file, GlobalOptions globalOptions)
+    private static RazorCSharpDocument GenerateRazorCode(SourceText sourceText, InputFile file, GlobalOptions globalOptions, IReadOnlyList<TagHelperDescriptor> tagHelpers)
     {
         var engine = RazorProjectEngine.Create(
             RazorConfiguration.Default,
@@ -151,7 +178,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             RazorSourceDocument.Create(sourceText.ToString(), file.AdditionalText.Path, sourceText.Encoding ?? Encoding.UTF8),
             FileKinds.Legacy,
             Array.Empty<RazorSourceDocument>(),
-            Array.Empty<TagHelperDescriptor>()
+            tagHelpers
         );
 
         return codeDoc.GetCSharpDocument();

@@ -18,6 +18,11 @@
     <Compile Remove="$(RazorLanguageDir)/Properties/AssemblyInfo.cs" />
 
     <Compile Include="$(RazorCodeAnalysisDir)/RazorProjectEngineBuilderExtensions.cs" Link="RazorLanguage/CodeAnalysis/%(FileName)%(Extension)" />
+    <Compile Include="$(RazorCodeAnalysisDir)/DefaultTagHelperDescriptorFactory.cs" Link="RazorLanguage/CodeAnalysis/%(FileName)%(Extension)" />
+    <Compile Include="$(RazorCodeAnalysisDir)/TagHelperTypes.cs" Link="RazorLanguage/CodeAnalysis/%(FileName)%(Extension)" />
+    <Compile Include="$(RazorCodeAnalysisDir)/RazorDiagnosticFactory.cs" Link="RazorLanguage/CodeAnalysis/%(FileName)%(Extension)" />
+    <Compile Include="$(RazorCodeAnalysisDir)/RequiredAttributeParser.cs" Link="RazorLanguage/CodeAnalysis/%(FileName)%(Extension)" />
+    
     <Compile Include="$(RazorLanguageSupportDir)/NullableAttributes.cs" Link="RazorLanguage/LanguageSupport/%(FileName)%(Extension)" />
   </ItemGroup>
 
@@ -29,6 +34,7 @@
 
   <ItemGroup>
     <AdditionalFiles Include="$(RazorLanguageDir)/*.resx" Role="Resource" Namespace="Microsoft.AspNetCore.Razor.Language" Visible="false" />
+    <AdditionalFiles Include="$(RazorCodeAnalysisDir)/*.resx" Role="Resource" Namespace="Microsoft.CodeAnalysis.Razor" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>

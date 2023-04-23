@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <Import Project="../RazorBlade/RazorBlade.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="../RazorBlade/RazorBlade.csproj" />
+    <ProjectReference Include="../RazorBlade.Analyzers/RazorBlade.Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Razor.Runtime" Version="2.2.0" />
+  </ItemGroup>
+
+  <Import Project="../RazorBlade/RazorBlade.targets" />
+
+</Project>
