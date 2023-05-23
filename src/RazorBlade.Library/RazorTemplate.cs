@@ -119,7 +119,7 @@ public abstract class RazorTemplate : IEncodedContent
     /// </summary>
     /// <param name="value">The value to write.</param>
     [PublicAPI]
-    protected internal void WriteLiteral(string? value)
+    protected internal virtual void WriteLiteral(string? value)
         => Output.Write(value);
 
     /// <summary>
