@@ -129,9 +129,14 @@ internal class LibraryCodeGenerator
         if (templateCtorAttribute is null)
             return;
 
+        var templateCtors = _classSymbol.InstanceConstructors;
+
         foreach (var ctor in baseType.InstanceConstructors)
         {
             if (!ctor.HasAttribute(templateCtorAttribute))
+                continue;
+
+            if (templateCtors.Any(defCtor => RoslynHelper.AreParameterTypesEqual(defCtor.Parameters, ctor.Parameters)))
                 continue;
 
             StartMember();
