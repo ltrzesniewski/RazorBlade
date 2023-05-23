@@ -146,6 +146,38 @@ public class RazorBladeSourceGeneratorTests
     }
 
     [Test]
+    public Task should_not_forward_private_constructor()
+    {
+        return Verify(
+            """
+            @inherits Foo.BaseClass
+            """,
+            """
+            using RazorBlade.Support;
+
+            namespace Foo;
+
+            public abstract class BaseClass : RazorBlade.HtmlTemplate
+            {
+                protected BaseClass()
+                {
+                }
+
+                [TemplateConstructor]
+                private BaseClass(int value)
+                {
+                }
+
+                [TemplateConstructor]
+                private protected BaseClass(long value)
+                {
+                }
+            }
+            """
+        );
+    }
+
+    [Test]
     public Task should_forward_constructor_from_embedded_library()
     {
         return Verify(

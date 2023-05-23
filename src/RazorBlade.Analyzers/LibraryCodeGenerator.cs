@@ -136,6 +136,9 @@ internal class LibraryCodeGenerator
             if (!ctor.HasAttribute(templateCtorAttribute))
                 continue;
 
+            if (!_compilation.IsSymbolAccessibleWithin(ctor, _classSymbol))
+                continue;
+
             if (templateCtors.Any(defCtor => RoslynHelper.AreParameterTypesEqual(defCtor.Parameters, ctor.Parameters)))
                 continue;
 
