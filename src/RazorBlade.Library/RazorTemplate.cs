@@ -133,7 +133,7 @@ public abstract class RazorTemplate : IEncodedContent
     /// Write already encoded content to the output.
     /// </summary>
     /// <param name="content">The template to render.</param>
-    protected internal void Write(IEncodedContent? content)
+    protected internal virtual void Write(IEncodedContent? content)
         => content?.WriteTo(Output);
 
     /// <summary>
