@@ -4,8 +4,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../RazorBlade/RazorBlade.csproj" />
     <ProjectReference Include="../RazorBlade.Analyzers/RazorBlade.Analyzers.csproj" />
+    <ProjectReference Include="../RazorBlade.Library.RazorRuntime/RazorBlade.Library.RazorRuntime.csproj" />
     <ProjectReference Include="../RazorBlade.MetaAnalyzers/RazorBlade.MetaAnalyzers.csproj" />
   </ItemGroup>
 

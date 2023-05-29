@@ -183,6 +183,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
 
                         targetExtensions.RemoveAt(i);
                         targetExtensions.Insert(i, new RazorBladeTagHelperTargetExtension());
+                        cfg.Features.Add(new RazorBladeTagHelperOptimizationPass());
                         break;
                     }
                 }

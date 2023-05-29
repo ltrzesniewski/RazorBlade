@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -56,6 +57,8 @@ public class TagHelperTests
             MetadataReference.CreateFromFile(Path.Combine(runtimeDir, "netstandard.dll")),
             MetadataReference.CreateFromFile(Path.Combine(runtimeDir, "System.Runtime.dll")),
             MetadataReference.CreateFromFile(typeof(RazorTemplate).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(TagHelperHandler).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(HtmlEncoder).Assembly.Location),
             MetadataReference.CreateFromFile(Path.Combine(outputDir, "Microsoft.AspNetCore.Razor.dll")),
             MetadataReference.CreateFromFile(Path.Combine(outputDir, "Microsoft.AspNetCore.Razor.Runtime.dll")),
             MetadataReference.CreateFromFile(Path.Combine(outputDir, "Microsoft.AspNetCore.Html.Abstractions.dll"))
@@ -70,7 +73,9 @@ public class TagHelperTests
         var compilation = CSharpCompilation.Create("TestAssembly")
                                            .AddReferences(metadataReferences)
                                            .AddSyntaxTrees(CSharpSyntaxTree.ParseText(csharpCode ?? string.Empty))
-                                           .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithNullableContextOptions(NullableContextOptions.Enable));
+                                           .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+                                                        .WithSpecificDiagnosticOptions(new[] { KeyValuePair.Create("CS1701", ReportDiagnostic.Suppress) })
+                                                        .WithNullableContextOptions(NullableContextOptions.Enable));
 
         var result = CSharpGeneratorDriver.Create(new RazorBladeSourceGenerator())
                                           .AddAdditionalTexts(ImmutableArray.Create<AdditionalText>(new AdditionalTextMock(input, "./TestFile.cshtml")))

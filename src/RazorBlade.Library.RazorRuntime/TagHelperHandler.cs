@@ -6,11 +6,11 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 
 namespace RazorBlade;
 
-internal sealed class TagHelperHandler
+public sealed class TagHelperHandler
 {
-    private readonly RazorTemplate _template;
+    private readonly ITagHelperTemplate _template;
 
-    public TagHelperHandler(RazorTemplate template)
+    public TagHelperHandler(ITagHelperTemplate template)
     {
         _template = template;
     }
@@ -70,4 +70,8 @@ internal sealed class TagHelperHandler
     {
         throw new NotImplementedException();
     }
+}
+
+public interface ITagHelperTemplate
+{
 }

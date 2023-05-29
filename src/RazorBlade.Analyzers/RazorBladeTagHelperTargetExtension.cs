@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.Razor.Language.CodeGeneration;
+﻿using System.Linq;
+using Microsoft.AspNetCore.Razor.Language;
+using Microsoft.AspNetCore.Razor.Language.CodeGeneration;
 using Microsoft.AspNetCore.Razor.Language.Extensions;
+using Microsoft.AspNetCore.Razor.Language.Intermediate;
 
 namespace RazorBlade.Analyzers;
 
@@ -73,5 +76,24 @@ internal class RazorBladeTagHelperTargetExtension : IDefaultTagHelperTargetExten
                .Write(" ??= new ")
                .Write(_tagHelperHandlerTypeName)
                .WriteLine("(this);");
+    }
+}
+
+internal class RazorBladeTagHelperOptimizationPass : IntermediateNodePassBase, IRazorOptimizationPass
+{
+    private static readonly DefaultTagHelperOptimizationPass _defaultTagHelperOptimizationPass = new();
+
+    public override int Order => _defaultTagHelperOptimizationPass.Order + 1;
+
+    protected override void ExecuteCore(RazorCodeDocument codeDocument, DocumentIntermediateNode documentNode)
+    {
+        var primaryClass = documentNode.FindPrimaryClass();
+        if (primaryClass is null)
+            return;
+
+        if (primaryClass.Children.Any(i => i is DefaultTagHelperRuntimeIntermediateNode))
+        {
+            primaryClass.Interfaces.Add("global::RazorBlade.ITagHelperTemplate");
+        }
     }
 }
