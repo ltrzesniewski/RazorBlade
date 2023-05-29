@@ -30,7 +30,7 @@ internal sealed class TagHelperTypeVisitor : SymbolVisitor
         => symbol is
            {
                TypeKind: TypeKind.Class or TypeKind.Struct,
-               DeclaredAccessibility: Accessibility.Public,
+               DeclaredAccessibility: Accessibility.Public or Accessibility.Internal,
                IsAbstract: false,
                IsGenericType: false
            }

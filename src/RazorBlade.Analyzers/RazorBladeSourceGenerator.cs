@@ -6,6 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Microsoft.AspNetCore.Razor.Language;
+using Microsoft.AspNetCore.Razor.Language.CodeGeneration;
+using Microsoft.AspNetCore.Razor.Language.Extensions;
 using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -171,6 +173,19 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                     node.Modifiers.Add("async");
                     node.Modifiers.Add("override");
                 });
+
+                if (cfg.Features.OfType<IRazorTargetExtensionFeature>().SingleOrDefault() is { TargetExtensions: IList<ICodeTargetExtension> targetExtensions })
+                {
+                    for (var i = 0; i < targetExtensions.Count; ++i)
+                    {
+                        if (targetExtensions[i] is not DefaultTagHelperTargetExtension)
+                            continue;
+
+                        targetExtensions.RemoveAt(i);
+                        targetExtensions.Insert(i, new RazorBladeTagHelperTargetExtension());
+                        break;
+                    }
+                }
             }
         );
 
