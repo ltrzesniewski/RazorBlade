@@ -127,6 +127,29 @@ public class RazorTemplateTests
         semaphore.CurrentCount.ShouldEqual(0);
     }
 
+    [Test]
+    public void should_stack_writers()
+    {
+        var template = new EmptyTemplate();
+        var origOutput = template.Output;
+        var writerA = new StringWriter();
+        var writerB = new StringWriter();
+
+        template.PushWriter(writerA);
+        template.Output.ShouldBeTheSameAs(writerA);
+
+        template.PushWriter(writerB);
+        template.Output.ShouldBeTheSameAs(writerB);
+
+        template.PopWriter().ShouldBeTheSameAs(writerB);
+        template.Output.ShouldBeTheSameAs(writerA);
+
+        template.PopWriter().ShouldBeTheSameAs(writerA);
+        template.Output.ShouldBeTheSameAs(origOutput);
+
+        Assert.Throws<InvalidOperationException>(() => template.PopWriter());
+    }
+
     private class Template : RazorTemplate
     {
         private readonly Func<Template, Task> _executeAction;
@@ -134,7 +157,7 @@ public class RazorTemplateTests
         public Template(Func<Template, Task> executeAction)
         {
             _executeAction = executeAction;
-            Output = new StringWriter();
+            PushWriter(new StringWriter());
         }
 
         public Template(Action<Template> executeAction)
@@ -152,6 +175,25 @@ public class RazorTemplateTests
             await base.ExecuteAsync();
         }
 
+        protected internal override void Write(object? value)
+        {
+        }
+
+        protected internal override void BeginWriteAttribute(string name, string prefix, int prefixOffset, string suffix, int suffixOffset, int attributeValuesCount)
+        {
+        }
+
+        protected internal override void WriteAttributeValue(string prefix, int prefixOffset, object? value, int valueOffset, int valueLength, bool isLiteral)
+        {
+        }
+
+        protected internal override void EndWriteAttribute()
+        {
+        }
+    }
+
+    private class EmptyTemplate : RazorTemplate
+    {
         protected internal override void Write(object? value)
         {
         }

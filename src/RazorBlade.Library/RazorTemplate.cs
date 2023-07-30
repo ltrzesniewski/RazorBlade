@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,10 +14,12 @@ namespace RazorBlade;
 /// </summary>
 public abstract class RazorTemplate : IEncodedContent
 {
+    private readonly List<TextWriter> _writerStack = new(); // Not a Stack<T> as that would require an additional assembly reference.
+
     /// <summary>
     /// The <see cref="TextWriter"/> which receives the output.
     /// </summary>
-    protected internal TextWriter Output { get; internal set; } = new StreamWriter(Stream.Null);
+    protected internal TextWriter Output { get; private set; } = new StreamWriter(Stream.Null);
 
     /// <summary>
     /// The cancellation token.
@@ -92,18 +96,19 @@ public abstract class RazorTemplate : IEncodedContent
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var previousState = (Output, CancellationToken);
+        var previousCancellationToken = CancellationToken;
 
         try
         {
-            Output = textWriter;
+            PushWriter(textWriter);
             CancellationToken = cancellationToken;
 
             await ExecuteAsync().ConfigureAwait(false);
         }
         finally
         {
-            (Output, CancellationToken) = previousState;
+            CancellationToken = previousCancellationToken;
+            PopWriter();
         }
     }
 
@@ -171,4 +176,31 @@ public abstract class RazorTemplate : IEncodedContent
 
     void IEncodedContent.WriteTo(TextWriter textWriter)
         => Render(textWriter, CancellationToken.None);
+
+    /// <summary>
+    /// Pushes the current <see cref="Output"/> to a stack and sets the given <see cref="TextWriter"/> as the new <see cref="Output"/>.
+    /// </summary>
+    /// <param name="writer">The output to use.</param>
+    [PublicAPI]
+    protected internal void PushWriter(TextWriter writer)
+    {
+        _writerStack.Add(Output);
+        Output = writer;
+    }
+
+    /// <summary>
+    /// Pops the last <see cref="TextWriter"/> from the stack and sets it as the new <see cref="Output"/>.
+    /// </summary>
+    /// <returns>The previous output.</returns>
+    [PublicAPI]
+    protected internal TextWriter PopWriter()
+    {
+        if (_writerStack.Count == 0)
+            throw new InvalidOperationException("The writer stack is empty.");
+        var previous = Output;
+        var lastIndex = _writerStack.Count - 1;
+        Output = _writerStack[lastIndex];
+        _writerStack.RemoveAt(lastIndex);
+        return previous;
+    }
 }

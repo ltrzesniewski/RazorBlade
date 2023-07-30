@@ -85,7 +85,7 @@ public class PlainTextTemplateTests
         public Template(Action<Template> executeAction)
         {
             _executeAction = executeAction;
-            Output = new StringWriter();
+            PushWriter(new StringWriter());
         }
 
         protected internal override Task ExecuteAsync()
