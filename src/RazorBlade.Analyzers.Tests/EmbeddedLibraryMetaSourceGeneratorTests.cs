@@ -20,7 +20,8 @@ public class EmbeddedLibraryMetaSourceGeneratorTests
     [Test]
     public Task should_update_accessibility_levels()
     {
-        return Verify("""
+        return Verify(
+            """
             public abstract class TestClass
             {
                 class InnerClass { }
@@ -41,13 +42,15 @@ public class EmbeddedLibraryMetaSourceGeneratorTests
             public record struct TestRecordStruct { }
             public enum TestEnum { }
             public delegate void TestDelegate();
-            """);
+            """
+        );
     }
 
     [Test]
     public Task should_remove_jetbrains_annotations()
     {
-        return Verify("""
+        return Verify(
+            """
             using System;
             using JetBrains.Annotations;
             using System.Text;
@@ -82,7 +85,8 @@ public class EmbeddedLibraryMetaSourceGeneratorTests
                 public string TestMethodE([NotNull, UsedImplicitly] StringBuilder sb)
                     => sb.ToString();
             }
-            """);
+            """
+        );
     }
 
     private static GeneratorDriverRunResult Generate(string input)

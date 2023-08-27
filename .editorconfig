@@ -76,6 +76,7 @@ resharper_align_multline_type_parameter_constrains = true
 resharper_align_multline_type_parameter_list = true
 resharper_align_tuple_components = true
 resharper_int_align_switch_expressions = true
+resharper_indent_raw_literal_string = do_not_change
 
 resharper_csharp_keep_blank_lines_in_code = 1
 resharper_csharp_keep_blank_lines_in_declarations = 1
