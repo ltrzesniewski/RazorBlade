@@ -6,7 +6,7 @@ public static class ModuleInit
     [ModuleInitializer]
     public static void Init()
     {
-        VerifySourceGenerators.Enable();
+        VerifySourceGenerators.Initialize();
         VerifyDiffPlex.Initialize();
     }
 }
