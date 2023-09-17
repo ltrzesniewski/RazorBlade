@@ -229,7 +229,8 @@ public class RazorBladeSourceGeneratorTests
         return Verify(
             """
             @model FooBar
-            """
+            """,
+            expectErrors: true
         );
     }
 
@@ -312,7 +313,22 @@ public class RazorBladeSourceGeneratorTests
         );
     }
 
-    private static GeneratorDriverRunResult Generate(string input, string? csharpCode, bool embeddedLibrary, bool netstandard)
+    [Test]
+    public Task should_reject_tag_helper_directives()
+    {
+        return Verify(
+            """
+            @addTagHelper *, Foo
+            """,
+            expectErrors: true
+        );
+    }
+
+    private static GeneratorDriverRunResult Generate(string input,
+                                                     string? csharpCode,
+                                                     bool embeddedLibrary,
+                                                     bool netstandard,
+                                                     bool expectErrors)
     {
         var metadataReferences = new List<MetadataReference>();
 
@@ -383,12 +399,21 @@ public class RazorBladeSourceGeneratorTests
 
         var diagnostics = updatedCompilation.GetDiagnostics();
 
-        if (!embeddedLibrary) // Don't validate the embedded library generator here, assume the final output will compile.
+        if (expectErrors)
         {
-            if (!diagnostics.IsEmpty)
-                Console.WriteLine(result.GeneratedTrees.FirstOrDefault());
+            result.Diagnostics.ShouldContain(i => i.Severity == DiagnosticSeverity.Error);
+        }
+        else
+        {
+            result.Diagnostics.ShouldBeEmpty();
 
-            diagnostics.ShouldBeEmpty();
+            if (!embeddedLibrary) // Don't validate the embedded library generator here, assume the final output will compile.
+            {
+                if (!diagnostics.IsEmpty)
+                    Console.WriteLine(result.GeneratedTrees.FirstOrDefault());
+
+                diagnostics.ShouldBeEmpty();
+            }
         }
 
         return result;
@@ -397,9 +422,10 @@ public class RazorBladeSourceGeneratorTests
     private static Task Verify([StringSyntax("razor")] string input,
                                [StringSyntax("csharp")] string? csharpCode = null,
                                bool embeddedLibrary = false,
-                               bool netstandard = false)
+                               bool netstandard = false,
+                               bool expectErrors = false)
     {
-        var result = Generate(input, csharpCode, embeddedLibrary, netstandard);
+        var result = Generate(input, csharpCode, embeddedLibrary, netstandard, expectErrors);
         return Verifier.Verify(result);
     }
 }

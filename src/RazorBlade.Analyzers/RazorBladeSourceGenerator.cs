@@ -144,6 +144,8 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                     node.Modifiers.Add("async");
                     node.Modifiers.Add("override");
                 });
+
+                cfg.Features.Add(new ErrorOnTagHelperSyntaxTreePass());
             }
         );
 

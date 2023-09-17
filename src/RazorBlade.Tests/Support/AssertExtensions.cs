@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using NUnit.Framework;
@@ -49,6 +50,9 @@ internal static class AssertExtensions
 
     public static void ShouldContain<T>(this IEnumerable<T> actual, T expected)
         => Assert.That(actual, Contains.Item(expected));
+
+    public static void ShouldContain<T>(this IEnumerable<T> actual, Predicate<T> predicate)
+        => Assert.That(actual, Has.Some.Matches(predicate));
 
     public static void ShouldBeEquivalentTo<T>(this IEnumerable<T>? actual, IEnumerable<T> expected)
         => Assert.That(actual, Is.EquivalentTo(expected));

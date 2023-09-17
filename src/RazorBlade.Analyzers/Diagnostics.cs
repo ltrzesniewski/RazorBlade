@@ -14,6 +14,7 @@ internal static class Diagnostics
         ModelDirectiveNotSupported = 2,
         ConditionalOnAsync = 3,
         EmbeddedLibraryUnsupportedCSharpVersion = 4,
+        TagHelpersNotSupported = 5,
     }
 
     private static DiagnosticDescriptor RoslynError(Id id, string title, string messageFormat)
@@ -48,4 +49,12 @@ internal static class Diagnostics
 
     public static Diagnostic EmbeddedLibraryUnsupportedCSharpVersion(LanguageVersion requiredVersion)
         => Diagnostic.Create(_embeddedLibraryUnsupportedCSharpVersionDescriptor, location: null, requiredVersion.ToDisplayString());
+
+    // Tag helpers not supported
+
+    private static readonly RazorDiagnosticDescriptor _tagHelpersNotSupportedDescriptor
+        = RazorError(Id.TagHelpersNotSupported, "Tag helpers are not supported in RazorBlade.");
+
+    public static RazorDiagnostic TagHelpersNotSupported(SourceSpan span)
+        => RazorDiagnostic.Create(_tagHelpersNotSupportedDescriptor, span);
 }
