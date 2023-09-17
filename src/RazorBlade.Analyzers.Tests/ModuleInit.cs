@@ -1,6 +1,8 @@
 using System.Runtime.CompilerServices;
 using VerifyTests;
 
+namespace RazorBlade.Analyzers.Tests;
+
 public static class ModuleInit
 {
     [ModuleInitializer]
