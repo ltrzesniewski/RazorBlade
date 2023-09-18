@@ -8,6 +8,7 @@
   </ItemGroup>
 
   <PropertyGroup>
+    <IsRoslynComponent>true</IsRoslynComponent>
     <RazorLanguageDir>../../lib/razor/src/Compiler/Microsoft.AspNetCore.Razor.Language/src</RazorLanguageDir>
     <RazorCodeAnalysisDir>../../lib/razor/src/Compiler/Microsoft.CodeAnalysis.Razor/src</RazorCodeAnalysisDir>
     <RazorLanguageSupportDir>../../lib/razor/src/Shared/Microsoft.AspNetCore.Razor.LanguageSupport</RazorLanguageSupportDir>

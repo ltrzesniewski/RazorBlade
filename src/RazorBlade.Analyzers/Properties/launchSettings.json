@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "DebugSourceGenerator": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\RazorBlade.IntegrationTest\\RazorBlade.IntegrationTest.csproj"
+    }
+  }
+}
