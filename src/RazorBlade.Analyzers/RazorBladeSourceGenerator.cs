@@ -85,23 +85,15 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             return;
 
         var csharpDoc = GenerateRazorCode(sourceText, file, globalOptions);
-        var libraryCode = GenerateLibrarySpecificCode(csharpDoc, globalOptions, compilation, context.CancellationToken);
+        var generatedCode = AppendLibrarySpecificCode(csharpDoc, globalOptions, compilation, context.CancellationToken);
 
         foreach (var diagnostic in csharpDoc.Diagnostics)
             context.ReportDiagnostic(diagnostic.ToDiagnostic());
 
         context.AddSource(
-            $"{file.Namespace}.{file.ClassName}.Razor.g.cs",
-            csharpDoc.GeneratedCode
+            $"{file.Namespace}.{file.ClassName}.g.cs",
+            generatedCode
         );
-
-        if (!string.IsNullOrEmpty(libraryCode))
-        {
-            context.AddSource(
-                $"{file.Namespace}.{file.ClassName}.RazorBlade.g.cs",
-                libraryCode
-            );
-        }
     }
 
     private static RazorCSharpDocument GenerateRazorCode(SourceText sourceText, InputFile file, GlobalOptions globalOptions)
@@ -159,7 +151,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         return codeDoc.GetCSharpDocument();
     }
 
-    private static string GenerateLibrarySpecificCode(RazorCSharpDocument generatedDoc, GlobalOptions globalOptions, Compilation compilation, CancellationToken cancellationToken)
+    private static string AppendLibrarySpecificCode(RazorCSharpDocument generatedDoc, GlobalOptions globalOptions, Compilation compilation, CancellationToken cancellationToken)
     {
         var generator = new LibraryCodeGenerator(
             generatedDoc,
@@ -168,7 +160,12 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             globalOptions.AdditionalSyntaxTrees
         );
 
-        return generator.Generate(cancellationToken);
+        var libraryCode = generator.Generate(cancellationToken);
+
+        if (string.IsNullOrEmpty(libraryCode))
+            return generatedDoc.GeneratedCode;
+
+        return string.Concat(generatedDoc.GeneratedCode, Environment.NewLine, libraryCode);
     }
 
     static partial void OnGenerate();
