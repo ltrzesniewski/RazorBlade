@@ -21,16 +21,9 @@ using System;
         {
         }
         #pragma warning restore 1998
-    }
-}
-#pragma warning restore 1591
 
-#nullable restore
+        #nullable restore
 
-namespace TestNamespace
-{
-    partial class TestFile
-    {
         /// <inheritdoc cref="M:RazorBlade.HtmlTemplate`1.#ctor(`0)" />
         public TestFile(global::System.Tuple<global::System.DateTime, string?> model)
             : base(model)
@@ -38,3 +31,4 @@ namespace TestNamespace
         }
     }
 }
+#pragma warning restore 1591

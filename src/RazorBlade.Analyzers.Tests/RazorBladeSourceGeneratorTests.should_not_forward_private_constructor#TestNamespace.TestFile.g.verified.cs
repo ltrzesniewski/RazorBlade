@@ -14,16 +14,9 @@ namespace TestNamespace
         {
         }
         #pragma warning restore 1998
-    }
-}
-#pragma warning restore 1591
 
-#nullable restore
+        #nullable restore
 
-namespace TestNamespace
-{
-    partial class TestFile
-    {
         /// <inheritdoc cref="M:Foo.BaseClass.#ctor(System.Int64)" />
         public TestFile(long value)
             : base(value)
@@ -31,3 +24,4 @@ namespace TestNamespace
         }
     }
 }
+#pragma warning restore 1591

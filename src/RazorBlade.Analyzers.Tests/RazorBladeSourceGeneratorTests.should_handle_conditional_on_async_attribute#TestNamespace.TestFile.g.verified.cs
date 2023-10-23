@@ -28,16 +28,9 @@ Write(await Task.FromResult(42));
 #nullable disable
         }
         #pragma warning restore 1998
-    }
-}
-#pragma warning restore 1591
 
-#nullable restore
+        #nullable restore
 
-namespace TestNamespace
-{
-    partial class TestFile
-    {
         /// <inheritdoc cref="M:Foo.BaseClassC.OnlyOnSync(System.Int32)" />
         [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
         [global::System.Obsolete("Hello, world!", DiagnosticId = "RB0003")]
@@ -75,3 +68,4 @@ namespace TestNamespace
             => base.Generic<TValueA, @int>(i, j);
     }
 }
+#pragma warning restore 1591

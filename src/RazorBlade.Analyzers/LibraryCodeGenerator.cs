@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.AspNetCore.Razor.Language.CodeGeneration;
-using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -71,7 +70,12 @@ internal class LibraryCodeGenerator
     {
         Analyze(cancellationToken);
 
-        if (_classSymbol is not null)
+        if (_classSymbol is null)
+            return string.Empty;
+
+        _writer.WriteLine();
+
+        using (_writer.IndentScope(2))
         {
             if (!_generatedDoc.Options.SuppressNullabilityEnforcement)
             {
@@ -79,12 +83,8 @@ internal class LibraryCodeGenerator
                 _writer.WriteLine();
             }
 
-            using (_writer.BuildNamespace(_classSymbol.ContainingNamespace.ToDisplayString()))
-            using (_writer.BuildClassDeclaration(new[] { "partial" }, _classSymbol.Name, null, Array.Empty<string>(), Array.Empty<TypeParameter>(), useNullableContext: false))
-            {
-                GenerateConstructors();
-                GenerateConditionalOnAsync();
-            }
+            GenerateConstructors();
+            GenerateConditionalOnAsync();
         }
 
         return _hasCode ? _writer.GenerateCode() : string.Empty;

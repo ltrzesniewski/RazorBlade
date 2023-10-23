@@ -28,16 +28,9 @@ Write(await Task.FromResult(42));
 #nullable disable
         }
         #pragma warning restore 1998
-    }
-}
-#pragma warning restore 1591
 
-#nullable restore
+        #nullable restore
 
-namespace TestNamespace
-{
-    partial class TestFile
-    {
         /// <inheritdoc cref="M:RazorBlade.RazorTemplate.Render(System.Threading.CancellationToken)" />
         [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
         [global::System.Obsolete("The generated template is async. Use RenderAsync instead.")]
@@ -51,3 +44,4 @@ namespace TestNamespace
             => base.Render(textWriter, cancellationToken);
     }
 }
+#pragma warning restore 1591

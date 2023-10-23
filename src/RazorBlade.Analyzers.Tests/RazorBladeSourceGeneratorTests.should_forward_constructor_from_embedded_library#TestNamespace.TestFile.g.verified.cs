@@ -14,16 +14,9 @@ namespace TestNamespace
         {
         }
         #pragma warning restore 1998
-    }
-}
-#pragma warning restore 1591
 
-#nullable restore
+        #nullable restore
 
-namespace TestNamespace
-{
-    partial class TestFile
-    {
         /// <inheritdoc cref="M:RazorBlade.HtmlTemplate`1.#ctor(`0)" />
         public TestFile(string model)
             : base(model)
@@ -31,3 +24,4 @@ namespace TestNamespace
         }
     }
 }
+#pragma warning restore 1591

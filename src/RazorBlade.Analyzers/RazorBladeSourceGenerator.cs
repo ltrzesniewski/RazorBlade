@@ -160,12 +160,28 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             globalOptions.AdditionalSyntaxTrees
         );
 
+        var generatedCode = generatedDoc.GeneratedCode;
         var libraryCode = generator.Generate(cancellationToken);
 
         if (string.IsNullOrEmpty(libraryCode))
-            return generatedDoc.GeneratedCode;
+            return generatedCode;
 
-        return string.Concat(generatedDoc.GeneratedCode, Environment.NewLine, libraryCode);
+        var insertPosition = ScanFromEnd(generatedCode, "}}\n");
+        return generatedCode.Insert(insertPosition, libraryCode);
+
+        static int ScanFromEnd(string input, string chars)
+        {
+            var lastIndex = input.Length;
+
+            foreach (var c in chars)
+            {
+                lastIndex = input.LastIndexOf(c, lastIndex - 1);
+                if (lastIndex < 0)
+                    throw new InvalidOperationException("Unexpected Razor output");
+            }
+
+            return lastIndex + 1;
+        }
     }
 
     static partial void OnGenerate();
