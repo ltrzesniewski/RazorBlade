@@ -47,29 +47,4 @@ internal static class RazorExtensions
 
     private static TextSpan ToTextSpan(this SourceSpan sourceSpan)
         => new(sourceSpan.AbsoluteIndex, sourceSpan.Length);
-
-    public static IndentDisposable IndentScope(this CodeWriter writer, int count = 1)
-    {
-        writer.CurrentIndent += writer.TabSize * count;
-        return new IndentDisposable(writer);
-    }
-
-    public struct IndentDisposable : IDisposable
-    {
-        private CodeWriter? _writer;
-
-        public IndentDisposable(CodeWriter writer)
-        {
-            _writer = writer;
-        }
-
-        public void Dispose()
-        {
-            if (_writer is null)
-                return;
-
-            _writer.CurrentIndent -= _writer.TabSize;
-            _writer = null;
-        }
-    }
 }

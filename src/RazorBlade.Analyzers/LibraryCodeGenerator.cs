@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Microsoft.AspNetCore.Razor.Language;
-using Microsoft.AspNetCore.Razor.Language.CodeGeneration;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -45,7 +44,7 @@ internal class LibraryCodeGenerator
     private readonly Compilation _inputCompilation;
     private readonly CSharpParseOptions _parseOptions;
     private readonly ImmutableArray<SyntaxTree> _additionalSyntaxTrees;
-    private readonly CodeWriter _writer;
+    private readonly CSharpCodeWriter _writer;
     private bool _hasCode;
 
     private INamedTypeSymbol? _classSymbol;
@@ -63,7 +62,7 @@ internal class LibraryCodeGenerator
         _additionalSyntaxTrees = additionalSyntaxTrees;
 
         _compilation = _inputCompilation;
-        _writer = new CodeWriter(Environment.NewLine, generatedDoc.Options);
+        _writer = new CSharpCodeWriter(generatedDoc.Options);
     }
 
     public string Generate(CancellationToken cancellationToken)
@@ -87,7 +86,7 @@ internal class LibraryCodeGenerator
             GenerateConditionalOnAsync();
         }
 
-        return _hasCode ? _writer.GenerateCode() : string.Empty;
+        return _hasCode ? _writer.ToString() : string.Empty;
     }
 
     private void Analyze(CancellationToken cancellationToken)
