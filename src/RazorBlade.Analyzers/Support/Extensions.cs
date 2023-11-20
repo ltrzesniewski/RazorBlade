@@ -33,23 +33,14 @@ internal static class Extensions
             ? "@" + name
             : name;
 
-    private sealed class LambdaComparer<T> : IEqualityComparer<T>
+    private sealed class LambdaComparer<T>(Func<T, T, bool> equals, Func<T, int> getHashCode) : IEqualityComparer<T>
     {
-        private readonly Func<T, T, bool> _equals;
-        private readonly Func<T, int> _getHashCode;
-
-        public LambdaComparer(Func<T, T, bool> equals, Func<T, int> getHashCode)
-        {
-            _equals = equals;
-            _getHashCode = getHashCode;
-        }
-
         public bool Equals(T? x, T? y)
             => x is not null
-                ? y is not null && _equals(x, y)
+                ? y is not null && equals(x, y)
                 : y is null;
 
         public int GetHashCode(T obj)
-            => _getHashCode(obj);
+            => getHashCode(obj);
     }
 }

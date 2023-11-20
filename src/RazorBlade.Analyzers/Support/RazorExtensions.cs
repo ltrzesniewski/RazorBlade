@@ -54,14 +54,9 @@ internal static class RazorExtensions
         return new IndentDisposable(writer);
     }
 
-    public struct IndentDisposable : IDisposable
+    public struct IndentDisposable(CodeWriter writer) : IDisposable
     {
-        private CodeWriter? _writer;
-
-        public IndentDisposable(CodeWriter writer)
-        {
-            _writer = writer;
-        }
+        private CodeWriter? _writer = writer;
 
         public void Dispose()
         {

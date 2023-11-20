@@ -9,17 +9,12 @@ internal class SourceWriter
 {
     private const string _indentString = "    ";
 
-    private readonly IndentedTextWriter _writer;
+    private readonly IndentedTextWriter _writer = new(new StringWriter(), _indentString);
 
     public int Indent
     {
         get => _writer.Indent;
         set => _writer.Indent = value;
-    }
-
-    public SourceWriter()
-    {
-        _writer = new IndentedTextWriter(new StringWriter(), _indentString);
     }
 
     public void WriteLine()
@@ -53,16 +48,9 @@ internal class SourceWriter
         return new IndentDisposable(this, "}");
     }
 
-    public struct IndentDisposable : IDisposable
+    public struct IndentDisposable(SourceWriter writer, string? suffix) : IDisposable
     {
-        private SourceWriter? _writer;
-        private readonly string? _suffix;
-
-        public IndentDisposable(SourceWriter writer, string? suffix)
-        {
-            _writer = writer;
-            _suffix = suffix;
-        }
+        private SourceWriter? _writer = writer;
 
         public void Dispose()
         {
@@ -71,8 +59,8 @@ internal class SourceWriter
 
             _writer._writer.Indent--;
 
-            if (_suffix is not null)
-                _writer.WriteLine(_suffix);
+            if (suffix is not null)
+                _writer.WriteLine(suffix);
 
             _writer = null;
         }

@@ -348,12 +348,11 @@ public class RazorBladeSourceGeneratorTests
         {
             var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
 
-            metadataReferences.AddRange(new[]
-            {
+            metadataReferences.AddRange([
                 MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
                 MetadataReference.CreateFromFile(Path.Combine(runtimeDir, "netstandard.dll")),
                 MetadataReference.CreateFromFile(Path.Combine(runtimeDir, "System.Runtime.dll"))
-            });
+            ]);
         }
 
         var analyzerConfigOptionsProvider = new AnalyzerConfigOptionsProviderMock

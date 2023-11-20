@@ -233,8 +233,8 @@ public sealed class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
     private sealed class RemoveJetBrainsAnnotationsRewriter : CSharpSyntaxRewriter
     {
         [SuppressMessage("ReSharper", "StringLiteralTypo")]
-        private static readonly HashSet<string> _attributes = new()
-        {
+        private static readonly HashSet<string> _attributes =
+        [
             "CanBeNull", "NotNull", "ItemNotNull", "ItemCanBeNull", "StringFormatMethod", "StructuredMessageTemplate", "ValueProvider", "ValueRange",
             "NonNegativeValue", "InvokerParameterName", "NotifyPropertyChangedInvocator", "ContractAnnotation", "LocalizationRequired",
             "CannotApplyEqualityOperator", "Component", "BaseTypeRequired", "UsedImplicitly", "MeansImplicitUse", "PublicAPI", "InstantHandle",
@@ -251,7 +251,7 @@ public sealed class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
             "XamlItemsControl", "XamlItemBindingOfItemsControl", "XamlItemStyleOfItemsControl", "XamlOneWayBindingModeByDefault", "XamlTwoWayBindingModeByDefault"
 
             // "Pure" can be confused with System.Diagnostics.Contracts.PureAttribute, so we don't remove it.
-        };
+        ];
 
         private SyntaxTriviaList _pendingLeadingTrivia = SyntaxTriviaList.Empty;
 

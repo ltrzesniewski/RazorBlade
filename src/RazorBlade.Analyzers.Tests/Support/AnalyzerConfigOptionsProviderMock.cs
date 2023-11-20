@@ -29,14 +29,9 @@ internal class AnalyzerConfigOptionsProviderMock : AnalyzerConfigOptionsProvider
     public IEnumerator GetEnumerator()
         => _values.GetEnumerator();
 
-    private class AnalyzerConfigOptionsMock : AnalyzerConfigOptions
+    private class AnalyzerConfigOptionsMock(AnalyzerConfigOptionsProviderMock mock) : AnalyzerConfigOptions
     {
-        private readonly AnalyzerConfigOptionsProviderMock _mock;
-
-        public AnalyzerConfigOptionsMock(AnalyzerConfigOptionsProviderMock mock)
-            => _mock = mock;
-
         public override bool TryGetValue(string key, out string value)
-            => _mock._values.TryGetValue(key, out value!);
+            => mock._values.TryGetValue(key, out value!);
     }
 }

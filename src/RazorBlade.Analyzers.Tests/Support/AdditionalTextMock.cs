@@ -4,16 +4,10 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace RazorBlade.Analyzers.Tests.Support;
 
-internal class AdditionalTextMock : AdditionalText
+internal class AdditionalTextMock(string text, string path) : AdditionalText
 {
-    public string Text { get; }
-    public override string Path { get; }
-
-    public AdditionalTextMock(string text, string path)
-    {
-        Text = text;
-        Path = path;
-    }
+    public string Text { get; } = text;
+    public override string Path { get; } = path;
 
     public override SourceText GetText(CancellationToken cancellationToken = default)
         => SourceText.From(Text);

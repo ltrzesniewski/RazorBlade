@@ -55,7 +55,7 @@ public class EmbeddedLibrarySourceGeneratorTests
                                            .AddSyntaxTrees(CSharpSyntaxTree.ParseText(string.Empty, parseOptions))
                                            .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithNullableContextOptions(NullableContextOptions.Enable));
 
-        var runResult = CSharpGeneratorDriver.Create(new[] { new EmbeddedLibrarySourceGenerator().AsSourceGenerator() }, parseOptions: parseOptions)
+        var runResult = CSharpGeneratorDriver.Create([new EmbeddedLibrarySourceGenerator().AsSourceGenerator()], parseOptions: parseOptions)
                                              .WithUpdatedAnalyzerConfigOptions(new AnalyzerConfigOptionsProviderMock
                                              {
                                                  { "RazorBladeEmbeddedLibrary", "True" }
