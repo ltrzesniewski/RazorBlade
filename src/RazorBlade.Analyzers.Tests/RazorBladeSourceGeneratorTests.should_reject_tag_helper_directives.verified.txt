@@ -6,8 +6,6 @@
       Severity: Error,
       WarningLevel: 0,
       Location: ./TestFile.cshtml: (0,0)-(0,20),
-      Description: ,
-      HelpLink: ,
       MessageFormat: Tag helpers are not supported in RazorBlade.,
       Message: Tag helpers are not supported in RazorBlade.,
       Category: RazorBlade
