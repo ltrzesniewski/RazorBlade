@@ -72,7 +72,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         return new InputFile(
             additionalText,
             ns,
-            CSharpIdentifier.SanitizeIdentifier(Path.GetFileNameWithoutExtension(additionalText.Path))
+            CSharpIdentifier.SanitizeIdentifier(Path.GetFileNameWithoutExtension(additionalText.Path).AsSpanOrDefault())
         );
     }
 

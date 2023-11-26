@@ -83,7 +83,7 @@ internal class LibraryCodeGenerator
             }
 
             using (_writer.BuildNamespace(_classSymbol.ContainingNamespace.ToDisplayString()))
-            using (_writer.BuildClassDeclaration(["partial"], _classSymbol.Name, null, Array.Empty<string>(), Array.Empty<TypeParameter>(), useNullableContext: false))
+            using (_writer.BuildClassDeclaration(["partial"], _classSymbol.Name, null, Array.Empty<string>(), Array.Empty<TypeParameter>(), null, useNullableContext: false))
             {
                 GenerateConstructors();
                 GenerateConditionalOnAsync();

@@ -1,3 +1,6 @@
 [submodule "lib/razor"]
 	path = lib/razor
 	url = https://github.com/dotnet/razor.git
+[submodule "lib/aspnetcore"]
+	path = lib/aspnetcore
+	url = https://github.com/dotnet/aspnetcore.git

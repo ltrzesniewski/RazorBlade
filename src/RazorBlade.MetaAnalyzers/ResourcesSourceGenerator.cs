@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using RazorBlade.Analyzers.Support;
 using RazorBlade.MetaAnalyzers.Support;
@@ -65,7 +66,12 @@ public class ResourcesSourceGenerator : IIncrementalGenerator
                 var name = item.Attribute("name")?.Value ?? string.Empty;
                 var value = item.Element("value")?.Value ?? string.Empty;
 
-                writer.WriteLine($"internal static string {name}");
+                if (string.IsNullOrEmpty(name))
+                    continue;
+
+                var formatStringName = SyntaxFacts.IsIdentifierStartCharacter(name[0]) ? name : $"_{name}";
+
+                writer.WriteLine($"internal static string {formatStringName}");
                 writer.WriteIndent();
                 writer.Write("=> ");
                 writer.WriteVerbatimString(value);
@@ -95,7 +101,7 @@ public class ResourcesSourceGenerator : IIncrementalGenerator
 
                     writer.WriteLine($"internal static string Format{name}({argsSb})");
                     writer.WriteIndent();
-                    writer.WriteLine($"=> string.Format(CultureInfo.InvariantCulture, {name}, {paramsSb});");
+                    writer.WriteLine($"=> string.Format(CultureInfo.InvariantCulture, {formatStringName}, {paramsSb});");
                     writer.WriteLine();
                 }
             }
