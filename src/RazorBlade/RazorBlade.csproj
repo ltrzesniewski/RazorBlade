@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net6.0;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net6.0;netstandard2.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <DebugType>embedded</DebugType>
   </PropertyGroup>
@@ -16,7 +16,7 @@
     <ProjectReference Include="../RazorBlade.Library/RazorBlade.Library.csproj" ReferenceOutputAssembly="false" />
     <Compile Include="../RazorBlade.Library/**/*.cs" Exclude="../RazorBlade.Library/obj/**/*.cs" Visible="false" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="../RazorBlade.Analyzers/RazorBlade.Analyzers.csproj" ReferenceOutputAssembly="false" />
     <None Include="../RazorBlade.Analyzers/bin/$(Configuration)/netstandard2.0/RazorBlade.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />

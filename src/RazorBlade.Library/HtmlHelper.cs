@@ -13,6 +13,12 @@ namespace RazorBlade;
 [SuppressMessage("ReSharper", "MemberCanBeMadeStatic.Global")]
 public sealed class HtmlHelper
 {
+#if NET8_0_OR_GREATER
+    private static readonly System.Buffers.SearchValues<char> _charsToEscape = System.Buffers.SearchValues.Create("&<>\"\'");
+#elif NET6_0_OR_GREATER
+    private const string _charsToEscape = "&<>\"\'";
+#endif
+
     internal static HtmlHelper Instance { get; } = new();
 
     /// <summary>
@@ -34,13 +40,15 @@ public sealed class HtmlHelper
 
 #if NET6_0_OR_GREATER
         var valueSpan = valueString.AsSpan();
-        var sb = new StringBuilder();
+        var sb = default(StringBuilder);
 
         while (true)
         {
-            var idx = valueSpan.IndexOfAny("&<>\"\'");
+            var idx = valueSpan.IndexOfAny(_charsToEscape);
             if (idx < 0)
                 break;
+
+            sb ??= new StringBuilder();
 
             if (idx != 0)
                 sb.Append(valueSpan[..idx]);
@@ -57,6 +65,9 @@ public sealed class HtmlHelper
 
             valueSpan = valueSpan[(idx + 1)..];
         }
+
+        if (sb is null)
+            return valueString;
 
         if (valueSpan.Length != 0)
             sb.Append(valueSpan);

@@ -13,6 +13,12 @@ namespace RazorBlade;
 /// </remarks>
 public abstract class HtmlTemplate : RazorTemplate
 {
+#if NET8_0_OR_GREATER
+    private static readonly System.Buffers.SearchValues<char> _charsToEscape = System.Buffers.SearchValues.Create("&<>\"\'");
+#elif NET6_0_OR_GREATER
+    private const string _charsToEscape = "&<>\"\'";
+#endif
+
     private AttributeInfo _currentAttribute;
 
     // ReSharper disable once RedundantDisableWarningComment
@@ -47,7 +53,7 @@ public abstract class HtmlTemplate : RazorTemplate
 
         while (true)
         {
-            var idx = valueSpan.IndexOfAny("&<>\"\'");
+            var idx = valueSpan.IndexOfAny(_charsToEscape);
             if (idx < 0)
                 break;
 
