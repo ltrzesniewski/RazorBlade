@@ -87,7 +87,10 @@ public class RazorTemplateTests
         writer.ToString().ShouldEqual("foo & bar");
     }
 
-    [Test, Timeout(10_000)]
+    [Test]
+#if NETFRAMEWORK
+    [Timeout(10_000)]
+#endif
     public async Task should_support_cancellation()
     {
         var cts = new CancellationTokenSource();
