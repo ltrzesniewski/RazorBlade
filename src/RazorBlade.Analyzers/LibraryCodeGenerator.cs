@@ -52,6 +52,8 @@ internal class LibraryCodeGenerator
     private INamedTypeSymbol? _classSymbol;
     private ImmutableArray<Diagnostic> _diagnostics;
     private Compilation _compilation;
+    private SemanticModel? _semanticModel;
+    private ClassDeclarationSyntax? _classDeclarationSyntax;
 
     public LibraryCodeGenerator(RazorCSharpDocument generatedDoc,
                                 Compilation compilation,
@@ -86,7 +88,7 @@ internal class LibraryCodeGenerator
             using (_writer.BuildClassDeclaration(["partial"], _classSymbol.Name, null, Array.Empty<string>(), Array.Empty<TypeParameter>(), useNullableContext: false))
             {
                 GenerateConstructors();
-                GenerateConditionalOnAsync();
+                GenerateConditionalOnAsync(cancellationToken);
             }
         }
 
@@ -107,17 +109,17 @@ internal class LibraryCodeGenerator
                                         .AddSyntaxTrees(syntaxTree)
                                         .AddSyntaxTrees(_additionalSyntaxTrees);
 
-        var semanticModel = _compilation.GetSemanticModel(syntaxTree);
+        _semanticModel = _compilation.GetSemanticModel(syntaxTree);
 
-        var classDeclarationNode = syntaxTree.GetRoot(cancellationToken)
-                                             .DescendantNodes()
-                                             .FirstOrDefault(static i => i.IsKind(SyntaxKind.ClassDeclaration));
+        _classDeclarationSyntax = syntaxTree.GetRoot(cancellationToken)
+                                            .DescendantNodes()
+                                            .FirstOrDefault(static i => i.IsKind(SyntaxKind.ClassDeclaration)) as ClassDeclarationSyntax;
 
-        _classSymbol = classDeclarationNode is ClassDeclarationSyntax classDeclarationSyntax
-            ? semanticModel.GetDeclaredSymbol(classDeclarationSyntax, cancellationToken)
+        _classSymbol = _classDeclarationSyntax is not null
+            ? _semanticModel.GetDeclaredSymbol(_classDeclarationSyntax, cancellationToken)
             : null;
 
-        _diagnostics = semanticModel.GetDiagnostics(cancellationToken: cancellationToken);
+        _diagnostics = _semanticModel.GetDiagnostics(cancellationToken: cancellationToken);
     }
 
     private void GenerateConstructors()
@@ -164,26 +166,29 @@ internal class LibraryCodeGenerator
         }
     }
 
-    private void GenerateConditionalOnAsync()
+    private void GenerateConditionalOnAsync(CancellationToken cancellationToken)
     {
+        const string executeAsyncMethodName = "ExecuteAsync";
+        const string defineSectionMethodName = "DefineSection";
+
         var conditionalOnAsyncAttribute = _compilation.GetTypeByMetadataName("RazorBlade.Support.ConditionalOnAsyncAttribute");
         if (conditionalOnAsyncAttribute is null)
             return;
 
-        var executeMethodSymbol = _classSymbol?.GetMembers("ExecuteAsync")
-                                              .OfType<IMethodSymbol>()
-                                              .FirstOrDefault(i => i.Parameters.IsEmpty && i.IsAsync);
+        var executeMethodSyntax = _classDeclarationSyntax?.ChildNodes()
+                                                         .Where(m => m.IsKind(SyntaxKind.MethodDeclaration))
+                                                         .OfType<MethodDeclarationSyntax>()
+                                                         .FirstOrDefault(m => m.Identifier.ValueText == executeAsyncMethodName
+                                                                              && m.Modifiers.Any(SyntaxKind.AsyncKeyword)
+                                                                              && m.ParameterList.Parameters.Count == 0);
 
-        var methodLocation = executeMethodSymbol?.Locations.FirstOrDefault();
-        if (methodLocation is null)
+        if (executeMethodSyntax is null)
             return;
 
-        // CS1998 = This async method lacks 'await' operators and will run synchronously.
-        var isTemplateSync = _diagnostics.Any(i => i.Id == "CS1998" && i.Location == methodLocation);
-
+        var isTemplateSync = IsTemplateSync();
         var hiddenMethodSignatures = new HashSet<string>(StringComparer.Ordinal);
 
-        for (var baseClass = _classSymbol?.BaseType; baseClass is not (null or { SpecialType: SpecialType.System_Object }); baseClass = baseClass.BaseType)
+        foreach (var baseClass in _classSymbol.SelfAndBasesTypes().Skip(1))
         {
             foreach (var methodSymbol in baseClass.GetMembers().OfType<IMethodSymbol>())
             {
@@ -231,6 +236,49 @@ internal class LibraryCodeGenerator
                     _writer.WriteLine(";");
                 }
             }
+        }
+
+        bool IsTemplateSync()
+        {
+            // CS1998 = This async method lacks 'await' operators and will run synchronously.
+            // The ExecuteAsync and all the DefineSection methods need to have this diagnostic for the template to be considered synchronous.
+
+            var diagnosticLocations = _diagnostics.Where(i => i.Id == "CS1998").Select(i => i.Location).ToHashSet();
+            if (!diagnosticLocations.Contains(executeMethodSyntax.Identifier.GetLocation()))
+                return false;
+
+            var defineSectionMethod = _classSymbol.SelfAndBasesTypes()
+                                                  .SelectMany(t => t.GetMembers(defineSectionMethodName))
+                                                  .OfType<IMethodSymbol>()
+                                                  .FirstOrDefault(m => m.Parameters is
+                                                  [
+                                                      { Type.SpecialType: SpecialType.System_String },
+                                                      { Type.TypeKind: TypeKind.Delegate }
+                                                  ]);
+
+            if (defineSectionMethod is null || executeMethodSyntax.Body is not { } executeMethodBody)
+                return true;
+
+            foreach (var node in executeMethodBody.DescendantNodes())
+            {
+                if (node is InvocationExpressionSyntax
+                    {
+                        ArgumentList.Arguments:
+                        [
+                            { Expression: LiteralExpressionSyntax { RawKind: (int)SyntaxKind.StringLiteralExpression } },
+                            { Expression: ParenthesizedLambdaExpressionSyntax { AsyncKeyword.RawKind: (int)SyntaxKind.AsyncKeyword } lambda }
+                        ],
+                        Expression: IdentifierNameSyntax { Identifier.ValueText: defineSectionMethodName } expression
+                    }
+                    && !diagnosticLocations.Contains(lambda.ArrowToken.GetLocation())
+                    && SymbolEqualityComparer.Default.Equals(_semanticModel.GetSymbolInfo(expression, cancellationToken).Symbol, defineSectionMethod)
+                   )
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         static string GetMethodSignatureFootprint(IMethodSymbol methodSymbol)

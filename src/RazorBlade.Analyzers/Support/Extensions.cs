@@ -7,6 +7,9 @@ namespace RazorBlade.Analyzers.Support;
 
 internal static class Extensions
 {
+    public static HashSet<T> ToHashSet<T>(this IEnumerable<T> items)
+        => new(items);
+
     public static IncrementalValuesProvider<T> WhereNotNull<T>(this IncrementalValuesProvider<T?> provider)
         where T : class
         => provider.Where(static item => item is not null)!;
@@ -32,6 +35,15 @@ internal static class Extensions
         => SyntaxFacts.GetKeywordKind(name) != SyntaxKind.None
             ? "@" + name
             : name;
+
+    public static IEnumerable<INamedTypeSymbol> SelfAndBasesTypes(this INamedTypeSymbol? symbol)
+    {
+        while (symbol is not null)
+        {
+            yield return symbol;
+            symbol = symbol.BaseType;
+        }
+    }
 
     private sealed class LambdaComparer<T>(Func<T, T, bool> equals, Func<T, int> getHashCode) : IEqualityComparer<T>
     {
