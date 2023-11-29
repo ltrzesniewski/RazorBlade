@@ -324,6 +324,19 @@ public class RazorBladeSourceGeneratorTests
         );
     }
 
+    [Test]
+    public Task should_handle_sections()
+    {
+        return Verify(
+            """
+            Before section
+            @section SectionName { Section content }
+            After section
+            @section OtherSectionName { Answer is @(42) }
+            """
+        );
+    }
+
     private static GeneratorDriverRunResult Generate(string input,
                                                      string? csharpCode,
                                                      bool embeddedLibrary,

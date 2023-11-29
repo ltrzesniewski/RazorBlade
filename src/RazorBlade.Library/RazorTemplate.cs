@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +14,8 @@ namespace RazorBlade;
 /// </summary>
 public abstract class RazorTemplate : IEncodedContent
 {
+    private readonly Dictionary<string, Func<Task>> _sections = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>
     /// The <see cref="TextWriter"/> which receives the output.
     /// </summary>
@@ -168,6 +172,26 @@ public abstract class RazorTemplate : IEncodedContent
     [PublicAPI]
     [EditorBrowsable(EditorBrowsableState.Never)]
     protected internal abstract void EndWriteAttribute();
+
+    /// <summary>
+    /// Defines a section.
+    /// </summary>
+    /// <param name="name">The name of the section.</param>
+    /// <param name="action">The action which renders the section.</param>
+    [PublicAPI]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    protected internal void DefineSection(string name, Func<Task> action)
+    {
+#if NETCOREAPP
+        if (!_sections.TryAdd(name, action))
+            throw new InvalidOperationException($"Section '{name}' is already defined.");
+#else
+        if (_sections.ContainsKey(name))
+            throw new InvalidOperationException($"Section '{name}' is already defined.");
+
+        _sections[name] = action;
+#endif
+    }
 
     void IEncodedContent.WriteTo(TextWriter textWriter)
         => Render(textWriter, CancellationToken.None);
