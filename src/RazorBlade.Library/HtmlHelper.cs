@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Text;
 
 namespace RazorBlade;
@@ -60,7 +61,7 @@ public sealed class HtmlHelper
                 '>'   => "&gt;",
                 '"'   => "&quot;",
                 '\''  => "&#x27;",
-                var c => c.ToString() // Won't happen
+                var c => c.ToString() // Unreachable
             });
 
             valueSpan = valueSpan[(idx + 1)..];
@@ -79,6 +80,49 @@ public sealed class HtmlHelper
                           .Replace(">", "&gt;")
                           .Replace("\"", "&quot;")
                           .Replace("\'", "&#x27;");
+#endif
+    }
+
+    /// <summary>
+    /// HTML-encodes the provided value to the writer.
+    /// </summary>
+    /// <param name="value">Value to HTML-encode.</param>
+    /// <param name="writer">Destination writer.</param>
+    internal static void Encode(object? value, TextWriter writer)
+    {
+        var valueString = value?.ToString();
+        if (valueString is null or "")
+            return;
+
+#if NET6_0_OR_GREATER
+        var valueSpan = valueString.AsSpan();
+
+        while (true)
+        {
+            var idx = valueSpan.IndexOfAny(_charsToEscape);
+            if (idx < 0)
+                break;
+
+            if (idx != 0)
+                writer.Write(valueSpan[..idx]);
+
+            writer.Write(valueSpan[idx] switch
+            {
+                '&'   => "&amp;",
+                '<'   => "&lt;",
+                '>'   => "&gt;",
+                '"'   => "&quot;",
+                '\''  => "&#x27;",
+                var c => c.ToString() // Unreachable
+            });
+
+            valueSpan = valueSpan[(idx + 1)..];
+        }
+
+        if (valueSpan.Length != 0)
+            writer.Write(valueSpan);
+#else
+        writer.Write(Instance.Encode(valueString));
 #endif
     }
 }

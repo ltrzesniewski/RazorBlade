@@ -13,12 +13,6 @@ namespace RazorBlade;
 /// </remarks>
 public abstract class HtmlTemplate : RazorTemplate
 {
-#if NET8_0_OR_GREATER
-    private static readonly System.Buffers.SearchValues<char> _charsToEscape = System.Buffers.SearchValues.Create("&<>\"\'");
-#elif NET6_0_OR_GREATER
-    private const string _charsToEscape = "&<>\"\'";
-#endif
-
     private AttributeInfo _currentAttribute;
 
     // ReSharper disable once RedundantDisableWarningComment
@@ -39,51 +33,9 @@ public abstract class HtmlTemplate : RazorTemplate
     protected internal override void Write(object? value)
     {
         if (value is IEncodedContent encodedContent)
-        {
             encodedContent.WriteTo(Output);
-            return;
-        }
-
-        var valueString = value?.ToString();
-        if (valueString is null or "")
-            return;
-
-#if NET6_0_OR_GREATER
-        var valueSpan = valueString.AsSpan();
-
-        while (true)
-        {
-            var idx = valueSpan.IndexOfAny(_charsToEscape);
-            if (idx < 0)
-                break;
-
-            if (idx != 0)
-                Output.Write(valueSpan[..idx]);
-
-            Output.Write(valueSpan[idx] switch
-            {
-                '&'   => "&amp;",
-                '<'   => "&lt;",
-                '>'   => "&gt;",
-                '"'   => "&quot;",
-                '\''  => "&#x27;",
-                var c => c.ToString() // Won't happen
-            });
-
-            valueSpan = valueSpan[(idx + 1)..];
-        }
-
-        if (valueSpan.Length != 0)
-            Output.Write(valueSpan);
-#else
-        Output.Write(
-            valueString.Replace("&", "&amp;")
-                       .Replace("<", "&lt;")
-                       .Replace(">", "&gt;")
-                       .Replace("\"", "&quot;")
-                       .Replace("\'", "&#x27;")
-        );
-#endif
+        else
+            HtmlHelper.Encode(value, Output);
     }
 
     /// <inheritdoc />
