@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
@@ -14,7 +15,7 @@ namespace RazorBlade;
 /// </summary>
 public abstract class RazorTemplate : IEncodedContent
 {
-    private readonly Dictionary<string, Func<Task>> _sections = new(StringComparer.OrdinalIgnoreCase);
+    private protected readonly Dictionary<string, Func<Task>> _sections = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// The <see cref="TextWriter"/> which receives the output.
@@ -24,7 +25,12 @@ public abstract class RazorTemplate : IEncodedContent
     /// <summary>
     /// The cancellation token.
     /// </summary>
-    protected internal CancellationToken CancellationToken { get; private set; }
+    protected internal CancellationToken CancellationToken { get; set; }
+
+    /// <summary>
+    /// The layout to use.
+    /// </summary>
+    protected internal IRazorLayout? Layout { get; set; }
 
     /// <summary>
     /// Renders the template synchronously and returns the result as a string.
@@ -100,10 +106,50 @@ public abstract class RazorTemplate : IEncodedContent
 
         try
         {
-            Output = textWriter;
+            var stringWriter = new StringWriter();
+
+            Output = stringWriter;
             CancellationToken = cancellationToken;
 
             await ExecuteAsync().ConfigureAwait(false);
+
+            if (Layout is null)
+            {
+#if NET6_0_OR_GREATER
+                await textWriter.WriteAsync(stringWriter.GetStringBuilder(), cancellationToken).ConfigureAwait(false);
+#else
+                await textWriter.WriteAsync(stringWriter.ToString()).ConfigureAwait(false);
+#endif
+            }
+            else
+            {
+                IRazorLayout.IExecutionResult executionResult = new ExecutionResult
+                {
+                    Body = new StringBuilderEncodedContent(stringWriter.GetStringBuilder()),
+                    Layout = Layout,
+                    Sections = _sections,
+                    CancellationToken = CancellationToken
+                };
+
+                while (executionResult.Layout is { } layout)
+                {
+                    CancellationToken.ThrowIfCancellationRequested();
+                    executionResult = await layout.RenderLayoutAsync(executionResult).ConfigureAwait(false);
+                }
+
+                if (executionResult.Body is StringBuilderEncodedContent { StringBuilder: var resultStringBuilder })
+                {
+#if NET6_0_OR_GREATER
+                    await textWriter.WriteAsync(resultStringBuilder, cancellationToken).ConfigureAwait(false);
+#else
+                    await textWriter.WriteAsync(resultStringBuilder.ToString()).ConfigureAwait(false);
+#endif
+                }
+                else
+                {
+                    executionResult.Body.WriteTo(textWriter);
+                }
+            }
         }
         finally
         {
@@ -195,4 +241,28 @@ public abstract class RazorTemplate : IEncodedContent
 
     void IEncodedContent.WriteTo(TextWriter textWriter)
         => Render(textWriter, CancellationToken.None);
+
+    private protected class ExecutionResult : IRazorLayout.IExecutionResult
+    {
+        public IEncodedContent Body { get; set; } = null!;
+        public IRazorLayout? Layout { get; set; }
+        public IReadOnlyDictionary<string, Func<Task>> Sections { get; set; } = null!;
+        public CancellationToken CancellationToken { get; set; }
+    }
+
+    private protected class StringBuilderEncodedContent : IEncodedContent
+    {
+        public static IEncodedContent Empty { get; } = new StringBuilderEncodedContent(new StringBuilder());
+
+        public StringBuilder StringBuilder { get; }
+
+        public StringBuilderEncodedContent(StringBuilder stringBuilder)
+            => StringBuilder = stringBuilder;
+
+        public void WriteTo(TextWriter textWriter)
+            => textWriter.Write(StringBuilder);
+
+        public override string ToString()
+            => StringBuilder.ToString();
+    }
 }

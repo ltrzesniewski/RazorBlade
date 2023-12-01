@@ -15,6 +15,13 @@ public abstract class HtmlTemplate : RazorTemplate
 {
     private AttributeInfo _currentAttribute;
 
+    /// <inheritdoc cref="RazorTemplate.Layout" />
+    protected internal new HtmlLayout? Layout
+    {
+        get => base.Layout as HtmlLayout;
+        set => base.Layout = value;
+    }
+
     // ReSharper disable once RedundantDisableWarningComment
 #pragma warning disable CA1822
 
