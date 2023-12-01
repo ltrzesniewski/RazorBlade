@@ -182,7 +182,7 @@ public abstract class RazorTemplate : IEncodedContent
     [EditorBrowsable(EditorBrowsableState.Never)]
     protected internal void DefineSection(string name, Func<Task> action)
     {
-#if NETCOREAPP
+#if NET6_0_OR_GREATER
         if (!_sections.TryAdd(name, action))
             throw new InvalidOperationException($"Section '{name}' is already defined.");
 #else
