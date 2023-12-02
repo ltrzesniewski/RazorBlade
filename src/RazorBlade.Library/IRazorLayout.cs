@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 
 namespace RazorBlade;
@@ -15,7 +13,7 @@ public interface IRazorLayout
     /// </summary>
     /// <param name="input">The input data.</param>
     /// <returns>The output data after rendering the layout, which can be used for the next layout.</returns>
-    Task<IExecutionResult> RenderLayoutAsync(IExecutionResult input);
+    Task<IExecutionResult> ExecuteLayoutAsync(IExecutionResult input);
 
     /// <summary>
     /// The execution result of a page.
@@ -33,13 +31,15 @@ public interface IRazorLayout
         IRazorLayout? Layout { get; }
 
         /// <summary>
-        /// The sections this page has defined.
-        /// </summary>
-        IReadOnlyDictionary<string, Func<Task>> Sections { get; }
-
-        /// <summary>
         /// The cancellation token.
         /// </summary>
         CancellationToken CancellationToken { get; }
+
+        /// <summary>
+        /// Renders a section.
+        /// </summary>
+        /// <param name="name">The section name.</param>
+        /// <returns>The rendered output, or null if the section is not defined.</returns>
+        Task<IEncodedContent?> RenderSectionAsync(string name);
     }
 }

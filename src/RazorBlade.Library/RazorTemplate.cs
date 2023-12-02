@@ -15,7 +15,9 @@ namespace RazorBlade;
 /// </summary>
 public abstract class RazorTemplate : IEncodedContent
 {
-    private protected readonly Dictionary<string, Func<Task>> _sections = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, Func<Task>>? _sections;
+
+    private Dictionary<string, Func<Task>> Sections => _sections ??= new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// The <see cref="TextWriter"/> which receives the output.
@@ -44,11 +46,11 @@ public abstract class RazorTemplate : IEncodedContent
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var renderTask = RenderAsync(cancellationToken);
+        var renderTask = RenderAsyncCore(cancellationToken);
         if (renderTask.IsCompleted)
-            return renderTask.Result;
+            return renderTask.GetAwaiter().GetResult().ToString();
 
-        return Task.Run(async () => await renderTask.ConfigureAwait(false), CancellationToken.None).GetAwaiter().GetResult();
+        return Task.Run(async () => await renderTask.ConfigureAwait(false), CancellationToken.None).GetAwaiter().GetResult().ToString();
     }
 
     /// <summary>
@@ -85,9 +87,8 @@ public abstract class RazorTemplate : IEncodedContent
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var output = new StringWriter();
-        await RenderAsync(output, cancellationToken).ConfigureAwait(false);
-        return output.ToString();
+        var stringBuilder = await RenderAsyncCore(cancellationToken).ConfigureAwait(false);
+        return stringBuilder.ToString();
     }
 
     /// <summary>
@@ -102,58 +103,53 @@ public abstract class RazorTemplate : IEncodedContent
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var previousState = (Output, CancellationToken);
+        var stringBuilder = await RenderAsyncCore(cancellationToken).ConfigureAwait(false);
+
+#if NET6_0_OR_GREATER
+        await textWriter.WriteAsync(stringBuilder, cancellationToken).ConfigureAwait(false);
+#else
+        await textWriter.WriteAsync(stringBuilder.ToString()).ConfigureAwait(false);
+#endif
+    }
+
+    private async Task<StringBuilder> RenderAsyncCore(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var previousState = (_sections, Output, CancellationToken, Layout);
 
         try
         {
-            var stringWriter = new StringWriter();
+            var output = new StringWriter();
 
-            Output = stringWriter;
+            _sections = null;
+            Output = output;
             CancellationToken = cancellationToken;
+            Layout = null;
 
             await ExecuteAsync().ConfigureAwait(false);
 
             if (Layout is null)
-            {
-#if NET6_0_OR_GREATER
-                await textWriter.WriteAsync(stringWriter.GetStringBuilder(), cancellationToken).ConfigureAwait(false);
-#else
-                await textWriter.WriteAsync(stringWriter.ToString()).ConfigureAwait(false);
-#endif
-            }
-            else
-            {
-                IRazorLayout.IExecutionResult executionResult = new ExecutionResult
-                {
-                    Body = new StringBuilderEncodedContent(stringWriter.GetStringBuilder()),
-                    Layout = Layout,
-                    Sections = _sections,
-                    CancellationToken = CancellationToken
-                };
+                return output.GetStringBuilder();
 
-                while (executionResult.Layout is { } layout)
-                {
-                    CancellationToken.ThrowIfCancellationRequested();
-                    executionResult = await layout.RenderLayoutAsync(executionResult).ConfigureAwait(false);
-                }
+            IRazorLayout.IExecutionResult executionResult = new ExecutionResult(this, output.GetStringBuilder());
 
-                if (executionResult.Body is StringBuilderEncodedContent { StringBuilder: var resultStringBuilder })
-                {
-#if NET6_0_OR_GREATER
-                    await textWriter.WriteAsync(resultStringBuilder, cancellationToken).ConfigureAwait(false);
-#else
-                    await textWriter.WriteAsync(resultStringBuilder.ToString()).ConfigureAwait(false);
-#endif
-                }
-                else
-                {
-                    executionResult.Body.WriteTo(textWriter);
-                }
+            while (executionResult.Layout is { } layout)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                executionResult = await layout.ExecuteLayoutAsync(executionResult).ConfigureAwait(false);
             }
+
+            if (executionResult.Body is StringBuilderEncodedContent { StringBuilder: var outputWithLayout })
+                return outputWithLayout;
+
+            var outerBodyResult = new StringWriter();
+            executionResult.Body.WriteTo(outerBodyResult);
+            return outerBodyResult.GetStringBuilder();
         }
         finally
         {
-            (Output, CancellationToken) = previousState;
+            (_sections, Output, CancellationToken, Layout) = previousState;
         }
     }
 
@@ -229,13 +225,13 @@ public abstract class RazorTemplate : IEncodedContent
     protected internal void DefineSection(string name, Func<Task> action)
     {
 #if NET6_0_OR_GREATER
-        if (!_sections.TryAdd(name, action))
+        if (!Sections.TryAdd(name, action))
             throw new InvalidOperationException($"Section '{name}' is already defined.");
 #else
-        if (_sections.ContainsKey(name))
+        if (Sections.ContainsKey(name))
             throw new InvalidOperationException($"Section '{name}' is already defined.");
 
-        _sections[name] = action;
+        Sections[name] = action;
 #endif
     }
 
@@ -244,10 +240,41 @@ public abstract class RazorTemplate : IEncodedContent
 
     private protected class ExecutionResult : IRazorLayout.IExecutionResult
     {
-        public IEncodedContent Body { get; set; } = null!;
-        public IRazorLayout? Layout { get; set; }
-        public IReadOnlyDictionary<string, Func<Task>> Sections { get; set; } = null!;
-        public CancellationToken CancellationToken { get; set; }
+        private readonly RazorTemplate _page;
+
+        public IEncodedContent Body { get; }
+        public IRazorLayout? Layout { get; }
+        public CancellationToken CancellationToken { get; }
+
+        public ExecutionResult(RazorTemplate page, StringBuilder body)
+        {
+            _page = page;
+            Body = new StringBuilderEncodedContent(body);
+            Layout = page.Layout;
+            CancellationToken = page.CancellationToken;
+        }
+
+        public async Task<IEncodedContent?> RenderSectionAsync(string name)
+        {
+            if (!_page.Sections.TryGetValue(name, out var sectionAction))
+                return null;
+
+            var previousOutput = _page.Output;
+
+            try
+            {
+                var output = new StringWriter();
+                _page.Output = output;
+
+                await sectionAction().ConfigureAwait(false);
+
+                return new StringBuilderEncodedContent(output.GetStringBuilder());
+            }
+            finally
+            {
+                _page.Output = previousOutput;
+            }
+        }
     }
 
     private protected class StringBuilderEncodedContent : IEncodedContent
