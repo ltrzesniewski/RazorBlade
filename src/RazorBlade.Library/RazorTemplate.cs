@@ -139,7 +139,7 @@ public abstract class RazorTemplate : IEncodedContent
     /// <summary>
     /// Calls the <see cref="ExecuteAsync"/> method in a new <see cref="ExecutionScope"/>.
     /// </summary>
-    private protected async Task<IRazorExecutionResult> ExecuteAsyncCore(CancellationToken cancellationToken)
+    private protected virtual async Task<IRazorExecutionResult> ExecuteAsyncCore(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 

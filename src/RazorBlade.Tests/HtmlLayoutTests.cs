@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using RazorBlade.Tests.Support;
@@ -168,6 +170,18 @@ public class HtmlLayoutTests
         });
 
         Assert.Throws<InvalidOperationException>(() => page.Render());
+    }
+
+    [Test, Obsolete]
+    public void should_throw_on_render()
+    {
+        var layout = new Layout(_ => { });
+
+        Assert.Throws<InvalidOperationException>(() => layout.Render(CancellationToken.None));
+        Assert.Throws<InvalidOperationException>(() => layout.Render(TextWriter.Null, CancellationToken.None));
+        Assert.Throws<InvalidOperationException>(() => layout.RenderAsync(CancellationToken.None).GetAwaiter().GetResult());
+        Assert.Throws<InvalidOperationException>(() => layout.RenderAsync(TextWriter.Null, CancellationToken.None).GetAwaiter().GetResult());
+        Assert.Throws<InvalidOperationException>(() => ((RazorTemplate)layout).Render(CancellationToken.None));
     }
 
     private class Template : HtmlTemplate

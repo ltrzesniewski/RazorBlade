@@ -1,4 +1,7 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -9,6 +12,8 @@ namespace RazorBlade;
 /// </summary>
 public abstract class HtmlLayout : HtmlTemplate, IRazorLayout
 {
+    private const string _contentsRequiredErrorMessage = "Layout pages can only be rendered when associated with a contents page.";
+
     private IRazorExecutionResult? _layoutInput;
 
     async Task<IRazorExecutionResult> IRazorLayout.ExecuteLayoutAsync(IRazorExecutionResult input)
@@ -23,6 +28,54 @@ public abstract class HtmlLayout : HtmlTemplate, IRazorLayout
             _layoutInput = null;
         }
     }
+
+    private protected override Task<IRazorExecutionResult> ExecuteAsyncCore(CancellationToken cancellationToken)
+    {
+        if (_layoutInput is null)
+            throw new InvalidOperationException(_contentsRequiredErrorMessage);
+
+        return base.ExecuteAsyncCore(cancellationToken);
+    }
+
+    /// <summary>
+    /// Should not be used on layout pages.
+    /// </summary>
+    [Obsolete(_contentsRequiredErrorMessage, true)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [SuppressMessage("ReSharper", "UnusedParameter.Global")]
+    [SuppressMessage("ReSharper", "MemberCanBeMadeStatic.Global")]
+    public new void Render(CancellationToken cancellationToken = default)
+        => throw new InvalidOperationException(_contentsRequiredErrorMessage);
+
+    /// <summary>
+    /// Should not be used on layout pages.
+    /// </summary>
+    [Obsolete(_contentsRequiredErrorMessage, true)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [SuppressMessage("ReSharper", "UnusedParameter.Global")]
+    [SuppressMessage("ReSharper", "MemberCanBeMadeStatic.Global")]
+    public new void Render(TextWriter textWriter, CancellationToken cancellationToken = default)
+        => throw new InvalidOperationException(_contentsRequiredErrorMessage);
+
+    /// <summary>
+    /// Should not be used on layout pages.
+    /// </summary>
+    [Obsolete(_contentsRequiredErrorMessage, true)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [SuppressMessage("ReSharper", "UnusedParameter.Global")]
+    [SuppressMessage("ReSharper", "MemberCanBeMadeStatic.Global")]
+    public new Task<string> RenderAsync(CancellationToken cancellationToken = default)
+        => throw new InvalidOperationException(_contentsRequiredErrorMessage);
+
+    /// <summary>
+    /// Should not be used on layout pages.
+    /// </summary>
+    [Obsolete(_contentsRequiredErrorMessage, true)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [SuppressMessage("ReSharper", "UnusedParameter.Global")]
+    [SuppressMessage("ReSharper", "MemberCanBeMadeStatic.Global")]
+    public new Task RenderAsync(TextWriter textWriter, CancellationToken cancellationToken = default)
+        => throw new InvalidOperationException(_contentsRequiredErrorMessage);
 
     /// <summary>
     /// Returns the inner page body.
