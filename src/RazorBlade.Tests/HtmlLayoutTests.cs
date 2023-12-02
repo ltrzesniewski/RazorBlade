@@ -87,7 +87,7 @@ public class HtmlLayoutTests
 
         var innerLayout = new Layout(t =>
         {
-            t.Write(t.RenderSection("page"));
+            t.Write(t.RenderSectionAsync("page").GetAwaiter().GetResult());
             t.Write(t.RenderSection("page2", false));
             t.SetSection("inner", "innerSection ");
             t.Write(t.RenderSection("inner", false));
@@ -129,6 +129,47 @@ public class HtmlLayoutTests
         sectionRendered.ShouldBeTrue();
     }
 
+    [Test]
+    public void should_throw_on_undefined_sections()
+    {
+        var layout = new Layout(t => t.Write(t.RenderSection("foo")));
+
+        var page = new Template(t => t.Layout = layout);
+
+        Assert.Throws<InvalidOperationException>(() => page.Render());
+    }
+
+    [Test]
+    public void should_indicate_if_section_is_defined()
+    {
+        var layout = new Layout(t =>
+        {
+            t.IsSectionDefined("foo").ShouldBeTrue();
+            t.IsSectionDefined("bar").ShouldBeFalse();
+        });
+
+        var page = new Template(t =>
+        {
+            t.Layout = layout;
+            t.SetSection("foo", "foo");
+        });
+
+        page.Render();
+        layout.WasExecuted.ShouldBeTrue();
+    }
+
+    [Test]
+    public void should_throw_when_duplicate_section_is_defined()
+    {
+        var page = new Template(t =>
+        {
+            t.SetSection("foo", "foo");
+            t.SetSection("foo", "foo");
+        });
+
+        Assert.Throws<InvalidOperationException>(() => page.Render());
+    }
+
     private class Template : HtmlTemplate
     {
         private readonly Action<Template> _executeAction;
@@ -159,12 +200,15 @@ public class HtmlLayoutTests
     {
         private readonly Action<Layout> _executeAction;
 
+        public bool WasExecuted { get; private set; }
+
         public Layout(Action<Layout> executeAction)
             => _executeAction = executeAction;
 
         protected internal override Task ExecuteAsync()
         {
             _executeAction(this);
+            WasExecuted = true;
             return base.ExecuteAsync();
         }
 

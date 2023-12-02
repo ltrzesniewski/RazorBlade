@@ -343,7 +343,7 @@ public class RazorBladeSourceGeneratorTests
         return Verify(
             """
             @using System.Threading.Tasks
-            @if(42.ToString() == "42") {
+            @if (42.ToString() == "42") {
                 @section SectionName { @await Task.FromResult(42) }
             }
             """

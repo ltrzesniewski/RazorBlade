@@ -130,6 +130,7 @@ public abstract class RazorTemplate : IEncodedContent
         if (executionResult.Body is EncodedContent { Output: var outputStringBuilder })
             return outputStringBuilder;
 
+        // Fallback case, shouldn't happen
         var outputStringWriter = new StringWriter();
         executionResult.Body.WriteTo(outputStringWriter);
         return outputStringWriter.GetStringBuilder();
