@@ -155,7 +155,5 @@ public abstract class HtmlTemplate<TModel> : HtmlTemplate
     /// This constructor is provided for the designer only. Do not use.
     /// </summary>
     protected HtmlTemplate()
-    {
-        throw new NotSupportedException("Use the constructor overload that takes a model.");
-    }
+        => throw new NotSupportedException("Use the constructor overload that takes a model.");
 }

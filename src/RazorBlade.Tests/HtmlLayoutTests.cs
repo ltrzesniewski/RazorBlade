@@ -104,6 +104,31 @@ public class HtmlLayoutTests
         page.Render().ShouldEqual("innerSection pageSection");
     }
 
+    [Test]
+    public void should_keep_the_layout_in_sections()
+    {
+        var sectionRendered = false;
+
+        var layout = new Layout(t => t.Write(t.RenderSection("section")));
+
+        var page = new Template(t =>
+        {
+            t.Layout = layout;
+            t.DefineSection(
+                "section",
+                () =>
+                {
+                    t.Layout.ShouldBeTheSameAs(layout);
+                    sectionRendered = true;
+                    return Task.CompletedTask;
+                }
+            );
+        });
+
+        page.Render();
+        sectionRendered.ShouldBeTrue();
+    }
+
     private class Template : HtmlTemplate
     {
         private readonly Action<Template> _executeAction;

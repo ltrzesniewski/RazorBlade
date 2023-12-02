@@ -9,11 +9,9 @@ namespace RazorBlade;
 /// </summary>
 public abstract class HtmlLayout : HtmlTemplate, IRazorLayout
 {
-    private IRazorLayout.IExecutionResult? _layoutInput;
+    private IRazorExecutionResult? _layoutInput;
 
-    private IRazorLayout.IExecutionResult LayoutInput => _layoutInput ?? throw new InvalidOperationException("No layout is being rendered.");
-
-    async Task<IRazorLayout.IExecutionResult> IRazorLayout.ExecuteLayoutAsync(IRazorLayout.IExecutionResult input)
+    async Task<IRazorExecutionResult> IRazorLayout.ExecuteLayoutAsync(IRazorExecutionResult input)
     {
         try
         {
@@ -30,7 +28,7 @@ public abstract class HtmlLayout : HtmlTemplate, IRazorLayout
     /// Returns the inner page body.
     /// </summary>
     protected internal IEncodedContent RenderBody()
-        => LayoutInput.Body;
+        => GetLayoutInput().Body;
 
     /// <summary>
     /// Renders a required section and returns the result as encoded content.
@@ -71,7 +69,7 @@ public abstract class HtmlLayout : HtmlTemplate, IRazorLayout
     /// <returns>The content to write to the output.</returns>
     protected internal async Task<IEncodedContent> RenderSectionAsync(string name, bool required)
     {
-        var result = await LayoutInput.RenderSectionAsync(name).ConfigureAwait(false);
+        var result = await GetLayoutInput().RenderSectionAsync(name).ConfigureAwait(false);
 
         if (result is not null)
             return result;
@@ -79,6 +77,19 @@ public abstract class HtmlLayout : HtmlTemplate, IRazorLayout
         if (required)
             throw new InvalidOperationException($"Section '{name}' is not defined.");
 
-        return StringBuilderEncodedContent.Empty;
+        return HtmlString.Empty;
     }
+
+    /// <summary>
+    /// Indicates if a given section is defined.
+    /// </summary>
+    /// <param name="name">The section name.</param>
+    protected internal bool IsSectionDefined(string name)
+        => GetLayoutInput().IsSectionDefined(name);
+
+    /// <summary>
+    /// Ensures the template is being executed as a layout and returns the input data.
+    /// </summary>
+    private IRazorExecutionResult GetLayoutInput()
+        => _layoutInput ?? throw new InvalidOperationException("The template is not being executed as a layout.");
 }
