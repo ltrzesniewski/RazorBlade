@@ -15,6 +15,13 @@ public abstract class HtmlTemplate : RazorTemplate
 {
     private AttributeInfo _currentAttribute;
 
+    /// <inheritdoc cref="RazorTemplate.Layout" />
+    protected internal new HtmlLayout? Layout
+    {
+        get => base.Layout as HtmlLayout;
+        set => base.Layout = value;
+    }
+
     // ReSharper disable once RedundantDisableWarningComment
 #pragma warning disable CA1822
 
@@ -148,7 +155,5 @@ public abstract class HtmlTemplate<TModel> : HtmlTemplate
     /// This constructor is provided for the designer only. Do not use.
     /// </summary>
     protected HtmlTemplate()
-    {
-        throw new NotSupportedException("Use the constructor overload that takes a model.");
-    }
+        => throw new NotSupportedException("Use the constructor overload that takes a model.");
 }

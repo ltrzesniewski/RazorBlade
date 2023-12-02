@@ -91,6 +91,7 @@ For HTML templates, specify one of the following base classes with an `@inherits
 
 - `RazorBlade.HtmlTemplate`
 - `RazorBlade.HtmlTemplate<TModel>`
+- `RazorBlade.HtmlLayout` (for layouts only)
 
 If you'd like to write a plain text template (which never escapes HTML), the following classes are available:
 
@@ -108,6 +109,20 @@ HTML escaping can be avoided by using the `@Html.Raw(value)` method, just like i
 Templates can be included in other templates by evaluating them, since they implement `IEncodedContent`. For instance, a `Footer` template can be included by writing `@(new Footer())`. Remember to always create a new instance of the template to include, even if it doesn't contain custom code, as templates are stateful and not thread-safe.
 
 The namespace of the generated class can be customized with the `@namespace` directive. The default value is deduced from the file location.
+
+### Layouts
+
+Layout templates may be written by inheriting from the `RazorBlade.HtmlLayout` class, which provides the relevant methods such as `RenderBody` and `RenderSection`. It inherits from `RazorBlade.HtmlTemplate`.
+
+The layout to use can be specified through the `Layout` property of `RazorBlade.HtmlTemplate`. Given that all Razor templates are stateful and not thread-safe, always create a new instance of the layout page to use:
+
+```Razor
+@{
+    Layout = new LayoutToUse();
+}
+```
+
+Layout pages can be nested, and can use sections. Unlike in ASP.NET, RazorBlade does not verify if the body and all sections have been used. Sections may also be executed multiple times.
 
 ### Executing templates
 

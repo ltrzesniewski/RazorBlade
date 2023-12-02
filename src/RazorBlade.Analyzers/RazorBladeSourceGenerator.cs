@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Microsoft.AspNetCore.Razor.Language;
+using Microsoft.AspNetCore.Razor.Language.Extensions;
 using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -112,6 +113,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             cfg =>
             {
                 ModelDirective.Register(cfg);
+                SectionDirective.Register(cfg);
 
                 cfg.SetCSharpLanguageVersion(globalOptions.ParseOptions.LanguageVersion);
 

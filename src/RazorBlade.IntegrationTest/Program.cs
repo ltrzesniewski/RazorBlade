@@ -6,13 +6,20 @@ public static class Program
 {
     public static void Main()
     {
-        var template = new TestTemplate { Name = "World" };
-        var result = template.Render();
-
-        Console.WriteLine(result);
-
-        _ = new TestTemplateWithModel(new FooBarModelClass());
+        WriteSeparator();
+        WriteTemplate(new TestTemplate { Name = "World" });
+        WriteTemplate(new TestTemplateWithModel(new FooBarModelClass { Foo = "Foo", Bar = "Bar" }));
+        WriteTemplate(new PageWithLayout());
     }
+
+    private static void WriteTemplate(RazorTemplate template)
+    {
+        Console.WriteLine(template.Render());
+        WriteSeparator();
+    }
+
+    private static void WriteSeparator()
+        => Console.WriteLine("--------------------------------------------------");
 }
 
 public class FooBarModelClass

@@ -10,6 +10,11 @@ public sealed class HtmlString : IEncodedContent
     private readonly string _value;
 
     /// <summary>
+    /// Represents an empty HTML-encoded string.
+    /// </summary>
+    public static HtmlString Empty { get; } = new(string.Empty);
+
+    /// <summary>
     /// Creates a HTML-encoded string.
     /// </summary>
     public HtmlString(string? value)

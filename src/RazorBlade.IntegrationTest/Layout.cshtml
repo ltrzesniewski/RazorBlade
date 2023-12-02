@@ -1,0 +1,14 @@
+@inherits RazorBlade.HtmlLayout
+@* ReSharper disable Razor.SectionNotResolved *@
+@{ Layout = new OuterLayout(); }
+
+<h1>Header</h1>
+This is the inner layout.
+
+Section Foo: @RenderSection("Foo")
+@RenderBody()
+Section Bar: @RenderSection("Bar")
+<i>Footer</i>
+@section Baz {
+    This is <b>Baz</b>, from the inner layout.
+}

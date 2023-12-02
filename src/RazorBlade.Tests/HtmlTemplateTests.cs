@@ -108,10 +108,7 @@ public class HtmlTemplateTests
         private readonly Action<Template> _executeAction;
 
         public Template(Action<Template> executeAction)
-        {
-            _executeAction = executeAction;
-            Output = new StringWriter();
-        }
+            => _executeAction = executeAction;
 
         protected internal override Task ExecuteAsync()
         {

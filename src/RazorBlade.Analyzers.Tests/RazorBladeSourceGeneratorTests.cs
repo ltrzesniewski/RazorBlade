@@ -324,6 +324,32 @@ public class RazorBladeSourceGeneratorTests
         );
     }
 
+    [Test]
+    public Task should_handle_sections()
+    {
+        return Verify(
+            """
+            Before section
+            @section SectionName { Section content }
+            After section
+            @section OtherSectionName { Answer is @(42) }
+            """
+        );
+    }
+
+    [Test]
+    public Task should_detect_async_sections()
+    {
+        return Verify(
+            """
+            @using System.Threading.Tasks
+            @if (42.ToString() == "42") {
+                @section SectionName { @await Task.FromResult(42) }
+            }
+            """
+        );
+    }
+
     private static GeneratorDriverRunResult Generate(string input,
                                                      string? csharpCode,
                                                      bool embeddedLibrary,
