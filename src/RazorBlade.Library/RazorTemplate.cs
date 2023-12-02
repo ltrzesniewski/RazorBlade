@@ -27,7 +27,7 @@ public abstract class RazorTemplate : IEncodedContent
     /// <summary>
     /// The cancellation token.
     /// </summary>
-    protected internal CancellationToken CancellationToken { get; set; }
+    protected internal CancellationToken CancellationToken { get; private set; }
 
     /// <summary>
     /// The layout to use.
@@ -116,41 +116,29 @@ public abstract class RazorTemplate : IEncodedContent
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var previousState = (_sections, Output, CancellationToken, Layout);
+        var executionResult = await ExecuteAsyncCore(cancellationToken);
 
-        try
+        while (executionResult.Layout is { } layout)
         {
-            var output = new StringWriter();
-
-            _sections = null;
-            Output = output;
-            CancellationToken = cancellationToken;
-            Layout = null;
-
-            await ExecuteAsync().ConfigureAwait(false);
-
-            if (Layout is null)
-                return output.GetStringBuilder();
-
-            IRazorLayout.IExecutionResult executionResult = new ExecutionResult(this, output.GetStringBuilder());
-
-            while (executionResult.Layout is { } layout)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                executionResult = await layout.ExecuteLayoutAsync(executionResult).ConfigureAwait(false);
-            }
-
-            if (executionResult.Body is StringBuilderEncodedContent { StringBuilder: var outputWithLayout })
-                return outputWithLayout;
-
-            var outerBodyResult = new StringWriter();
-            executionResult.Body.WriteTo(outerBodyResult);
-            return outerBodyResult.GetStringBuilder();
+            cancellationToken.ThrowIfCancellationRequested();
+            executionResult = await layout.ExecuteLayoutAsync(executionResult).ConfigureAwait(false);
         }
-        finally
-        {
-            (_sections, Output, CancellationToken, Layout) = previousState;
-        }
+
+        if (executionResult.Body is StringBuilderEncodedContent { StringBuilder: var outputStringBuilder })
+            return outputStringBuilder;
+
+        var outputStringWriter = new StringWriter();
+        executionResult.Body.WriteTo(outputStringWriter);
+        return outputStringWriter.GetStringBuilder();
+    }
+
+    private protected async Task<IRazorLayout.IExecutionResult> ExecuteAsyncCore(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        using var executionScope = new ExecutionScope(this, cancellationToken);
+        await ExecuteAsync().ConfigureAwait(false);
+        return new ExecutionResult(this, executionScope.Output);
     }
 
     /// <summary>
@@ -238,9 +226,10 @@ public abstract class RazorTemplate : IEncodedContent
     void IEncodedContent.WriteTo(TextWriter textWriter)
         => Render(textWriter, CancellationToken.None);
 
-    private protected class ExecutionResult : IRazorLayout.IExecutionResult
+    private class ExecutionResult : IRazorLayout.IExecutionResult
     {
         private readonly RazorTemplate _page;
+        private readonly IReadOnlyDictionary<string, Func<Task>>? _sections;
 
         public IEncodedContent Body { get; }
         public IRazorLayout? Layout { get; }
@@ -249,6 +238,7 @@ public abstract class RazorTemplate : IEncodedContent
         public ExecutionResult(RazorTemplate page, StringBuilder body)
         {
             _page = page;
+            _sections = page._sections;
             Body = new StringBuilderEncodedContent(body);
             Layout = page.Layout;
             CancellationToken = page.CancellationToken;
@@ -256,24 +246,12 @@ public abstract class RazorTemplate : IEncodedContent
 
         public async Task<IEncodedContent?> RenderSectionAsync(string name)
         {
-            if (!_page.Sections.TryGetValue(name, out var sectionAction))
+            if (_sections is null || !_sections.TryGetValue(name, out var sectionAction))
                 return null;
 
-            var previousOutput = _page.Output;
-
-            try
-            {
-                var output = new StringWriter();
-                _page.Output = output;
-
-                await sectionAction().ConfigureAwait(false);
-
-                return new StringBuilderEncodedContent(output.GetStringBuilder());
-            }
-            finally
-            {
-                _page.Output = previousOutput;
-            }
+            using var executionScope = new ExecutionScope(_page, CancellationToken);
+            await sectionAction().ConfigureAwait(false);
+            return new StringBuilderEncodedContent(executionScope.Output);
         }
     }
 
@@ -291,5 +269,39 @@ public abstract class RazorTemplate : IEncodedContent
 
         public override string ToString()
             => StringBuilder.ToString();
+    }
+
+    private class ExecutionScope : IDisposable
+    {
+        private readonly RazorTemplate _page;
+
+        private readonly Dictionary<string, Func<Task>>? _sections;
+        private readonly TextWriter _output;
+        private readonly CancellationToken _cancellationToken;
+        private readonly IRazorLayout? _layout;
+
+        public StringBuilder Output { get; }
+
+        public ExecutionScope(RazorTemplate page, CancellationToken cancellationToken)
+        {
+            _page = page;
+
+            _sections = page._sections;
+            _output = page.Output;
+            _cancellationToken = page.CancellationToken;
+            _layout = page.Layout;
+
+            Output = new StringBuilder();
+            page.Output = new StringWriter(Output);
+            page.CancellationToken = cancellationToken;
+        }
+
+        public void Dispose()
+        {
+            _page._sections = _sections;
+            _page.Output = _output;
+            _page.CancellationToken = _cancellationToken;
+            _page.Layout = _layout;
+        }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,27 +15,14 @@ public abstract class HtmlLayout : HtmlTemplate, IRazorLayout
 
     async Task<IRazorLayout.IExecutionResult> IRazorLayout.ExecuteLayoutAsync(IRazorLayout.IExecutionResult input)
     {
-        input.CancellationToken.ThrowIfCancellationRequested();
-        var previousStatus = (Output, CancellationToken);
-
         try
         {
             _layoutInput = input;
-
-            var output = new StringWriter();
-
-            Output = output;
-            CancellationToken = input.CancellationToken;
-            // TODO fully reset/restore the state
-
-            await ExecuteAsync().ConfigureAwait(false);
-
-            return new ExecutionResult(this, output.GetStringBuilder());
+            return await ExecuteAsyncCore(input.CancellationToken);
         }
         finally
         {
             _layoutInput = null;
-            (Output, CancellationToken) = previousStatus;
         }
     }
 
