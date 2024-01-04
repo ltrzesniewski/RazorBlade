@@ -15,73 +15,97 @@ This package will generate a template class for every `.cshtml` file in your pro
 
 The generated classes will inherit from `RazorBlade.HtmlTemplate` by default, though it is advised to specify the base class explicitly to get the best IDE experience:
 
-````Razor
+<!-- snippet: EmptyTemplate.cshtml -->
+<a id='snippet-EmptyTemplate.cshtml'></a>
+```cshtml
 @inherits RazorBlade.HtmlTemplate
-````
-
-A version with a model is also available for convenience. The following will add a `Model` property and a constructor with a `TModel` parameter:
-
-```Razor
-@inherits RazorBlade.HtmlTemplate<TModel>
 ```
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/EmptyTemplate.cshtml#L1-L1' title='Snippet source file'>snippet source</a> | <a href='#snippet-EmptyTemplate.cshtml' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+A version with a model is also available for convenience. The following will add a `Model` property and a constructor with a `ModelType` parameter:
+
+<!-- snippet: EmptyTemplateWithModel.cshtml -->
+<a id='snippet-EmptyTemplateWithModel.cshtml'></a>
+```cshtml
+@inherits RazorBlade.HtmlTemplate<MyApplication.ModelType>
+```
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/EmptyTemplateWithModel.cshtml#L1-L1' title='Snippet source file'>snippet source</a> | <a href='#snippet-EmptyTemplateWithModel.cshtml' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
 
 Further [documentation](#Documentation) is provided below.
 
 ## Example
 
-The following template, in the `TestTemplate.cshtml` file:
+The following template, in the `ExampleTemplate.cshtml` file:
 
-```Razor
+<!-- snippet: ExampleTemplate.cshtml -->
+<a id='snippet-ExampleTemplate.cshtml'></a>
+```cshtml
 @inherits RazorBlade.HtmlTemplate
 
 Hello, <i>@Name</i>!
 
 @functions
 {
-    public string? Name { get; set; }
+    public string? Name { get; init; }
 }
 ```
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/ExampleTemplate.cshtml#L1-L8' title='Snippet source file'>snippet source</a> | <a href='#snippet-ExampleTemplate.cshtml' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
 
 Will generate the following class in your project:
 
-```C#
-internal partial class TestTemplate : RazorBlade.HtmlTemplate
+```cs
+internal partial class ExampleTemplate : RazorBlade.HtmlTemplate
 {
     // ...
-    public string? Name { get; set; }
+    public string? Name { get; init; }
     // ...
 }
 ```
 
 That you can use like the following:
 
-```C#
-var template = new TestTemplate
+<!-- snippet: ExampleTemplate.Usage -->
+<a id='snippet-exampletemplate.usage'></a>
+```cs
+var template = new ExampleTemplate
 {
     Name = "World"
 };
 
 var result = template.Render();
 ```
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/Examples.cs#L13-L22' title='Snippet source file'>snippet source</a> | <a href='#snippet-exampletemplate.usage' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
 
 ### With a model
 
 A similar template with a model would be:
 
-```Razor
-@using MyApplication.Models
+<!-- snippet: TemplateWithModel.cshtml -->
+<a id='snippet-TemplateWithModel.cshtml'></a>
+```cshtml
+@using MyApplication
 @inherits RazorBlade.HtmlTemplate<GreetingModel>
 
 Hello, <i>@Model.Name</i>!
 ```
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/TemplateWithModel.cshtml#L1-L4' title='Snippet source file'>snippet source</a> | <a href='#snippet-TemplateWithModel.cshtml' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
 
 Instantiating the generated class requires a model argument:
 
-```C#
+<!-- snippet: TemplateWithModel.Usage -->
+<a id='snippet-templatewithmodel.usage'></a>
+```cs
 var model = new GreetingModel { Name = "World" };
-var template = new TestTemplate(model);
+var template = new TemplateWithModel(model);
 var result = template.Render();
 ```
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/Examples.cs#L27-L33' title='Snippet source file'>snippet source</a> | <a href='#snippet-templatewithmodel.usage' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
 
 ## Documentation
 
@@ -116,11 +140,15 @@ Layout templates may be written by inheriting from the `RazorBlade.HtmlLayout` c
 
 The layout to use can be specified through the `Layout` property of `RazorBlade.HtmlTemplate`. Given that all Razor templates are stateful and not thread-safe, always create a new instance of the layout page to use:
 
-```Razor
+<!-- snippet: TemplateWithLayout.Usage -->
+<a id='snippet-templatewithlayout.usage'></a>
+```cshtml
 @{
     Layout = new LayoutToUse();
 }
 ```
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/TemplateWithLayout.cshtml#L2-L6' title='Snippet source file'>snippet source</a> | <a href='#snippet-templatewithlayout.usage' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
 
 Layout pages can be nested, and can use sections. Unlike in ASP.NET, RazorBlade does not verify if the body and all sections have been used. Sections may also be executed multiple times.
 

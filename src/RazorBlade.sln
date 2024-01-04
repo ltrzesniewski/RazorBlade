@@ -11,6 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{12E535CC
 		..\README.md = ..\README.md
 		NuGetReadme.md = NuGetReadme.md
 		..\.github\workflows\build.yml = ..\.github\workflows\build.yml
+		mdsnippets.json = mdsnippets.json
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorBlade.IntegrationTest", "RazorBlade.IntegrationTest\RazorBlade.IntegrationTest.csproj", "{2FE5A803-86C8-42D2-A0DB-61D156DB6EB9}"

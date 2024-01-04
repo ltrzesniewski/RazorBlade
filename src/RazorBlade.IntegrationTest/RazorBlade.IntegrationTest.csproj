@@ -11,6 +11,10 @@
     <ProjectReference Include="../RazorBlade.Analyzers/RazorBlade.Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MarkdownSnippets.MsBuild" Version="26.0.1" PrivateAssets="all" />
+  </ItemGroup>
+
   <Import Project="../RazorBlade/RazorBlade.targets" />
 
 </Project>
