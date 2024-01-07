@@ -5,9 +5,11 @@
 [![GitHub release](https://img.shields.io/github/release/ltrzesniewski/RazorBlade.svg?logo=GitHub)](https://github.com/ltrzesniewski/RazorBlade/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/ltrzesniewski/RazorBlade/blob/master/LICENSE)
 
-*The sharpest part of the razor.*
+**Compile Razor templates at build-time without a dependency on ASP.NET.**
 
-Compile Razor templates at build-time without a dependency on ASP.NET.
+RazorBlade is meant to be *lightweight* and *self-contained*: cshtml files are compiled into C# classes at build-time with a Roslyn source generator. No reference to ASP.NET is required.
+
+A simple base class library is provided by default, but it can also be embedded into the target project, or even replaced by your own implementation.
 
 ## Usage
 
@@ -32,6 +34,8 @@ A version with a model is also available for convenience. The following will add
 ```
 <sup><a href='/src/RazorBlade.IntegrationTest/Examples/EmptyTemplateWithModel.cshtml#L1-L1' title='Snippet source file'>snippet source</a> | <a href='#snippet-EmptyTemplateWithModel.cshtml' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
+
+Please note that this will cause a constructor with a `ModelType` parameter to be added to the generated class, which may cause false errors to be shown in some IDEs.
 
 Further [documentation](#Documentation) is provided below.
 
@@ -105,6 +109,40 @@ var template = new TemplateWithModel(model);
 var result = template.Render();
 ```
 <sup><a href='/src/RazorBlade.IntegrationTest/Examples/Examples.cs#L27-L33' title='Snippet source file'>snippet source</a> | <a href='#snippet-templatewithmodel.usage' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+Since this generates a constructor with a `GreetingModel` parameter in the `TemplateWithModel` class, it may cause false errors to be shown in some IDEs, as they don't recognize this constructor signature.
+
+### With a manual model property
+
+Another way of implementing a template with a model is to add a `Model` property in the template and mark it as `required`. This will work around false errors which can be shown in some IDEs.
+
+<!-- snippet: TemplateWithManualModel.cshtml -->
+<a id='snippet-TemplateWithManualModel.cshtml'></a>
+```cshtml
+@using MyApplication
+@inherits RazorBlade.HtmlTemplate
+
+Hello, <i>@Model.Name</i>!
+
+@functions
+{
+    public required GreetingModel Model { get; init; }
+}
+```
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/TemplateWithManualModel.cshtml#L1-L9' title='Snippet source file'>snippet source</a> | <a href='#snippet-TemplateWithManualModel.cshtml' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+Instantiating the generated class is done similarly to the previous example:
+
+<!-- snippet: TemplateWithManualModel.Usage -->
+<a id='snippet-templatewithmanualmodel.usage'></a>
+```cs
+var model = new GreetingModel { Name = "World" };
+var template = new TemplateWithManualModel { Model = model };
+var result = template.Render();
+```
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/Examples.cs#L38-L44' title='Snippet source file'>snippet source</a> | <a href='#snippet-templatewithmanualmodel.usage' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Documentation

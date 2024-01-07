@@ -1,0 +1,9 @@
+﻿@using MyApplication
+@inherits RazorBlade.HtmlTemplate
+
+Hello, <i>@Model.Name</i>!
+
+@functions
+{
+    public required GreetingModel Model { get; init; }
+}

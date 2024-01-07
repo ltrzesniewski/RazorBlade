@@ -32,6 +32,17 @@ namespace RazorBlade.IntegrationTest.Examples
 
             #endregion
         }
+
+        public static void TemplateWithManualModelUsage()
+        {
+            #region TemplateWithManualModel.Usage
+
+            var model = new GreetingModel { Name = "World" };
+            var template = new TemplateWithManualModel { Model = model };
+            var result = template.Render();
+
+            #endregion
+        }
     }
 }
 
