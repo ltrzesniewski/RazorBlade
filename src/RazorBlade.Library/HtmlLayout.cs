@@ -21,7 +21,7 @@ public abstract class HtmlLayout : HtmlTemplate, IRazorLayout
         try
         {
             _layoutInput = input;
-            return await ExecuteAsyncCore(input.CancellationToken);
+            return await ExecuteAsyncCore(null, input.CancellationToken);
         }
         finally
         {
@@ -29,12 +29,12 @@ public abstract class HtmlLayout : HtmlTemplate, IRazorLayout
         }
     }
 
-    private protected override Task<IRazorExecutionResult> ExecuteAsyncCore(CancellationToken cancellationToken)
+    private protected override Task<IRazorExecutionResult> ExecuteAsyncCore(TextWriter? targetOutput, CancellationToken cancellationToken)
     {
         if (_layoutInput is null)
             throw new InvalidOperationException(_contentsRequiredErrorMessage);
 
-        return base.ExecuteAsyncCore(cancellationToken);
+        return base.ExecuteAsyncCore(targetOutput, cancellationToken);
     }
 
     /// <summary>
