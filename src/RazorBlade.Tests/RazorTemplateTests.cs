@@ -134,6 +134,91 @@ public class RazorTemplateTests
         semaphore.CurrentCount.ShouldEqual(0);
     }
 
+    [Test]
+    public async Task should_flush_output()
+    {
+        var output = new StringWriter();
+        var stepSemaphore = new StepSemaphore();
+
+        var template = new Template(async t =>
+        {
+            await stepSemaphore.WaitForNextStepAsync();
+
+            t.WriteLiteral("foo");
+            await t.FlushAsync();
+
+            await stepSemaphore.WaitForNextStepAsync();
+
+            t.WriteLiteral(" bar");
+            await t.FlushAsync();
+
+            await stepSemaphore.WaitForNextStepAsync();
+
+            t.WriteLiteral(" baz");
+            await t.FlushAsync();
+
+            await stepSemaphore.NotifyEndOfLastStepAsync();
+        });
+
+        var task = template.RenderAsync(output);
+
+        await stepSemaphore.StartNextStepAndWaitForResultAsync();
+        output.ToString().ShouldEqual("foo");
+        template.Output.ShouldBe<StringWriter>().ToString().ShouldEqual(string.Empty);
+
+        await stepSemaphore.StartNextStepAndWaitForResultAsync();
+        output.ToString().ShouldEqual("foo bar");
+        template.Output.ShouldBe<StringWriter>().ToString().ShouldEqual(string.Empty);
+
+        await stepSemaphore.StartNextStepAndWaitForResultAsync();
+        output.ToString().ShouldEqual("foo bar baz");
+
+        await task;
+        output.ToString().ShouldEqual("foo bar baz");
+        template.Output.ShouldEqual(TextWriter.Null);
+    }
+
+    [Test]
+    public async Task should_buffer_output_until_flushed()
+    {
+        var output = new StringWriter();
+        var stepSemaphore = new StepSemaphore();
+
+        var template = new Template(async t =>
+        {
+            await stepSemaphore.WaitForNextStepAsync();
+
+            t.WriteLiteral("foo");
+            await t.Output.FlushAsync();
+
+            await stepSemaphore.WaitForNextStepAsync();
+
+            t.WriteLiteral(" bar");
+            await t.Output.FlushAsync();
+
+            await stepSemaphore.WaitForNextStepAsync();
+
+            t.WriteLiteral(" baz");
+            await t.Output.FlushAsync();
+
+            await stepSemaphore.NotifyEndOfLastStepAsync();
+        });
+
+        var task = template.RenderAsync(output);
+
+        await stepSemaphore.StartNextStepAndWaitForResultAsync();
+        output.ToString().ShouldEqual(string.Empty);
+        template.Output.ShouldBe<StringWriter>().ToString().ShouldEqual("foo");
+
+        await stepSemaphore.StartNextStepAndWaitForResultAsync();
+        output.ToString().ShouldEqual(string.Empty);
+        template.Output.ShouldBe<StringWriter>().ToString().ShouldEqual("foo bar");
+
+        await stepSemaphore.StartNextStepAndWaitForResultAsync();
+        await task;
+        output.ToString().ShouldEqual("foo bar baz");
+    }
+
     private class Template(Func<Template, Task> executeAction) : RazorTemplate
     {
         public Template(Action<Template> executeAction)

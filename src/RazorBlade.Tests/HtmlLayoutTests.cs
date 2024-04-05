@@ -184,12 +184,51 @@ public class HtmlLayoutTests
         Assert.Throws<InvalidOperationException>(() => ((RazorTemplate)layout).Render(CancellationToken.None));
     }
 
-    private class Template(Action<Template> executeAction) : HtmlTemplate
+    [Test]
+    public void should_throw_when_setting_layout_after_flush()
     {
-        protected internal override Task ExecuteAsync()
+        var layout = new Layout(_ => { });
+
+        var page = new Template(async t =>
         {
-            executeAction(this);
-            return base.ExecuteAsync();
+            await t.FlushAsync();
+            t.Layout = layout;
+        });
+
+        Assert.Throws<InvalidOperationException>(() => page.Render())
+              .ShouldNotBeNull().Message.ShouldEqual("The layout can no longer be changed.");
+    }
+
+    [Test]
+    public void should_throw_when_flushing_with_layout()
+    {
+        var layout = new Layout(_ => { });
+
+        var page = new Template(async t =>
+        {
+            t.Layout = layout;
+            await t.FlushAsync();
+        });
+
+        Assert.Throws<InvalidOperationException>(() => page.Render())
+              .ShouldNotBeNull().Message.ShouldEqual("The output cannot be flushed when a layout is used.");
+    }
+
+    private class Template(Func<Template, Task> executeAction) : HtmlTemplate
+    {
+        public Template(Action<Template> executeAction)
+            : this(t =>
+            {
+                executeAction(t);
+                return Task.CompletedTask;
+            })
+        {
+        }
+
+        protected internal override async Task ExecuteAsync()
+        {
+            await executeAction(this);
+            await base.ExecuteAsync();
         }
 
         public void SetSection(string name, string content)

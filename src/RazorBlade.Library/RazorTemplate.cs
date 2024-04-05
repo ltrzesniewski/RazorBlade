@@ -167,7 +167,7 @@ public abstract class RazorTemplate : IEncodedContent
     /// <remarks>
     /// This feature is not compatible with layouts.
     /// </remarks>
-    protected Task FlushAsync()
+    protected internal Task FlushAsync()
         => _executionScope?.FlushAsync() ?? Task.CompletedTask;
 
     /// <summary>
