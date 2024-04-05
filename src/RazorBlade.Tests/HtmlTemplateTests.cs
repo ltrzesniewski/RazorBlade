@@ -103,16 +103,11 @@ public class HtmlTemplateTests
         template.Render().ShouldEqual("&<>");
     }
 
-    private class Template : HtmlTemplate
+    private class Template(Action<Template> executeAction) : HtmlTemplate
     {
-        private readonly Action<Template> _executeAction;
-
-        public Template(Action<Template> executeAction)
-            => _executeAction = executeAction;
-
         protected internal override Task ExecuteAsync()
         {
-            _executeAction(this);
+            executeAction(this);
             return base.ExecuteAsync();
         }
     }

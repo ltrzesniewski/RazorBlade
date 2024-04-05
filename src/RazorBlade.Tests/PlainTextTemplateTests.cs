@@ -78,16 +78,11 @@ public class PlainTextTemplateTests
         template.Render().ShouldEqual("foo=\" a True b False c 42 d  e bar\"");
     }
 
-    private class Template : PlainTextTemplate
+    private class Template(Action<Template> executeAction) : PlainTextTemplate
     {
-        private readonly Action<Template> _executeAction;
-
-        public Template(Action<Template> executeAction)
-            => _executeAction = executeAction;
-
         protected internal override Task ExecuteAsync()
         {
-            _executeAction(this);
+            executeAction(this);
             return base.ExecuteAsync();
         }
     }

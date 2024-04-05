@@ -14,54 +14,58 @@ public class RazorTemplateTests
     public async Task should_write_literal()
     {
         var template = new Template(t => t.WriteLiteral("foo & bar < baz > foobar"));
-        await template.ExecuteAsync();
-        template.Output.ToString().ShouldEqual("foo & bar < baz > foobar");
+
+        var result = await template.RenderAsync();
+
+        result.ShouldEqual("foo & bar < baz > foobar");
     }
 
     [Test]
     public void should_render_to_local_output()
     {
         var template = new Template(t => t.WriteLiteral("foo"));
-        template.Output.Write("bar");
+        template.Output.ShouldEqual(TextWriter.Null);
 
         template.Render().ShouldEqual("foo");
-        template.Output.ToString().ShouldEqual("bar");
+
+        template.Output.ShouldEqual(TextWriter.Null);
     }
 
     [Test]
     public void should_render_to_text_writer()
     {
         var template = new Template(t => t.WriteLiteral("foo"));
-        template.Output.Write("bar");
+        template.Output.ShouldEqual(TextWriter.Null);
 
         var output = new StringWriter();
         template.Render(output);
         output.ToString().ShouldEqual("foo");
 
-        template.Output.ToString().ShouldEqual("bar");
+        template.Output.ShouldEqual(TextWriter.Null);
     }
 
     [Test]
     public async Task should_render_async_to_local_output()
     {
         var template = new Template(t => t.WriteLiteral("foo"));
-        await template.Output.WriteAsync("bar");
+        template.Output.ShouldEqual(TextWriter.Null);
 
         (await template.RenderAsync()).ShouldEqual("foo");
-        template.Output.ToString().ShouldEqual("bar");
+
+        template.Output.ShouldEqual(TextWriter.Null);
     }
 
     [Test]
     public async Task should_render_async_to_text_writer()
     {
         var template = new Template(t => t.WriteLiteral("foo"));
-        await template.Output.WriteAsync("bar");
+        template.Output.ShouldEqual(TextWriter.Null);
 
         var output = new StringWriter();
         await template.RenderAsync(output);
         output.ToString().ShouldEqual("foo");
 
-        template.Output.ToString().ShouldEqual("bar");
+        template.Output.ShouldEqual(TextWriter.Null);
     }
 
     [Test]
@@ -130,16 +134,8 @@ public class RazorTemplateTests
         semaphore.CurrentCount.ShouldEqual(0);
     }
 
-    private class Template : RazorTemplate
+    private class Template(Func<Template, Task> executeAction) : RazorTemplate
     {
-        private readonly Func<Template, Task> _executeAction;
-
-        public Template(Func<Template, Task> executeAction)
-        {
-            _executeAction = executeAction;
-            Output = new StringWriter();
-        }
-
         public Template(Action<Template> executeAction)
             : this(t =>
             {
@@ -151,7 +147,7 @@ public class RazorTemplateTests
 
         protected internal override async Task ExecuteAsync()
         {
-            await _executeAction(this);
+            await executeAction(this);
             await base.ExecuteAsync();
         }
 

@@ -184,16 +184,11 @@ public class HtmlLayoutTests
         Assert.Throws<InvalidOperationException>(() => ((RazorTemplate)layout).Render(CancellationToken.None));
     }
 
-    private class Template : HtmlTemplate
+    private class Template(Action<Template> executeAction) : HtmlTemplate
     {
-        private readonly Action<Template> _executeAction;
-
-        public Template(Action<Template> executeAction)
-            => _executeAction = executeAction;
-
         protected internal override Task ExecuteAsync()
         {
-            _executeAction(this);
+            executeAction(this);
             return base.ExecuteAsync();
         }
 
@@ -210,18 +205,13 @@ public class HtmlLayoutTests
         }
     }
 
-    private class Layout : HtmlLayout
+    private class Layout(Action<Layout> executeAction) : HtmlLayout
     {
-        private readonly Action<Layout> _executeAction;
-
         public bool WasExecuted { get; private set; }
-
-        public Layout(Action<Layout> executeAction)
-            => _executeAction = executeAction;
 
         protected internal override Task ExecuteAsync()
         {
-            _executeAction(this);
+            executeAction(this);
             WasExecuted = true;
             return base.ExecuteAsync();
         }
