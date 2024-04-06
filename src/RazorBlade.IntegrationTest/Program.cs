@@ -10,6 +10,7 @@ public static class Program
         WriteTemplate(new TestTemplate { Name = "World" });
         WriteTemplate(new TestTemplateWithModel(new FooBarModelClass { Foo = "Foo", Bar = "Bar" }));
         WriteTemplate(new PageWithLayout());
+        WriteTemplate(new PageWithFlush());
     }
 
     private static void WriteTemplate(RazorTemplate template)

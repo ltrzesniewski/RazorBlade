@@ -164,11 +164,20 @@ public abstract class RazorTemplate : IEncodedContent
     /// <summary>
     /// Writes the buffered output to the target output then flushes the output stream.
     /// </summary>
+    /// <returns>
+    /// An empty <see cref="IEncodedContent"/>, which allows using a direct expression: <c>@await FlushAsync()</c>
+    /// </returns>
     /// <remarks>
     /// This feature is not compatible with layouts.
     /// </remarks>
-    protected internal Task FlushAsync()
-        => _executionScope?.FlushAsync() ?? Task.CompletedTask;
+    protected internal async Task<IEncodedContent> FlushAsync()
+    {
+        if (_executionScope is not { } executionScope)
+            throw new InvalidOperationException("The template is not executing.");
+
+        await executionScope.FlushAsync().ConfigureAwait(false);
+        return HtmlString.Empty;
+    }
 
     /// <summary>
     /// Executes the template and appends the result to <see cref="Output"/>.

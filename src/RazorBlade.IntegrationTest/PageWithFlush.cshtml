@@ -1,0 +1,7 @@
+@inherits RazorBlade.HtmlTemplate
+<h2>Hello, world!</h2>
+This is the body contents before flushing.
+@await FlushAsync()
+This is the body contents after flushing.
+@await FlushAsync()
+This is the body contents after a second flushing.
