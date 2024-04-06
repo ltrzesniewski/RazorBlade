@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="../RazorBlade.Tests/Support/AssertExtensions.cs" Link="Support/%(Filename)%(Extension)" />
+    <Compile Include="../RazorBlade.Library.Tests/Support/AssertExtensions.cs" Link="Support/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <!-- netstandard2.0 -->

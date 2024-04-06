@@ -1,25 +1,19 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using RazorBlade.Tests.Support;
 
-namespace RazorBlade.Tests;
+namespace RazorBlade.Library.Tests;
 
 [TestFixture]
-public class HtmlTemplateTests
+public class PlainTextTemplateTests
 {
     [Test]
-    [TestCase("", "")]
-    [TestCase("foo", "foo")]
-    [TestCase("&foo", "&amp;foo")]
-    [TestCase("foo&", "foo&amp;")]
-    [TestCase("foo's", "foo&#x27;s")]
-    [TestCase("foo & bar < baz > foo\"bar", "foo &amp; bar &lt; baz &gt; foo&quot;bar")]
-    public void should_escape_special_characters(string input, string expectedOutput)
+    public void should_not_escape_html_characters()
     {
-        var template = new Template(t => t.Write(input));
-        template.Render().ShouldEqual(expectedOutput);
+        var template = new Template(t => t.Write("foo & bar < baz > foobar"));
+        template.Render().ShouldEqual("foo & bar < baz > foobar");
     }
 
     [Test]
@@ -42,18 +36,20 @@ public class HtmlTemplateTests
         var template = new Template(t =>
         {
             t.BeginWriteAttribute("name", "attr_prefix ", 0, " attr_suffix", 0, 2);
-            t.WriteAttributeValue("foo_prefix ", 0, "&", 0, 0, false);
-            t.WriteAttributeValue(" bar_prefix ", 0, "&", 0, 0, true);
+            t.WriteAttributeValue("foo_prefix ", 0, "<", 0, 0, false);
+            t.WriteAttributeValue(" bar_prefix ", 0, ">", 0, 0, true);
             t.EndWriteAttribute();
         });
 
-        template.Render().ShouldEqual("attr_prefix foo_prefix &amp; bar_prefix & attr_suffix");
+        template.Render().ShouldEqual("attr_prefix foo_prefix < bar_prefix > attr_suffix");
     }
 
     [Test]
     [TestCase(null)]
     [TestCase(false)]
-    public void should_skip_attribute_when_value_is_null_or_false(object value)
+    [TestCase(true)]
+    [TestCase("bar")]
+    public void should_not_special_case_attributes_by_value(object value)
     {
         var template = new Template(t =>
         {
@@ -62,24 +58,11 @@ public class HtmlTemplateTests
             t.EndWriteAttribute();
         });
 
-        template.Render().ShouldEqual(string.Empty);
+        template.Render().ShouldEqual($"foo=\"{value}\"");
     }
 
     [Test]
-    public void should_write_attribute_name_when_value_is_true()
-    {
-        var template = new Template(t =>
-        {
-            t.BeginWriteAttribute("foo", "foo=\"", 0, "\"", 0, 1);
-            t.WriteAttributeValue("", 0, true, 0, 0, false);
-            t.EndWriteAttribute();
-        });
-
-        template.Render().ShouldEqual("foo=\"foo\"");
-    }
-
-    [Test]
-    public void should_skip_prefixes_of_null_attribute_values()
+    public void should_not_skip_prefixes_of_null_attribute_values()
     {
         var template = new Template(t =>
         {
@@ -92,18 +75,10 @@ public class HtmlTemplateTests
             t.EndWriteAttribute();
         });
 
-        template.Render().ShouldEqual("foo=\" a True b False c 42 e bar\"");
+        template.Render().ShouldEqual("foo=\" a True b False c 42 d  e bar\"");
     }
 
-    [Test]
-    public void should_write_raw_string()
-    {
-        var template = new Template(t => t.Write(t.Raw("&<>")));
-
-        template.Render().ShouldEqual("&<>");
-    }
-
-    private class Template(Action<Template> executeAction) : HtmlTemplate
+    private class Template(Action<Template> executeAction) : PlainTextTemplate
     {
         protected internal override Task ExecuteAsync()
         {

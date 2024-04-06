@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="../RazorBlade.Library/RazorBlade.Library.csproj" ReferenceOutputAssembly="false" />
     <Compile Include="../RazorBlade.Library/**/*.cs" Exclude="../RazorBlade.Library/obj/**/*.cs" Visible="false" />
+    <Compile Remove="../RazorBlade.Library/Properties/**/*.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
+// ReSharper disable once CheckNamespace
 namespace RazorBlade.Tests.Support;
 
 public class StepSemaphore

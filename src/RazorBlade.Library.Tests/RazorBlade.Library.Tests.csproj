@@ -4,7 +4,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../RazorBlade/RazorBlade.csproj" />
+    <ProjectReference Include="../RazorBlade.Library/RazorBlade.Library.csproj" />
   </ItemGroup>
 
   <ItemGroup>

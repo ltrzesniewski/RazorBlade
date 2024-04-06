@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 using RazorBlade.Tests.Support;
 
-namespace RazorBlade.Tests;
+namespace RazorBlade.Library.Tests;
 
 [TestFixture]
 public class HtmlLayoutTests

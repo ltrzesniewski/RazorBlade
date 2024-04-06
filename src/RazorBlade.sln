@@ -16,7 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{12E535CC
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorBlade.IntegrationTest", "RazorBlade.IntegrationTest\RazorBlade.IntegrationTest.csproj", "{2FE5A803-86C8-42D2-A0DB-61D156DB6EB9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorBlade.Tests", "RazorBlade.Tests\RazorBlade.Tests.csproj", "{4013CD72-9A23-4796-9C8D-1AB6B082D01E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorBlade.Library.Tests", "RazorBlade.Library.Tests\RazorBlade.Library.Tests.csproj", "{4013CD72-9A23-4796-9C8D-1AB6B082D01E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorBlade.Analyzers.Tests", "RazorBlade.Analyzers.Tests\RazorBlade.Analyzers.Tests.csproj", "{8D894247-5CD6-43CC-854A-313E50BE1644}"
 EndProject
