@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RazorBlade.Tests.Support;
@@ -7,29 +8,72 @@ public class StepSemaphore
 {
     private readonly SemaphoreSlim _semaphoreStartOfStep = new(0);
     private readonly SemaphoreSlim _semaphoreEndOfStep = new(0);
-    private int _isFirstStep;
 
-    public async Task WaitForNextStepAsync()
+    private bool _hasWorker;
+    private bool _hasController;
+    private bool _isFirstStep = true;
+
+    public IWorker CreateWorker()
     {
-        if (Interlocked.Exchange(ref _isFirstStep, 1) != 0)
+        if (_hasWorker)
+            throw new InvalidOperationException("A worker has already been created");
+
+        _hasWorker = true;
+        return new Worker(this);
+    }
+
+    public IController CreateController()
+    {
+        if (_hasController)
+            throw new InvalidOperationException("A controller has already been created");
+
+        _hasController = true;
+        return new Controller(this);
+    }
+
+    private async Task WaitForNextStepAsync()
+    {
+        if (!_isFirstStep)
             _semaphoreEndOfStep.Release();
 
-        var result = await _semaphoreStartOfStep.WaitAsync(10_000);
-        result.ShouldBeTrue();
+        _isFirstStep = false;
+        await WaitWithTimeout(_semaphoreStartOfStep);
     }
 
-    public Task NotifyEndOfLastStepAsync()
-    {
-        _semaphoreEndOfStep.Release();
+    private void NotifyEndOfLastStep()
+        => _semaphoreEndOfStep.Release();
 
-        return Task.CompletedTask; // Just to make the API consistent
-    }
-
-    public async Task StartNextStepAndWaitForResultAsync()
+    private async Task StartNextStepAndWaitForResultAsync()
     {
         _semaphoreStartOfStep.Release();
+        await WaitWithTimeout(_semaphoreEndOfStep);
+    }
 
-        var result = await _semaphoreEndOfStep.WaitAsync(10_000);
-        result.ShouldBeTrue();
+    private static async Task WaitWithTimeout(SemaphoreSlim semaphore)
+        => (await semaphore.WaitAsync(10_000)).ShouldBeTrue();
+
+    public interface IWorker : IDisposable
+    {
+        Task WaitForNextStepAsync();
+    }
+
+    public interface IController
+    {
+        Task StartNextStepAndWaitForResultAsync();
+    }
+
+    private class Worker(StepSemaphore parent) : IWorker
+    {
+        public Task WaitForNextStepAsync()
+            => parent.WaitForNextStepAsync();
+
+        public void Dispose()
+            => parent.NotifyEndOfLastStep();
+    }
+
+    private class Controller(StepSemaphore parent) : IController
+    {
+        public Task StartNextStepAndWaitForResultAsync()
+            => parent.StartNextStepAndWaitForResultAsync();
     }
 }

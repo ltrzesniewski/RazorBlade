@@ -123,15 +123,15 @@ public class RazorTemplateTests
         var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        var semaphore = new SemaphoreSlim(0);
-        var template = new Template(_ => semaphore.Release());
+        var executionCount = 0;
+        var template = new Template(_ => Interlocked.Increment(ref executionCount));
 
         Assert.Catch<OperationCanceledException>(() => template.Render(cts.Token));
         Assert.Catch<OperationCanceledException>(() => template.Render(StreamWriter.Null, cts.Token));
         Assert.CatchAsync<OperationCanceledException>(() => template.RenderAsync(cts.Token));
         Assert.CatchAsync<OperationCanceledException>(() => template.RenderAsync(StreamWriter.Null, cts.Token));
 
-        semaphore.CurrentCount.ShouldEqual(0);
+        executionCount.ShouldEqual(0);
     }
 
     [Test]
@@ -142,37 +142,35 @@ public class RazorTemplateTests
 
         var template = new Template(async t =>
         {
-            await stepSemaphore.WaitForNextStepAsync();
+            using var worker = stepSemaphore.CreateWorker();
+            await worker.WaitForNextStepAsync();
 
             t.WriteLiteral("foo");
             await t.FlushAsync();
 
-            await stepSemaphore.WaitForNextStepAsync();
+            await worker.WaitForNextStepAsync();
 
             t.WriteLiteral(" bar");
             await t.FlushAsync();
 
-            await stepSemaphore.WaitForNextStepAsync();
+            await worker.WaitForNextStepAsync();
 
             t.WriteLiteral(" baz");
             await t.FlushAsync();
-
-            await stepSemaphore.NotifyEndOfLastStepAsync();
         });
 
         var task = template.RenderAsync(output);
+        var controller = stepSemaphore.CreateController();
 
-        await stepSemaphore.StartNextStepAndWaitForResultAsync();
+        await controller.StartNextStepAndWaitForResultAsync();
         output.ToString().ShouldEqual("foo");
         template.Output.ShouldBe<StringWriter>().ToString().ShouldEqual(string.Empty);
 
-        await stepSemaphore.StartNextStepAndWaitForResultAsync();
+        await controller.StartNextStepAndWaitForResultAsync();
         output.ToString().ShouldEqual("foo bar");
         template.Output.ShouldBe<StringWriter>().ToString().ShouldEqual(string.Empty);
 
-        await stepSemaphore.StartNextStepAndWaitForResultAsync();
-        output.ToString().ShouldEqual("foo bar baz");
-
+        await controller.StartNextStepAndWaitForResultAsync();
         await task;
         output.ToString().ShouldEqual("foo bar baz");
         template.Output.ShouldEqual(TextWriter.Null);
@@ -186,35 +184,35 @@ public class RazorTemplateTests
 
         var template = new Template(async t =>
         {
-            await stepSemaphore.WaitForNextStepAsync();
+            using var worker = stepSemaphore.CreateWorker();
+            await worker.WaitForNextStepAsync();
 
             t.WriteLiteral("foo");
             await t.Output.FlushAsync();
 
-            await stepSemaphore.WaitForNextStepAsync();
+            await worker.WaitForNextStepAsync();
 
             t.WriteLiteral(" bar");
             await t.Output.FlushAsync();
 
-            await stepSemaphore.WaitForNextStepAsync();
+            await worker.WaitForNextStepAsync();
 
             t.WriteLiteral(" baz");
             await t.Output.FlushAsync();
-
-            await stepSemaphore.NotifyEndOfLastStepAsync();
         });
 
         var task = template.RenderAsync(output);
+        var controller = stepSemaphore.CreateController();
 
-        await stepSemaphore.StartNextStepAndWaitForResultAsync();
+        await controller.StartNextStepAndWaitForResultAsync();
         output.ToString().ShouldEqual(string.Empty);
         template.Output.ShouldBe<StringWriter>().ToString().ShouldEqual("foo");
 
-        await stepSemaphore.StartNextStepAndWaitForResultAsync();
+        await controller.StartNextStepAndWaitForResultAsync();
         output.ToString().ShouldEqual(string.Empty);
         template.Output.ShouldBe<StringWriter>().ToString().ShouldEqual("foo bar");
 
-        await stepSemaphore.StartNextStepAndWaitForResultAsync();
+        await controller.StartNextStepAndWaitForResultAsync();
         await task;
         output.ToString().ShouldEqual("foo bar baz");
     }
