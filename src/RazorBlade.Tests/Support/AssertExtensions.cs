@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using JetBrains.Annotations;
 using NUnit.Framework;
 
 namespace RazorBlade.Tests.Support;
 
+#if NET
+[StackTraceHidden]
+#endif
 internal static class AssertExtensions
 {
     public static void ShouldEqual<T>(this T? actual, T? expected)
@@ -18,6 +22,13 @@ internal static class AssertExtensions
 
     public static void ShouldBeFalse(this bool actual)
         => Assert.That(actual, Is.False);
+
+    public static TExpected ShouldBe<TExpected>(this object? actual)
+        where TExpected : class
+    {
+        Assert.That(actual, Is.InstanceOf<TExpected>());
+        return actual as TExpected ?? throw new AssertionException($"Expected instance of {typeof(TExpected).Name}");
+    }
 
     [ContractAnnotation("notnull => halt")]
     public static void ShouldBeNull(this object? actual)

@@ -196,6 +196,25 @@ The `RazorTemplate` base class provides `Render` and `RenderAsync` methods to ex
 
 Templates are stateful and not thread-safe, so it is advised to always create new instances of the templates to render.
 
+### Flushing partial output
+
+By default, the output of a template is buffered while it is executing, then copied to the provided writer when finished. This is necessary for features such as layouts to be supported, but may not always be desired.
+
+The `RazorTemplate` class provides a `FlushAsync` method which will copy the buffered output to the provided `TextWriter` and then flush the writer:
+
+<!-- snippet: TemplateWithFlush.Usage -->
+<a id='snippet-templatewithflush.usage'></a>
+```cshtml
+<div>Lightweight content goes here.</div>
+@await FlushAsync()
+<div>Slower to render content goes here.</div>
+```
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/TemplateWithFlush.cshtml#L2-L6' title='Snippet source file'>snippet source</a> | <a href='#snippet-templatewithflush.usage' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+> [!IMPORTANT]  
+> Flushing is not compatible with layout usage.
+
 ### MSBuild
 
 The source generator will process `RazorBlade` MSBuild items which have the `.cshtml` file extension.
