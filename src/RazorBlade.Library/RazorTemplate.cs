@@ -48,23 +48,12 @@ public abstract class RazorTemplate : IEncodedContent
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var textWriter = new StringWriter();
-        var renderTask = RenderAsyncCore(textWriter, cancellationToken);
+        var renderTask = RenderAsync(cancellationToken);
 
         if (renderTask.IsCompleted)
-        {
-            renderTask.GetAwaiter().GetResult();
-            return textWriter.ToString();
-        }
+            return renderTask.GetAwaiter().GetResult();
 
-        return Task.Run(
-            async () =>
-            {
-                await renderTask.ConfigureAwait(false);
-                return textWriter.ToString();
-            },
-            CancellationToken.None
-        ).GetAwaiter().GetResult();
+        return Task.Run(async () => await renderTask.ConfigureAwait(false), CancellationToken.None).GetAwaiter().GetResult();
     }
 
     /// <summary>
@@ -80,7 +69,7 @@ public abstract class RazorTemplate : IEncodedContent
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var renderTask = RenderAsyncCore(textWriter, cancellationToken);
+        var renderTask = RenderAsync(textWriter, cancellationToken);
 
         if (renderTask.IsCompleted)
         {
@@ -100,11 +89,18 @@ public abstract class RazorTemplate : IEncodedContent
     /// </remarks>
     public async Task<string> RenderAsync(CancellationToken cancellationToken = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        var body = await RenderAsyncCore(null, cancellationToken).ConfigureAwait(false);
 
-        var textWriter = new StringWriter();
-        await RenderAsyncCore(textWriter, cancellationToken).ConfigureAwait(false);
-        return textWriter.ToString();
+        switch (body)
+        {
+            case BufferedContent { Output: var bufferedOutput }:
+                return bufferedOutput.ToString();
+
+            default: // Fallback case, shouldn't happen
+                var writer = new StringWriter();
+                body.WriteTo(writer);
+                return writer.ToString();
+        }
     }
 
     /// <summary>
@@ -117,19 +113,26 @@ public abstract class RazorTemplate : IEncodedContent
     /// </remarks>
     public async Task RenderAsync(TextWriter textWriter, CancellationToken cancellationToken = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        var body = await RenderAsyncCore(textWriter, cancellationToken).ConfigureAwait(false);
 
-        await RenderAsyncCore(textWriter, cancellationToken).ConfigureAwait(false);
+        switch (body)
+        {
+            case BufferedContent { Output: var bufferedOutput }:
+                await WriteStringBuilderToOutputAsync(bufferedOutput, textWriter, cancellationToken).ConfigureAwait(false);
+                break;
+
+            default: // Fallback case, shouldn't happen
+                body.WriteTo(textWriter);
+                break;
+        }
     }
 
     /// <summary>
-    /// Renders the template asynchronously including its layout and returns the result as a <see cref="StringBuilder"/>.
+    /// Renders the template and its layout stack.
     /// </summary>
-    private async Task RenderAsyncCore(TextWriter targetOutput, CancellationToken cancellationToken)
+    private async Task<IEncodedContent> RenderAsyncCore(TextWriter? targetOutput, CancellationToken cancellationToken)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var executionResult = await ExecuteAsyncCore(targetOutput, cancellationToken);
+        var executionResult = await ExecuteAsyncCore(targetOutput, cancellationToken).ConfigureAwait(false);
 
         while (executionResult.Layout is { } layout)
         {
@@ -137,16 +140,7 @@ public abstract class RazorTemplate : IEncodedContent
             executionResult = await layout.ExecuteLayoutAsync(executionResult).ConfigureAwait(false);
         }
 
-        switch (executionResult.Body)
-        {
-            case BufferedContent { Output: var bufferedOutput }:
-                await WriteStringBuilderToOutputAsync(bufferedOutput, targetOutput, cancellationToken).ConfigureAwait(false);
-                break;
-
-            case { } body: // Fallback case, shouldn't happen
-                body.WriteTo(targetOutput);
-                break;
-        }
+        return executionResult.Body;
     }
 
     /// <summary>
@@ -337,18 +331,18 @@ public abstract class RazorTemplate : IEncodedContent
             // so disallow setting a layout later on, as that would lead to inconsistent results.
             _layoutFrozen = true;
 
-            if (_targetOutput is not null)
-            {
-                var bufferedOutput = BufferedOutput.GetStringBuilder();
-                await WriteStringBuilderToOutputAsync(bufferedOutput, _targetOutput, CancellationToken).ConfigureAwait(false);
-                bufferedOutput.Clear();
+            if (_targetOutput is null)
+                return;
+
+            var bufferedOutput = BufferedOutput.GetStringBuilder();
+            await WriteStringBuilderToOutputAsync(bufferedOutput, _targetOutput, CancellationToken).ConfigureAwait(false);
+            bufferedOutput.Clear();
 
 #if NET8_0_OR_GREATER
-                await _targetOutput.FlushAsync(CancellationToken).ConfigureAwait(false);
+            await _targetOutput.FlushAsync(CancellationToken).ConfigureAwait(false);
 #else
-                await _targetOutput.FlushAsync().ConfigureAwait(false);
+            await _targetOutput.FlushAsync().ConfigureAwait(false);
 #endif
-            }
         }
 
         public BufferedContent ToBufferedContent()
