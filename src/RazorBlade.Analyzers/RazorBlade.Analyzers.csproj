@@ -34,8 +34,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../RazorBlade.Library/RazorBlade.Library.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="../RazorBlade.Library/**/*.cs" Exclude="../RazorBlade.Library/obj/**/*.cs" Role="Library" Visible="false" />
-    <AdditionalFiles Remove="../RazorBlade.Library/Properties/**/*.cs" />
+    <AdditionalFiles Include="../RazorBlade.Library/**/*.cs" Exclude="../RazorBlade.Library/obj/**/*.cs;../RazorBlade.Library/Properties/**/*.cs" Role="Library" Visible="false" />
   </ItemGroup>
 
 </Project>

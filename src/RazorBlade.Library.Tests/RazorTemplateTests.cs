@@ -21,7 +21,7 @@ public class RazorTemplateTests
     }
 
     [Test]
-    public void should_render_to_local_output()
+    public void should_render_to_string()
     {
         var template = new Template(t => t.WriteLiteral("foo"));
         template.Output.ShouldEqual(TextWriter.Null);
@@ -45,7 +45,7 @@ public class RazorTemplateTests
     }
 
     [Test]
-    public async Task should_render_async_to_local_output()
+    public async Task should_render_async_to_string()
     {
         var template = new Template(t => t.WriteLiteral("foo"));
         template.Output.ShouldEqual(TextWriter.Null);
@@ -157,6 +157,14 @@ public class RazorTemplateTests
 
             t.WriteLiteral(" baz");
             await t.FlushAsync();
+
+            await worker.WaitForNextStepAsync();
+
+            t.WriteLiteral(" hello"); // No flush after here
+
+            await worker.WaitForNextStepAsync();
+
+            t.WriteLiteral(" world");
         });
 
         var task = template.RenderAsync(output);
@@ -171,8 +179,16 @@ public class RazorTemplateTests
         template.Output.ShouldBe<StringWriter>().ToString().ShouldEqual(string.Empty);
 
         await controller.StartNextStepAndWaitForResultAsync();
-        await task;
         output.ToString().ShouldEqual("foo bar baz");
+        template.Output.ShouldBe<StringWriter>().ToString().ShouldEqual(string.Empty);
+
+        await controller.StartNextStepAndWaitForResultAsync();
+        output.ToString().ShouldEqual("foo bar baz");
+        template.Output.ShouldBe<StringWriter>().ToString().ShouldEqual(" hello");
+
+        await controller.StartNextStepAndWaitForResultAsync();
+        await task;
+        output.ToString().ShouldEqual("foo bar baz hello world");
         template.Output.ShouldEqual(TextWriter.Null);
     }
 

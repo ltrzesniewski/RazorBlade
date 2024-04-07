@@ -72,7 +72,7 @@ internal partial class ExampleTemplate : RazorBlade.HtmlTemplate
 That you can use like the following:
 
 <!-- snippet: ExampleTemplate.Usage -->
-<a id='snippet-exampletemplate.usage'></a>
+<a id='snippet-ExampleTemplate.Usage'></a>
 ```cs
 var template = new ExampleTemplate
 {
@@ -81,7 +81,7 @@ var template = new ExampleTemplate
 
 var result = template.Render();
 ```
-<sup><a href='/src/RazorBlade.IntegrationTest/Examples/Examples.cs#L13-L22' title='Snippet source file'>snippet source</a> | <a href='#snippet-exampletemplate.usage' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/Examples.cs#L13-L22' title='Snippet source file'>snippet source</a> | <a href='#snippet-ExampleTemplate.Usage' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### With a model
@@ -102,13 +102,13 @@ Hello, <i>@Model.Name</i>!
 Instantiating the generated class requires a model argument:
 
 <!-- snippet: TemplateWithModel.Usage -->
-<a id='snippet-templatewithmodel.usage'></a>
+<a id='snippet-TemplateWithModel.Usage'></a>
 ```cs
 var model = new GreetingModel { Name = "World" };
 var template = new TemplateWithModel(model);
 var result = template.Render();
 ```
-<sup><a href='/src/RazorBlade.IntegrationTest/Examples/Examples.cs#L27-L33' title='Snippet source file'>snippet source</a> | <a href='#snippet-templatewithmodel.usage' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/Examples.cs#L27-L33' title='Snippet source file'>snippet source</a> | <a href='#snippet-TemplateWithModel.Usage' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Since this generates a constructor with a `GreetingModel` parameter in the `TemplateWithModel` class, it may cause false errors to be shown in some IDEs, as they don't recognize this constructor signature.
@@ -136,13 +136,13 @@ Hello, <i>@Model.Name</i>!
 Instantiating the generated class is done similarly to the previous example:
 
 <!-- snippet: TemplateWithManualModel.Usage -->
-<a id='snippet-templatewithmanualmodel.usage'></a>
+<a id='snippet-TemplateWithManualModel.Usage'></a>
 ```cs
 var model = new GreetingModel { Name = "World" };
 var template = new TemplateWithManualModel { Model = model };
 var result = template.Render();
 ```
-<sup><a href='/src/RazorBlade.IntegrationTest/Examples/Examples.cs#L38-L44' title='Snippet source file'>snippet source</a> | <a href='#snippet-templatewithmanualmodel.usage' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/Examples.cs#L38-L44' title='Snippet source file'>snippet source</a> | <a href='#snippet-TemplateWithManualModel.Usage' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Documentation
@@ -179,13 +179,13 @@ Layout templates may be written by inheriting from the `RazorBlade.HtmlLayout` c
 The layout to use can be specified through the `Layout` property of `RazorBlade.HtmlTemplate`. Given that all Razor templates are stateful and not thread-safe, always create a new instance of the layout page to use:
 
 <!-- snippet: TemplateWithLayout.Usage -->
-<a id='snippet-templatewithlayout.usage'></a>
+<a id='snippet-TemplateWithLayout.Usage'></a>
 ```cshtml
 @{
     Layout = new LayoutToUse();
 }
 ```
-<sup><a href='/src/RazorBlade.IntegrationTest/Examples/TemplateWithLayout.cshtml#L2-L6' title='Snippet source file'>snippet source</a> | <a href='#snippet-templatewithlayout.usage' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/TemplateWithLayout.cshtml#L2-L6' title='Snippet source file'>snippet source</a> | <a href='#snippet-TemplateWithLayout.Usage' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Layout pages can be nested, and can use sections. Unlike in ASP.NET, RazorBlade does not verify if the body and all sections have been used. Sections may also be executed multiple times.
@@ -203,13 +203,13 @@ By default, the output of a template is buffered while it is executing, then cop
 The `RazorTemplate` class provides a `FlushAsync` method which will copy the buffered output to the provided `TextWriter` and then flush the writer:
 
 <!-- snippet: TemplateWithFlush.Usage -->
-<a id='snippet-templatewithflush.usage'></a>
+<a id='snippet-TemplateWithFlush.Usage'></a>
 ```cshtml
 <div>Lightweight content goes here.</div>
 @await FlushAsync()
 <div>Slower to render content goes here.</div>
 ```
-<sup><a href='/src/RazorBlade.IntegrationTest/Examples/TemplateWithFlush.cshtml#L2-L6' title='Snippet source file'>snippet source</a> | <a href='#snippet-templatewithflush.usage' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/TemplateWithFlush.cshtml#L2-L6' title='Snippet source file'>snippet source</a> | <a href='#snippet-TemplateWithFlush.Usage' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 > [!IMPORTANT]  
