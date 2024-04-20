@@ -62,6 +62,7 @@ dotnet_naming_style.underscore_camel_case.required_prefix = _
 ### csharp settings
 [*.cs]
 csharp_indent_labels = no_change
+csharp_prefer_braces = false
 
 ### ReSharper settings (these need to be in a [*] section)
 
