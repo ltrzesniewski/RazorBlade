@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Razor.Language;
+﻿using JetBrains.Annotations;
+using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -15,6 +16,7 @@ internal static class Diagnostics
         ConditionalOnAsync = 3,
         EmbeddedLibraryUnsupportedCSharpVersion = 4,
         TagHelpersNotSupported = 5,
+        [UsedImplicitly] UsingWithRazorSdk = 6
     }
 
     private static DiagnosticDescriptor RoslynError(Id id, string title, string messageFormat)

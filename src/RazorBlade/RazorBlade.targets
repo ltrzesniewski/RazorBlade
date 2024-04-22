@@ -14,6 +14,11 @@
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Namespace" />
   </ItemGroup>
 
+  <Target Name="RazorBladeBeforeCompile" BeforeTargets="BeforeCompile">
+    <Warning Condition="'$(UsingMicrosoftNETSdkRazor)' == 'true'" Code="RB0006"
+             Text="RazorBlade shouldn't be used in ASP.NET projects, as several Razor source generators would process the same .cshtml files by default. ASP.NET's generator is not compatible with the RazorBlade library." />
+  </Target>
+
   <Target Name="RazorBladePrepareAnalyzerInput" BeforeTargets="GenerateMSBuildEditorConfigFileCore">
     <PropertyGroup>
       <RazorBladeEmbeddedLibrary Condition="'$(RazorBladeEmbeddedLibrary)' == '' and @(PackageReference->WithMetadataValue('Identity', 'RazorBlade')->AnyHaveMetadataValue('PrivateAssets', 'all'))">True</RazorBladeEmbeddedLibrary>
