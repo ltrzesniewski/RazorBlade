@@ -1,14 +1,17 @@
 ﻿{
   Diagnostics: [
     {
-      Id: RB0005,
-      Title: Tag helpers are not supported in RazorBlade.,
-      Severity: Error,
-      WarningLevel: 0,
-      Location: ./TestFile.cshtml: (0,0)-(0,20),
-      MessageFormat: Tag helpers are not supported in RazorBlade.,
+      Location: .\TestFile.cshtml: (0,0)-(0,20),
       Message: Tag helpers are not supported in RazorBlade.,
-      Category: RazorBlade
+      Severity: Error,
+      Descriptor: {
+        Id: RB0005,
+        Title: Tag helpers are not supported in RazorBlade.,
+        MessageFormat: Tag helpers are not supported in RazorBlade.,
+        Category: RazorBlade,
+        DefaultSeverity: Error,
+        IsEnabledByDefault: true
+      }
     }
   ]
 }
