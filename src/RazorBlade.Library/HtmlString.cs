@@ -15,7 +15,7 @@ public sealed class HtmlString : IEncodedContent
     public static HtmlString Empty { get; } = new(string.Empty);
 
     /// <summary>
-    /// Creates a HTML-encoded string.
+    /// Creates an HTML-encoded string.
     /// </summary>
     public HtmlString(string? value)
         => _value = value ?? string.Empty;

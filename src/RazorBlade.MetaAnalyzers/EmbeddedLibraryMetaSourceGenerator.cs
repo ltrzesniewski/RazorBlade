@@ -121,6 +121,7 @@ public sealed class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
         // - Make protected internal members protected
         // - Remove JetBrains annotations
 
+        // language=csharp
         sourceText = $"""
             // This file is part of the RazorBlade library.
 

@@ -3,7 +3,7 @@ using System.IO;
 namespace RazorBlade;
 
 /// <summary>
-/// Encoded content to we written to the output as-is.
+/// Encoded content to be written to the output as-is.
 /// </summary>
 public interface IEncodedContent
 {
