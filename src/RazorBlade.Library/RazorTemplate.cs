@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -20,7 +21,7 @@ public abstract class RazorTemplate : IEncodedContent
     /// <summary>
     /// The <see cref="TextWriter"/> which receives the output.
     /// </summary>
-    protected internal TextWriter Output => _executionScope?.BufferedOutput ?? TextWriter.Null;
+    protected internal TextWriter Output => _executionScope?.Output ?? TextWriter.Null;
 
     /// <summary>
     /// The cancellation token.
@@ -164,6 +165,7 @@ public abstract class RazorTemplate : IEncodedContent
     /// <remarks>
     /// This feature is not compatible with layouts.
     /// </remarks>
+    [PublicAPI]
     protected internal async Task<IEncodedContent> FlushAsync()
     {
         if (_executionScope is not { } executionScope)
@@ -251,6 +253,33 @@ public abstract class RazorTemplate : IEncodedContent
     }
 
     /// <summary>
+    /// Pushes a writer on the stack.
+    /// </summary>
+    /// <param name="writer">The writer to use.</param>
+    [PublicAPI]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    protected internal void PushWriter(TextWriter writer)
+    {
+        if (_executionScope is not { } executionScope)
+            throw new InvalidOperationException("The writer stack can only be manipulated when the template is executing.");
+
+        executionScope.PushWriter(writer);
+    }
+
+    /// <summary>
+    /// Pops the last writer pushed on the stack.
+    /// </summary>
+    [PublicAPI]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    protected internal TextWriter PopWriter()
+    {
+        if (_executionScope is not { } executionScope)
+            throw new InvalidOperationException("The writer stack can only be manipulated when the template is executing.");
+
+        return executionScope.PopWriter();
+    }
+
+    /// <summary>
     /// Writes the contents of a <see cref="StringBuilder"/> to a <see cref="TextWriter"/> asynchronuously.
     /// </summary>
     private static Task WriteStringBuilderToOutputAsync(StringBuilder input, TextWriter output, CancellationToken cancellationToken)
@@ -274,35 +303,71 @@ public abstract class RazorTemplate : IEncodedContent
     private class ExecutionScope : IDisposable
     {
         private readonly RazorTemplate _page;
+        private readonly ScopeKind _kind;
         private readonly TextWriter? _targetOutput;
+        private readonly StringWriter? _bufferedOutput;
         private readonly ExecutionScope? _previousExecutionScope;
 
         private IRazorLayout? _layout;
         private bool _layoutFrozen;
         private Dictionary<string, Func<Task>>? _sections;
 
-        public StringWriter BufferedOutput { get; } = new();
+        public TextWriter Output { get; }
+
         public IRazorLayout? Layout => _layout;
         public CancellationToken CancellationToken { get; }
 
         public static ExecutionScope StartBody(RazorTemplate page, TextWriter? targetOutput, CancellationToken cancellationToken)
-            => new(page, targetOutput, cancellationToken);
+            => Start(new ExecutionScope(page, ScopeKind.Body, targetOutput, cancellationToken));
 
         private static ExecutionScope StartSection(ExecutionScope parent)
-            => new(parent._page, null, parent.CancellationToken)
+            => Start(new ExecutionScope(parent._page, ScopeKind.Section, null, parent.CancellationToken)
             {
                 _layout = parent._layout, // The section might reference the layout instance.
                 _layoutFrozen = true
-            };
+            });
 
-        private ExecutionScope(RazorTemplate page, TextWriter? targetOutput, CancellationToken cancellationToken)
+        private static void StartWriter(ExecutionScope parent, TextWriter writer)
+            => Start(new ExecutionScope(parent._page, ScopeKind.Writer, writer, parent.CancellationToken));
+
+        private static ExecutionScope Start(ExecutionScope executionScope)
+        {
+            executionScope._page._executionScope = executionScope;
+            return executionScope;
+        }
+
+        private ExecutionScope(RazorTemplate page, ScopeKind kind, TextWriter? writer, CancellationToken cancellationToken)
         {
             _page = page;
-            _targetOutput = targetOutput;
+            _kind = kind;
             CancellationToken = cancellationToken;
 
+            switch (kind)
+            {
+                case ScopeKind.Body:
+                    _targetOutput = writer;
+                    _bufferedOutput = new StringWriter();
+                    Output = _bufferedOutput;
+                    break;
+
+                case ScopeKind.Section:
+                    Debug.Assert(writer is null);
+                    _targetOutput = null;
+                    _bufferedOutput = new StringWriter();
+                    Output = _bufferedOutput;
+                    break;
+
+                case ScopeKind.Writer:
+                    _targetOutput = writer;
+                    _bufferedOutput = null;
+                    Output = _targetOutput ?? throw new ArgumentNullException(nameof(writer));
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+            }
+
             _previousExecutionScope = page._executionScope;
-            page._executionScope = this;
         }
 
         public void Dispose()
@@ -324,6 +389,12 @@ public abstract class RazorTemplate : IEncodedContent
 
         public async Task FlushAsync()
         {
+            if (_kind == ScopeKind.Writer)
+            {
+                await FlushTargetOutputWriter().ConfigureAwait(false);
+                return;
+            }
+
             if (_layout is not null)
                 throw new InvalidOperationException("The output cannot be flushed when a layout is used.");
 
@@ -334,19 +405,29 @@ public abstract class RazorTemplate : IEncodedContent
             if (_targetOutput is null)
                 return;
 
-            var bufferedOutput = BufferedOutput.GetStringBuilder();
-            await WriteStringBuilderToOutputAsync(bufferedOutput, _targetOutput, CancellationToken).ConfigureAwait(false);
-            bufferedOutput.Clear();
+            if (_bufferedOutput?.GetStringBuilder() is { } bufferedOutput)
+            {
+                await WriteStringBuilderToOutputAsync(bufferedOutput, _targetOutput, CancellationToken).ConfigureAwait(false);
+                bufferedOutput.Clear();
+            }
+
+            await FlushTargetOutputWriter().ConfigureAwait(false);
+
+            Task FlushTargetOutputWriter()
+            {
+                if (_targetOutput is null)
+                    return Task.CompletedTask;
 
 #if NET8_0_OR_GREATER
-            await _targetOutput.FlushAsync(CancellationToken).ConfigureAwait(false);
+                return _targetOutput.FlushAsync(CancellationToken);
 #else
-            await _targetOutput.FlushAsync().ConfigureAwait(false);
+                return _targetOutput.FlushAsync();
 #endif
+            }
         }
 
         public BufferedContent ToBufferedContent()
-            => new(BufferedOutput.GetStringBuilder());
+            => new(_bufferedOutput?.GetStringBuilder() ?? new());
 
         public bool IsSectionDefined(string name)
             => _sections is { } sections && sections.ContainsKey(name);
@@ -366,6 +447,18 @@ public abstract class RazorTemplate : IEncodedContent
 #endif
         }
 
+        public void PushWriter(TextWriter writer)
+            => StartWriter(this, writer);
+
+        public TextWriter PopWriter()
+        {
+            if (_kind != ScopeKind.Writer)
+                throw new InvalidOperationException("The writer stack is empty.");
+
+            Dispose();
+            return Output;
+        }
+
         public async Task<IEncodedContent?> RenderSectionAsync(string name)
         {
             if (_sections is not { } sections || !sections.TryGetValue(name, out var sectionAction))
@@ -374,6 +467,13 @@ public abstract class RazorTemplate : IEncodedContent
             using var sectionScope = StartSection(this);
             await sectionAction().ConfigureAwait(false);
             return sectionScope.ToBufferedContent();
+        }
+
+        private enum ScopeKind
+        {
+            Body,
+            Section,
+            Writer
         }
     }
 
