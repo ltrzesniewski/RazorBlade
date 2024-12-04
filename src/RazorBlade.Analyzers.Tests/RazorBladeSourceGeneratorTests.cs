@@ -350,6 +350,18 @@ public class RazorBladeSourceGeneratorTests
         );
     }
 
+    [Test]
+    public Task should_handle_templated_delegates()
+    {
+        return Verify(
+            """
+            @using System
+            @{ Func<string, object> bold = @<b>@item</b>; }
+            @bold("Bold but not <i>italic</i>")
+            """
+        );
+    }
+
     private static GeneratorDriverRunResult Generate(string input,
                                                      string? csharpCode,
                                                      bool embeddedLibrary,
