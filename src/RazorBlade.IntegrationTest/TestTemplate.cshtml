@@ -1,4 +1,4 @@
-@using RazorBlade.IntegrationTest
+@using System
 @inherits RazorBlade.HtmlTemplate
 
 <b>Hello, @Name!</b>
@@ -11,6 +11,13 @@
 @{ var br = "<br>"; }
 @br
 @Html.Raw("<br>")
+
+@{
+    Func<string, IEncodedContent> bold = @<b>@item</b>;
+}
+
+@bold("Bold text")
+@bold("Other bold text")
 
 @(new Footer())
 

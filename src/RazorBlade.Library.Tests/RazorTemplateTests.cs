@@ -233,6 +233,30 @@ public class RazorTemplateTests
         output.ToString().ShouldEqual("foo bar baz");
     }
 
+    [Test]
+    public void should_execute_templated_delegate()
+    {
+        var template = new Template(t =>
+        {
+            Func<object, object> bold = item => new RazorTemplate.HelperResult(writer =>
+                {
+                    t.PushWriter(writer);
+                    t.WriteLiteral("<b>");
+                    t.Write(item);
+                    t.WriteLiteral("</b>");
+                    t.PopWriter();
+                    return Task.CompletedTask;
+                }
+            );
+
+            t.Write(bold("Bold text"));
+            t.WriteLiteral(" - ");
+            t.Write(bold("Other bold text"));
+        });
+
+        template.Render().ShouldEqual("<b>Bold text</b> - <b>Other bold text</b>");
+    }
+
     private class Template(Func<Template, Task> executeAction) : RazorTemplate
     {
         public Template(Action<Template> executeAction)
@@ -252,6 +276,10 @@ public class RazorTemplateTests
 
         protected internal override void Write(object? value)
         {
+            if (value is IEncodedContent encodedContent)
+                encodedContent.WriteTo(Output);
+            else
+                WriteLiteral(value?.ToString());
         }
 
         protected internal override void BeginWriteAttribute(string name, string prefix, int prefixOffset, string suffix, int suffixOffset, int attributeValuesCount)

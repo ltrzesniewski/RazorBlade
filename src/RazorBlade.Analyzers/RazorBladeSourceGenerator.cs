@@ -148,6 +148,8 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                 });
 
                 cfg.Features.Add(new ErrorOnTagHelperSyntaxTreePass());
+
+                cfg.AddTargetExtension(new TemplateTargetExtension { TemplateTypeName = "HelperResult" });
             }
         );
 

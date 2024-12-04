@@ -521,4 +521,24 @@ public abstract class RazorTemplate : IEncodedContent
         public override string ToString()
             => Output.ToString();
     }
+
+    /// <summary>
+    /// Represents a deferred write operation.
+    /// </summary>
+    [PublicAPI]
+    protected internal class HelperResult : IEncodedContent
+    {
+        private readonly Func<TextWriter, Task> _action;
+
+        /// <summary>
+        /// Creates a deferred operation.
+        /// </summary>
+        /// <param name="action">The action to execute.</param>
+        public HelperResult(Func<TextWriter, Task> action)
+            => _action = action;
+
+        /// <inheritdoc />
+        public void WriteTo(TextWriter textWriter)
+            => _action.Invoke(textWriter).GetAwaiter().GetResult();
+    }
 }
