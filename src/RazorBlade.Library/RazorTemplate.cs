@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -151,9 +150,9 @@ public abstract class RazorTemplate : IEncodedContent
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        using var executionScope = ExecutionScope.StartBody(this, targetOutput, cancellationToken);
+        using var bodyScope = ExecutionScope.StartBody(this, targetOutput, cancellationToken);
         await ExecuteAsync().ConfigureAwait(false);
-        return new ExecutionResult(executionScope);
+        return new ExecutionResult(bodyScope);
     }
 
     /// <summary>
@@ -246,8 +245,8 @@ public abstract class RazorTemplate : IEncodedContent
     [EditorBrowsable(EditorBrowsableState.Never)]
     protected internal void DefineSection(string name, Func<Task> action)
     {
-        if (_executionScope is not { } executionScope)
-            throw new InvalidOperationException("Sections can only be defined while the template is executing.");
+        if (_executionScope is not ExecutionScope.BodyScope executionScope)
+            throw new InvalidOperationException("Sections can only be defined in a template body white it is executing.");
 
         executionScope.DefineSection(name, action);
     }
@@ -300,74 +299,47 @@ public abstract class RazorTemplate : IEncodedContent
     /// <summary>
     /// Stores the state of a template execution.
     /// </summary>
-    private class ExecutionScope : IDisposable
+    private abstract class ExecutionScope : IDisposable
     {
         private readonly RazorTemplate _page;
-        private readonly ScopeKind _kind;
-        private readonly TextWriter? _targetOutput;
-        private readonly StringWriter? _bufferedOutput;
         private readonly ExecutionScope? _previousExecutionScope;
 
-        private IRazorLayout? _layout;
-        private bool _layoutFrozen;
-        private Dictionary<string, Func<Task>>? _sections;
+#if NET5_0_OR_GREATER
+        public TextWriter Output { get; private init; } = TextWriter.Null;
+#else
+        public TextWriter Output { get; private set; } = TextWriter.Null;
+#endif
 
-        public TextWriter Output { get; }
-
-        public IRazorLayout? Layout => _layout;
+        public IRazorLayout? Layout { get; private set; }
         public CancellationToken CancellationToken { get; }
 
-        public static ExecutionScope StartBody(RazorTemplate page, TextWriter? targetOutput, CancellationToken cancellationToken)
-            => Start(new ExecutionScope(page, ScopeKind.Body, targetOutput, cancellationToken));
+        public static BodyScope StartBody(RazorTemplate page, TextWriter? targetOutput, CancellationToken cancellationToken)
+            => Start(new BodyScope(page, targetOutput, cancellationToken));
 
-        private static ExecutionScope StartSection(ExecutionScope parent)
-            => Start(new ExecutionScope(parent._page, ScopeKind.Section, null, parent.CancellationToken)
-            {
-                _layout = parent._layout, // The section might reference the layout instance.
-                _layoutFrozen = true
-            });
+        private static SectionScope StartSection(ExecutionScope parent)
+            => Start(new SectionScope(parent));
 
         private static void StartWriter(ExecutionScope parent, TextWriter writer)
-            => Start(new ExecutionScope(parent._page, ScopeKind.Writer, writer, parent.CancellationToken));
+            => Start(new WriterScope(parent, writer));
 
-        private static ExecutionScope Start(ExecutionScope executionScope)
+        private static TScope Start<TScope>(TScope executionScope)
+            where TScope : ExecutionScope
         {
             executionScope._page._executionScope = executionScope;
             return executionScope;
         }
 
-        private ExecutionScope(RazorTemplate page, ScopeKind kind, TextWriter? writer, CancellationToken cancellationToken)
+        private ExecutionScope(RazorTemplate page, CancellationToken cancellationToken)
         {
             _page = page;
-            _kind = kind;
             CancellationToken = cancellationToken;
 
-            switch (kind)
-            {
-                case ScopeKind.Body:
-                    _targetOutput = writer;
-                    _bufferedOutput = new StringWriter();
-                    Output = _bufferedOutput;
-                    break;
-
-                case ScopeKind.Section:
-                    Debug.Assert(writer is null);
-                    _targetOutput = null;
-                    _bufferedOutput = new StringWriter();
-                    Output = _bufferedOutput;
-                    break;
-
-                case ScopeKind.Writer:
-                    _targetOutput = writer;
-                    _bufferedOutput = null;
-                    Output = _targetOutput ?? throw new ArgumentNullException(nameof(writer));
-                    break;
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
-            }
-
             _previousExecutionScope = page._executionScope;
+        }
+
+        private ExecutionScope(ExecutionScope parent)
+            : this(parent._page, parent.CancellationToken)
+        {
         }
 
         public void Dispose()
@@ -376,119 +348,171 @@ public abstract class RazorTemplate : IEncodedContent
                 _page._executionScope = _previousExecutionScope;
         }
 
-        public void SetLayout(IRazorLayout? layout)
-        {
-            if (ReferenceEquals(layout, _layout))
-                return;
+        public abstract void SetLayout(IRazorLayout? layout);
 
-            if (_layoutFrozen)
-                throw new InvalidOperationException("The layout can no longer be changed.");
-
-            _layout = layout;
-        }
-
-        public async Task FlushAsync()
-        {
-            if (_kind == ScopeKind.Writer)
-            {
-                await FlushTargetOutputWriter().ConfigureAwait(false);
-                return;
-            }
-
-            if (_layout is not null)
-                throw new InvalidOperationException("The output cannot be flushed when a layout is used.");
-
-            // A part of the output will be written to the target output and discarded,
-            // so disallow setting a layout later on, as that would lead to inconsistent results.
-            _layoutFrozen = true;
-
-            if (_targetOutput is null)
-                return;
-
-            if (_bufferedOutput?.GetStringBuilder() is { } bufferedOutput)
-            {
-                await WriteStringBuilderToOutputAsync(bufferedOutput, _targetOutput, CancellationToken).ConfigureAwait(false);
-                bufferedOutput.Clear();
-            }
-
-            await FlushTargetOutputWriter().ConfigureAwait(false);
-
-            Task FlushTargetOutputWriter()
-            {
-                if (_targetOutput is null)
-                    return Task.CompletedTask;
-
-#if NET8_0_OR_GREATER
-                return _targetOutput.FlushAsync(CancellationToken);
-#else
-                return _targetOutput.FlushAsync();
-#endif
-            }
-        }
-
-        public BufferedContent ToBufferedContent()
-            => new(_bufferedOutput?.GetStringBuilder() ?? new());
-
-        public bool IsSectionDefined(string name)
-            => _sections is { } sections && sections.ContainsKey(name);
-
-        public void DefineSection(string name, Func<Task> action)
-        {
-            var sections = _sections ??= new(StringComparer.OrdinalIgnoreCase);
-
-#if NET6_0_OR_GREATER
-            if (!sections.TryAdd(name, action))
-                throw new InvalidOperationException($"Section '{name}' is already defined.");
-#else
-            if (sections.ContainsKey(name))
-                throw new InvalidOperationException($"Section '{name}' is already defined.");
-
-            sections[name] = action;
-#endif
-        }
+        public abstract Task FlushAsync();
 
         public void PushWriter(TextWriter writer)
             => StartWriter(this, writer);
 
-        public TextWriter PopWriter()
-        {
-            if (_kind != ScopeKind.Writer)
-                throw new InvalidOperationException("The writer stack is empty.");
+        public virtual TextWriter PopWriter()
+            => throw new InvalidOperationException("The writer stack is empty.");
 
-            Dispose();
-            return Output;
+#if NET8_0_OR_GREATER
+        private Task FlushWriterAsync(TextWriter? writer)
+            => writer?.FlushAsync(CancellationToken) ?? Task.CompletedTask;
+#else
+        private static Task FlushWriterAsync(TextWriter? writer)
+            => writer?.FlushAsync() ?? Task.CompletedTask;
+#endif
+
+        public sealed class BodyScope : ExecutionScope
+        {
+            private readonly TextWriter? _targetOutput;
+            private readonly StringWriter _bufferedOutput = new();
+
+            private Dictionary<string, Func<Task>>? _sections;
+            private bool _layoutIsFrozen;
+
+            public BodyScope(RazorTemplate page, TextWriter? targetOutput, CancellationToken cancellationToken)
+                : base(page, cancellationToken)
+            {
+                _targetOutput = targetOutput;
+                Output = _bufferedOutput;
+            }
+
+            public BufferedContent ToBufferedContent()
+                => new(_bufferedOutput.GetStringBuilder());
+
+            public override void SetLayout(IRazorLayout? layout)
+            {
+                if (ReferenceEquals(layout, Layout))
+                    return;
+
+                if (_layoutIsFrozen)
+                    throw new InvalidOperationException("The layout can no longer be changed.");
+
+                Layout = layout;
+            }
+
+            public bool IsSectionDefined(string name)
+                => _sections is { } sections && sections.ContainsKey(name);
+
+            public void DefineSection(string name, Func<Task> action)
+            {
+                var sections = _sections ??= new(StringComparer.OrdinalIgnoreCase);
+
+#if NET6_0_OR_GREATER
+                if (!sections.TryAdd(name, action))
+                    throw new InvalidOperationException($"Section '{name}' is already defined.");
+#else
+                if (sections.ContainsKey(name))
+                    throw new InvalidOperationException($"Section '{name}' is already defined.");
+
+                sections[name] = action;
+#endif
+            }
+
+            public async Task<IEncodedContent?> RenderSectionAsync(string name)
+            {
+                if (_sections is not { } sections || !sections.TryGetValue(name, out var sectionAction))
+                    return null;
+
+                using var sectionScope = StartSection(this);
+                await sectionAction().ConfigureAwait(false);
+                return sectionScope.ToBufferedContent();
+            }
+
+            public override async Task FlushAsync()
+            {
+                if (Layout is not null)
+                    throw new InvalidOperationException("The output cannot be flushed when a layout is used.");
+
+                // A part of the output will be written to the target output and discarded,
+                // so disallow setting a layout later on, as that would lead to inconsistent results.
+                _layoutIsFrozen = true;
+
+                if (_targetOutput is null)
+                    return;
+
+                var bufferedOutput = _bufferedOutput.GetStringBuilder();
+                await WriteStringBuilderToOutputAsync(bufferedOutput, _targetOutput, CancellationToken).ConfigureAwait(false);
+                bufferedOutput.Clear();
+
+                await FlushWriterAsync(_targetOutput).ConfigureAwait(false);
+            }
         }
 
-        public async Task<IEncodedContent?> RenderSectionAsync(string name)
+        private sealed class SectionScope : ExecutionScope
         {
-            if (_sections is not { } sections || !sections.TryGetValue(name, out var sectionAction))
-                return null;
+            private readonly StringWriter _bufferedOutput = new();
 
-            using var sectionScope = StartSection(this);
-            await sectionAction().ConfigureAwait(false);
-            return sectionScope.ToBufferedContent();
+            public SectionScope(ExecutionScope parent)
+                : base(parent)
+            {
+                Output = _bufferedOutput;
+                Layout = parent.Layout; // The section might reference the layout instance.
+            }
+
+            public BufferedContent ToBufferedContent()
+                => new(_bufferedOutput.GetStringBuilder());
+
+            public override void SetLayout(IRazorLayout? layout)
+            {
+                if (ReferenceEquals(layout, Layout))
+                    return;
+
+                throw new InvalidOperationException("The layout can not be changed from a section.");
+            }
+
+            public override Task FlushAsync()
+            {
+                if (Layout is not null)
+                    throw new InvalidOperationException("The output cannot be flushed when a layout is used.");
+
+                return Task.CompletedTask;
+            }
         }
 
-        private enum ScopeKind
+        private sealed class WriterScope : ExecutionScope
         {
-            Body,
-            Section,
-            Writer
+            public WriterScope(ExecutionScope parent, TextWriter writer)
+                : base(parent)
+            {
+                Output = writer ?? throw new ArgumentNullException(nameof(writer));
+            }
+
+            public override void SetLayout(IRazorLayout? layout)
+            {
+                if (ReferenceEquals(layout, Layout))
+                    return;
+
+                throw new InvalidOperationException("The layout can not be changed from a helper.");
+            }
+
+            public override Task FlushAsync()
+                => FlushWriterAsync(Output);
+
+            public override TextWriter PopWriter()
+            {
+                Dispose();
+                return Output;
+            }
         }
     }
 
     /// <summary>
     /// Stores the result of a template execution.
     /// </summary>
-    private class ExecutionResult : IRazorExecutionResult
+    private sealed class ExecutionResult : IRazorExecutionResult
     {
-        private readonly ExecutionScope _executionScope;
+        private readonly ExecutionScope.BodyScope _executionScope;
 
         public IEncodedContent Body { get; }
         public IRazorLayout? Layout => _executionScope.Layout;
         public CancellationToken CancellationToken => _executionScope.CancellationToken;
 
-        public ExecutionResult(ExecutionScope executionScope)
+        public ExecutionResult(ExecutionScope.BodyScope executionScope)
         {
             _executionScope = executionScope;
             Body = executionScope.ToBufferedContent();
@@ -508,7 +532,7 @@ public abstract class RazorTemplate : IEncodedContent
     /// StringBuilders can be combined more efficiently than strings, which is useful for layouts.
     /// <see cref="TextWriter"/> has a dedicated <c>Write</c> overload for <see cref="StringBuilder"/> in some frameworks.
     /// </remarks>
-    private class BufferedContent : IEncodedContent
+    private sealed class BufferedContent : IEncodedContent
     {
         public StringBuilder Output { get; }
 
@@ -526,7 +550,7 @@ public abstract class RazorTemplate : IEncodedContent
     /// Represents a deferred write operation.
     /// </summary>
     [PublicAPI]
-    protected internal class HelperResult : IEncodedContent
+    protected internal sealed class HelperResult : IEncodedContent
     {
         private readonly Func<TextWriter, Task> _action;
 
