@@ -1,0 +1,5 @@
+﻿<ProjectSchemaDefinitions xmlns="http://schemas.microsoft.com/build/2009/properties">
+  <ContentType Name="RazorBlade" DisplayName="RazorBlade template" ItemType="RazorBlade" />
+  <ItemType Name="RazorBlade" DisplayName="RazorBlade template" />
+  <FileExtension Name=".cshtml" ContentType="RazorBlade" />
+</ProjectSchemaDefinitions>

@@ -5,11 +5,11 @@ trim_trailing_whitespace = true
 insert_final_newline = true
 end_of_line = crlf
 
-[*.{cs,csx,xaml,cake,tt}]
+[*.{cs,csx,cake,tt}]
 indent_size = 4
 indent_style = space
 
-[*.{config,nuspec,resx}]
+[*.{config,nuspec,resx,xaml}]
 indent_size = 2
 indent_style = space
 

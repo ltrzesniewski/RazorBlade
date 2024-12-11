@@ -9,6 +9,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <AvailableItemName Include="RazorBlade" />
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)RazorBlade.xaml" Context="File;BrowseObject" />
+
     <CompilerVisibleProperty Include="RazorBladeEmbeddedLibrary" />
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="IsRazorBlade" />
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Namespace" />

@@ -4,10 +4,6 @@
     <EnableDefaultRazorBladeItems Condition="'$(EnableDefaultRazorBladeItems)' == ''">true</EnableDefaultRazorBladeItems>
   </PropertyGroup>
 
-  <ItemGroup>
-    <AvailableItemName Include="RazorBlade" />
-  </ItemGroup>
-
   <ItemGroup Condition="'$(EnableDefaultItems)' == 'true' and '$(EnableDefaultRazorBladeItems)' == 'true'">
     <RazorBlade Include="**/*.cshtml" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder)" />
   </ItemGroup>
