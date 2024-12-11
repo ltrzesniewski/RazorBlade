@@ -25,6 +25,7 @@
   <ItemGroup>
     <None Include="RazorBlade.props" Pack="true" PackagePath="build" />
     <None Include="RazorBlade.targets" Pack="true" PackagePath="build" />
+    <None Include="RazorBlade.xaml" Pack="true" PackagePath="build" />
     <None Include="RazorBlade.MT.props" Pack="true" PackagePath="buildMultiTargeting/RazorBlade.props" />
     <None Include="RazorBlade.MT.targets" Pack="true" PackagePath="buildMultiTargeting/RazorBlade.targets" />
     <None Include="../../icon.png" Pack="true" PackagePath="/" Visible="false" />
