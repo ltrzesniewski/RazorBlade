@@ -1,6 +1,12 @@
+@using System
 @inherits RazorBlade.HtmlTemplate<string>
 
 <b>Hello, @Name and @Model!</b>
+
+@{
+    Func<string, IEncodedContent> bold = @<b>@item</b>;
+}
+@bold("Bold text")
 
 @functions {
     public string? Name { get; set; }

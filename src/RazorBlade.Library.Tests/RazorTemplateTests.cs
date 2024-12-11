@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -234,6 +235,31 @@ public class RazorTemplateTests
     }
 
     [Test]
+    public void should_push_pop_writers()
+    {
+        var writerA = new StringWriter();
+        var writerB = new StringWriter();
+
+        var template = new Template(t =>
+        {
+            t.Write("A");
+            t.PushWriter(writerA);
+            t.Write("B");
+            t.PushWriter(writerB);
+            t.Write("C");
+            t.PopWriter();
+            t.Write("D");
+            t.PopWriter();
+            t.Write("E");
+        });
+
+        template.Render().ShouldEqual("AE");
+        writerA.ToString().ShouldEqual("BD");
+        writerB.ToString().ShouldEqual("C");
+    }
+
+    [Test]
+    [SuppressMessage("ReSharper", "ConvertToLocalFunction")]
     public void should_execute_templated_delegate()
     {
         var template = new Template(t =>
