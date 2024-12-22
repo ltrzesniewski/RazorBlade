@@ -1,0 +1,28 @@
+@using System
+@inherits RazorBlade.HtmlTemplate
+
+<b>Hello, @Name!</b>
+
+<a id="hello" href="https://@HostName/hello.txt?q=@Name&t=test">Hello</a>
+
+<div true="@true" false="@false" foo-and-null="foo @null"></div>
+<div data-true="@true" data-false="@false" data-foo-and-null="foo @null"></div>
+
+@{ var br = "<br>"; }
+@br
+@Html.Raw("<br>")
+
+@{
+    Func<string, IEncodedContent> bold = @<b>@item</b>;
+}
+@bold("Bold text")
+@bold("Other <i>bold</i> text")
+
+@(new Footer())
+
+@functions {
+
+    public string? Name { get; set; }
+    public string? HostName { get; set; } = "example.com";
+
+}

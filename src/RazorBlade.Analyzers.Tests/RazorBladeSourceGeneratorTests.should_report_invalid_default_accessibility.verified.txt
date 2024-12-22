@@ -1,0 +1,16 @@
+﻿{
+  Diagnostics: [
+    {
+      Message: Invalid accessibility modifier: 'foo'. Valid values are 'internal' and 'public'.,
+      Severity: Error,
+      Descriptor: {
+        Id: RB0007,
+        Title: Invalid accessibility,
+        MessageFormat: Invalid accessibility modifier: '{0}'. Valid values are 'internal' and 'public'.,
+        Category: RazorBlade,
+        DefaultSeverity: Error,
+        IsEnabledByDefault: true
+      }
+    }
+  ]
+}

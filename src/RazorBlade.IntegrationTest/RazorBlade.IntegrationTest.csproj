@@ -16,6 +16,10 @@
     <PackageReference Include="MarkdownSnippets.MsBuild" Version="27.0.2" PrivateAssets="all" />
   </ItemGroup>
 
+  <ItemGroup>
+    <RazorBlade Update="PublicTemplate.cshtml" Accessibility="public" />
+  </ItemGroup>
+
   <Import Project="../RazorBlade/RazorBlade.targets" />
 
 </Project>

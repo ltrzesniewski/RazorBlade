@@ -11,6 +11,11 @@ public static class Program
         WriteTemplate(new TestTemplateWithModel(new FooBarModelClass { Foo = "Foo", Bar = "Bar" }));
         WriteTemplate(new PageWithLayout());
         WriteTemplate(new PageWithFlush());
+
+        CheckNamespaces();
+        CheckAccessibility();
+
+        Console.WriteLine("OK");
     }
 
     private static void WriteTemplate(RazorTemplate template)
@@ -27,6 +32,15 @@ public static class Program
         _ = typeof(global::RazorBlade.IntegrationTest.TestTemplate);
         _ = typeof(global::RazorBlade.IntegrationTest.Examples.ExampleTemplate);
         _ = typeof(global::FooBar.OtherNamespace.TestTemplateWithNamespace);
+    }
+
+    private static void CheckAccessibility()
+    {
+        if (!typeof(TestTemplate).IsNotPublic)
+            throw new InvalidOperationException("Invalid accessibility for TestTemplate");
+
+        if (!typeof(PublicTemplate).IsPublic)
+            throw new InvalidOperationException("Invalid accessibility for PublicTemplate");
     }
 }
 

@@ -1,12 +1,19 @@
 <Project>
 
+  <PropertyGroup>
+    <RazorBladeDefaultAccessibility Condition="'$(RazorBladeDefaultAccessibility)' == ''">internal</RazorBladeDefaultAccessibility>
+  </PropertyGroup>
+
   <ItemGroup>
     <AvailableItemName Include="RazorBlade" />
     <PropertyPageSchema Include="$(MSBuildThisFileDirectory)RazorBlade.xaml" Context="File;BrowseObject" />
 
     <CompilerVisibleProperty Include="RazorBladeEmbeddedLibrary" />
+    <CompilerVisibleProperty Include="RazorBladeDefaultAccessibility" />
+
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="IsRazorBlade" />
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="HintNamespace" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Accessibility" />
 
     <None Remove="**/*.cshtml" Condition="'$(EnableDefaultItems)' == 'true' and '$(EnableDefaultRazorBladeItems)' == 'true'" />
   </ItemGroup>

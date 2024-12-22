@@ -218,7 +218,10 @@ public class RazorBladeSourceGeneratorTests
             """
             @inherits RazorBlade.HtmlTemplate<string>
             """,
-            embeddedLibrary: true
+            config: new()
+            {
+                EmbeddedLibrary = true
+            }
         );
     }
 
@@ -229,7 +232,10 @@ public class RazorBladeSourceGeneratorTests
             """
             @model FooBar
             """,
-            expectErrors: true
+            config: new()
+            {
+                ExpectErrors = true
+            }
         );
     }
 
@@ -252,7 +258,10 @@ public class RazorBladeSourceGeneratorTests
             @using System.Threading.Tasks
             @await Task.FromResult(42)
             """,
-            netstandard: true
+            config: new()
+            {
+                NetStandard = true
+            }
         );
     }
 
@@ -319,7 +328,10 @@ public class RazorBladeSourceGeneratorTests
             """
             @addTagHelper *, Foo
             """,
-            expectErrors: true
+            config: new()
+            {
+                ExpectErrors = true
+            }
         );
     }
 
@@ -361,15 +373,89 @@ public class RazorBladeSourceGeneratorTests
         );
     }
 
+    [Test]
+    public Task should_set_accessibility()
+    {
+        return Verify(
+            """
+            Hello
+            """,
+            config: new()
+            {
+                ConfigOptions = { [Constants.FileOptions.Accessibility] = "public" }
+            }
+        );
+    }
+
+    [Test]
+    public Task should_report_invalid_accessibility()
+    {
+        return Verify(
+            """
+            Hello
+            """,
+            config: new()
+            {
+                ConfigOptions = { [Constants.FileOptions.Accessibility] = "foo" },
+                ExpectErrors = true
+            }
+        );
+    }
+
+    [Test]
+    public Task should_set_default_accessibility()
+    {
+        return Verify(
+            """
+            Hello
+            """,
+            config: new()
+            {
+                ConfigOptions = { [Constants.GlobalOptions.DefaultAccessibility] = "public" }
+            }
+        );
+    }
+
+    [Test]
+    public Task should_report_invalid_default_accessibility()
+    {
+        return Verify(
+            """
+            Hello
+            """,
+            config: new()
+            {
+                ConfigOptions = { [Constants.GlobalOptions.DefaultAccessibility] = "foo" },
+                ExpectErrors = true
+            }
+        );
+    }
+
+    [Test]
+    public Task should_prioritize_accessibility_over_default_accessibility()
+    {
+        return Verify(
+            """
+            Hello
+            """,
+            config: new()
+            {
+                ConfigOptions =
+                {
+                    [Constants.FileOptions.Accessibility] = "public",
+                    [Constants.GlobalOptions.DefaultAccessibility] = "internal"
+                }
+            }
+        );
+    }
+
     private static GeneratorDriverRunResult Generate(string input,
                                                      string? csharpCode,
-                                                     bool embeddedLibrary,
-                                                     bool netstandard,
-                                                     bool expectErrors)
+                                                     TestConfig config)
     {
         var metadataReferences = new List<MetadataReference>();
 
-        if (netstandard)
+        if (config.NetStandard)
         {
             metadataReferences.Add(
                 MetadataReference.CreateFromFile(
@@ -392,19 +478,18 @@ public class RazorBladeSourceGeneratorTests
             ]);
         }
 
-        var analyzerConfigOptionsProvider = new AnalyzerConfigOptionsProviderMock
-        {
-            { Constants.FileOptions.IsRazorBlade, "True" },
-            { Constants.FileOptions.HintNamespace, "TestNamespace" }
-        };
+        var analyzerConfigOptionsProvider = new AnalyzerConfigOptionsProviderMock();
 
-        if (embeddedLibrary)
+        foreach (var (key, value) in config.ConfigOptions)
+            analyzerConfigOptionsProvider.Add(key, value);
+
+        if (config.EmbeddedLibrary)
         {
             analyzerConfigOptionsProvider.Add(Constants.GlobalOptions.EmbeddedLibrary, "true");
         }
         else
         {
-            if (netstandard)
+            if (config.NetStandard)
             {
                 metadataReferences.Add(
                     MetadataReference.CreateFromFile(
@@ -435,7 +520,7 @@ public class RazorBladeSourceGeneratorTests
 
         var diagnostics = updatedCompilation.GetDiagnostics();
 
-        if (expectErrors)
+        if (config.ExpectErrors)
         {
             result.Diagnostics.ShouldContain(i => i.Severity == DiagnosticSeverity.Error);
         }
@@ -443,7 +528,7 @@ public class RazorBladeSourceGeneratorTests
         {
             result.Diagnostics.ShouldBeEmpty();
 
-            if (!embeddedLibrary) // Don't validate the embedded library generator here, assume the final output will compile.
+            if (!config.EmbeddedLibrary) // Don't validate the embedded library generator here, assume the final output will compile.
             {
                 if (!diagnostics.IsEmpty)
                     Console.WriteLine(result.GeneratedTrees.FirstOrDefault());
@@ -457,11 +542,22 @@ public class RazorBladeSourceGeneratorTests
 
     private static Task Verify([StringSyntax("razor")] string input,
                                [StringSyntax("csharp")] string? csharpCode = null,
-                               bool embeddedLibrary = false,
-                               bool netstandard = false,
-                               bool expectErrors = false)
+                               TestConfig? config = null)
     {
-        var result = Generate(input, csharpCode, embeddedLibrary, netstandard, expectErrors);
+        var result = Generate(input, csharpCode, config ?? new());
         return Verifier.Verify(result);
+    }
+
+    private class TestConfig
+    {
+        public Dictionary<string, string> ConfigOptions { get; } = new()
+        {
+            { Constants.FileOptions.IsRazorBlade, "True" },
+            { Constants.FileOptions.HintNamespace, "TestNamespace" }
+        };
+
+        public bool EmbeddedLibrary { get; init; }
+        public bool NetStandard { get; init; }
+        public bool ExpectErrors { get; init; }
     }
 }

@@ -16,7 +16,8 @@ internal static class Diagnostics
         ConditionalOnAsync = 3,
         EmbeddedLibraryUnsupportedCSharpVersion = 4,
         TagHelpersNotSupported = 5,
-        [UsedImplicitly] UsingWithRazorSdk = 6
+        [UsedImplicitly] UsingWithRazorSdk = 6,
+        InvalidAccessibility = 7
     }
 
     private static DiagnosticDescriptor RoslynError(Id id, string title, string messageFormat)
@@ -59,4 +60,12 @@ internal static class Diagnostics
 
     public static RazorDiagnostic TagHelpersNotSupported(SourceSpan span)
         => RazorDiagnostic.Create(_tagHelpersNotSupportedDescriptor, span);
+
+    // Invalid accessibility
+
+    private static readonly DiagnosticDescriptor _invalidAccessibilityDescriptor
+        = RoslynError(Id.InvalidAccessibility, "Invalid accessibility", "Invalid accessibility modifier: '{0}'. Valid values are 'internal' and 'public'.");
+
+    public static Diagnostic InvalidAccessibility(string value)
+        => Diagnostic.Create(_invalidAccessibilityDescriptor, null, value);
 }

@@ -6,6 +6,7 @@ internal static class Constants
     {
         private const string _prefix = "build_property";
 
+        public const string DefaultAccessibility = $"{_prefix}.RazorBladeDefaultAccessibility";
         public const string EmbeddedLibrary = $"{_prefix}.RazorBladeEmbeddedLibrary";
     }
 
@@ -15,5 +16,6 @@ internal static class Constants
 
         public const string IsRazorBlade = $"{_prefix}.IsRazorBlade";
         public const string HintNamespace = $"{_prefix}.HintNamespace";
+        public const string Accessibility = $"{_prefix}.Accessibility";
     }
 }

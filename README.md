@@ -221,6 +221,16 @@ The source generator will process `RazorBlade` MSBuild items which have the `.cs
 
 By default, all `.cshtml` files are included, unless one of the `EnableDefaultRazorBladeItems` or `EnableDefaultItems` properties are set to `false`. You can also manually customize this set.
 
+**Available property settings:**
+
+- `EnableDefaultRazorBladeItems`: Whether to automatically include all `.cshtml` files in the project. Default is `true`.
+- `RazorBladeDefaultAccessibility`: The default accessibility of the generated classes (`internal` or `public`). Default is `internal`.
+- `RazorBladeEmbeddedLibrary`: Whether to embed the RazorBlade library in the target project (see below). Default is `false`.
+
+**Available item metadata settings:**
+
+- `Accessibility`: The accessibility of the generated class (`internal` or `public`). Default is `$(RazorBladeDefaultAccessibility)`.
+
 ### Removing the dependency on RazorBlade
 
 RazorBlade makes it possible to remove the dependency on its runtime assembly. This could be useful for library projects which should be self-contained, with no dependencies on external packages.

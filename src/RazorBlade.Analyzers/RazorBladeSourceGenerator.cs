@@ -21,11 +21,12 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var globalOptions = context.ParseOptionsProvider
+                                   .Combine(context.AnalyzerConfigOptionsProvider)
                                    .Combine(EmbeddedLibrarySourceGenerator.EmbeddedLibraryProvider(context))
                                    .Select(static (pair, _) =>
                                    {
-                                       var (parseOptions, embeddedLibrary) = pair;
-                                       return GlobalOptions.Create((CSharpParseOptions)parseOptions, embeddedLibrary);
+                                       var ((parseOptions, optionsProvider), embeddedLibrary) = pair;
+                                       return GlobalOptions.Create((CSharpParseOptions)parseOptions, optionsProvider, embeddedLibrary);
                                    });
 
         var inputFiles = context.AdditionalTextsProvider
@@ -37,6 +38,11 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                                     return InputFile.Create(additionalText, optionsProvider);
                                 })
                                 .WhereNotNull();
+
+        context.RegisterSourceOutput(
+            globalOptions,
+            static (context, globalOptions) => globalOptions.ReportDiagnostics(context)
+        );
 
         context.RegisterSourceOutput(
             inputFiles.Combine(globalOptions)
@@ -61,6 +67,8 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
     private static void Generate(SourceProductionContext context, InputFile file, GlobalOptions globalOptions, Compilation compilation)
     {
         OnGenerate();
+
+        file.ReportDiagnostics(context);
 
         var sourceText = file.AdditionalText.GetText();
         if (sourceText is null)
@@ -113,7 +121,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                     node.BaseType = "global::RazorBlade.HtmlTemplate";
 
                     node.Modifiers.Clear();
-                    node.Modifiers.Add(SyntaxFacts.GetText(Accessibility.Internal));
+                    node.Modifiers.Add(SyntaxFacts.GetText(file.Accessibility ?? globalOptions.DefaultAccessibility ?? Accessibility.Internal));
                     node.Modifiers.Add(SyntaxFacts.GetText(SyntaxKind.PartialKeyword));
 
                     // Enable nullable reference types for the class definition node, as they may be needed for the base class.
