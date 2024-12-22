@@ -43,7 +43,7 @@ public class EmbeddedLibrarySourceGenerator : IIncrementalGenerator
     private static IncrementalValueProvider<bool> EmbeddedLibraryFlagProvider(IncrementalGeneratorInitializationContext context)
         => context.AnalyzerConfigOptionsProvider
                   .Select(
-                      static (i, _) => i.GlobalOptions.TryGetValue("build_property.RazorBladeEmbeddedLibrary", out var embeddedLibraryStr)
+                      static (i, _) => i.GlobalOptions.TryGetValue(Constants.GlobalOptions.EmbeddedLibrary, out var embeddedLibraryStr)
                                        && bool.TryParse(embeddedLibraryStr, out var embeddedLibrary)
                                        && embeddedLibrary
                   );

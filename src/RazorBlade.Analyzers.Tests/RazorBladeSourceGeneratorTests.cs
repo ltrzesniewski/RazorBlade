@@ -394,13 +394,13 @@ public class RazorBladeSourceGeneratorTests
 
         var analyzerConfigOptionsProvider = new AnalyzerConfigOptionsProviderMock
         {
-            { "IsRazorBlade", "True" },
-            { "HintNamespace", "TestNamespace" }
+            { Constants.FileOptions.IsRazorBlade, "True" },
+            { Constants.FileOptions.HintNamespace, "TestNamespace" }
         };
 
         if (embeddedLibrary)
         {
-            analyzerConfigOptionsProvider.Add("RazorBladeEmbeddedLibrary", "true");
+            analyzerConfigOptionsProvider.Add(Constants.GlobalOptions.EmbeddedLibrary, "true");
         }
         else
         {

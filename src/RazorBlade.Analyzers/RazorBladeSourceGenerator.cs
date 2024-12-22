@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Immutable;
-using System.IO;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -9,10 +8,10 @@ using Microsoft.AspNetCore.Razor.Language.Extensions;
 using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Razor;
 using Microsoft.CodeAnalysis.Text;
 using RazorBlade.Analyzers.Support;
+using SyntaxKind = Microsoft.CodeAnalysis.CSharp.SyntaxKind;
 
 namespace RazorBlade.Analyzers;
 
@@ -26,17 +25,17 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                                    .Select(static (pair, _) =>
                                    {
                                        var (parseOptions, embeddedLibrary) = pair;
-
-                                       return new GlobalOptions(
-                                           (CSharpParseOptions)parseOptions,
-                                           embeddedLibrary
-                                       );
+                                       return GlobalOptions.Create((CSharpParseOptions)parseOptions, embeddedLibrary);
                                    });
 
         var inputFiles = context.AdditionalTextsProvider
                                 .Where(static i => i.Path.EndsWith(".cshtml", StringComparison.OrdinalIgnoreCase))
                                 .Combine(context.AnalyzerConfigOptionsProvider)
-                                .Select(static (pair, _) => GetInputFile(pair.Left, pair.Right))
+                                .Select(static (pair, _) =>
+                                {
+                                    var (additionalText, optionsProvider) = pair;
+                                    return InputFile.Create(additionalText, optionsProvider);
+                                })
                                 .WhereNotNull();
 
         context.RegisterSourceOutput(
@@ -56,24 +55,6 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                     context.ReportDiagnostic(Diagnostics.InternalError(ex.Message, Location.Create(inputFile.AdditionalText.Path, default, default)));
                 }
             }
-        );
-    }
-
-    private static InputFile? GetInputFile(AdditionalText additionalText, AnalyzerConfigOptionsProvider optionsProvider)
-    {
-        var options = optionsProvider.GetOptions(additionalText);
-
-        options.TryGetValue("build_metadata.AdditionalFiles.IsRazorBlade", out var isTargetFile);
-        if (!string.Equals(isTargetFile, bool.TrueString, StringComparison.OrdinalIgnoreCase))
-            return null;
-
-        if (!options.TryGetValue("build_metadata.AdditionalFiles.HintNamespace", out var hintNamespace))
-            hintNamespace = null;
-
-        return new InputFile(
-            additionalText,
-            hintNamespace,
-            CSharpIdentifier.SanitizeIdentifier(Path.GetFileNameWithoutExtension(additionalText.Path))
         );
     }
 
@@ -132,8 +113,8 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                     node.BaseType = "global::RazorBlade.HtmlTemplate";
 
                     node.Modifiers.Clear();
-                    node.Modifiers.Add("internal");
-                    node.Modifiers.Add("partial");
+                    node.Modifiers.Add(SyntaxFacts.GetText(Accessibility.Internal));
+                    node.Modifiers.Add(SyntaxFacts.GetText(SyntaxKind.PartialKeyword));
 
                     // Enable nullable reference types for the class definition node, as they may be needed for the base class.
                     node.Annotations[CommonAnnotations.NullableContext] = CommonAnnotations.NullableContext;
@@ -142,9 +123,9 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                 configurationFeature.ConfigureMethod.Add((_, node) =>
                 {
                     node.Modifiers.Clear();
-                    node.Modifiers.Add("protected");
-                    node.Modifiers.Add("async");
-                    node.Modifiers.Add("override");
+                    node.Modifiers.Add(SyntaxFacts.GetText(Accessibility.Protected));
+                    node.Modifiers.Add(SyntaxFacts.GetText(SyntaxKind.AsyncKeyword));
+                    node.Modifiers.Add(SyntaxFacts.GetText(SyntaxKind.OverrideKeyword));
                 });
 
                 cfg.Features.Add(new ErrorOnTagHelperSyntaxTreePass());
@@ -175,9 +156,6 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         return generator.Generate(cancellationToken);
     }
 
+    [SuppressMessage("ReSharper", "PartialMethodWithSinglePart")]
     static partial void OnGenerate();
-
-    private record InputFile(AdditionalText AdditionalText, string? HintNamespace, string ClassName);
-
-    private record GlobalOptions(CSharpParseOptions ParseOptions, ImmutableArray<SyntaxTree> AdditionalSyntaxTrees);
 }

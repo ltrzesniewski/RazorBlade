@@ -15,10 +15,7 @@ internal class AnalyzerConfigOptionsProviderMock : AnalyzerConfigOptionsProvider
         => GlobalOptions = new AnalyzerConfigOptionsMock(this);
 
     public void Add(string key, string value)
-    {
-        _values.Add($"build_metadata.AdditionalFiles.{key}", value);
-        _values.Add($"build_property.{key}", value);
-    }
+        => _values.Add(key, value);
 
     public override AnalyzerConfigOptions GetOptions(SyntaxTree tree)
         => GlobalOptions;

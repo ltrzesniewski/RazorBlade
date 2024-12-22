@@ -108,7 +108,7 @@ public class EmbeddedLibraryMetaSourceGeneratorTests
                                           .AddAdditionalTexts(ImmutableArray.Create<AdditionalText>(new AdditionalTextMock(input, "./TestFile.cs")))
                                           .WithUpdatedAnalyzerConfigOptions(new AnalyzerConfigOptionsProviderMock
                                           {
-                                              { "Role", "Library" }
+                                              { "build_metadata.AdditionalFiles.Role", "Library" }
                                           })
                                           .RunGeneratorsAndUpdateCompilation(compilation, out var updatedCompilation, out _)
                                           .GetRunResult();

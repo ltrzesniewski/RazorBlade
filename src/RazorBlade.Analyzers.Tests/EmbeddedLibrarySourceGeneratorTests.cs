@@ -58,7 +58,7 @@ public class EmbeddedLibrarySourceGeneratorTests
         var runResult = CSharpGeneratorDriver.Create([new EmbeddedLibrarySourceGenerator().AsSourceGenerator()], parseOptions: parseOptions)
                                              .WithUpdatedAnalyzerConfigOptions(new AnalyzerConfigOptionsProviderMock
                                              {
-                                                 { "RazorBladeEmbeddedLibrary", "True" }
+                                                 { Constants.GlobalOptions.EmbeddedLibrary, "True" }
                                              })
                                              .RunGeneratorsAndUpdateCompilation(compilation, out var updatedCompilation, out _)
                                              .GetRunResult();
