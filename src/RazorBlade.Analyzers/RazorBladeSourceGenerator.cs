@@ -67,12 +67,12 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         if (!string.Equals(isTargetFile, bool.TrueString, StringComparison.OrdinalIgnoreCase))
             return null;
 
-        if (!options.TryGetValue("build_metadata.AdditionalFiles.Namespace", out var ns))
-            ns = null;
+        if (!options.TryGetValue("build_metadata.AdditionalFiles.HintNamespace", out var hintNamespace))
+            hintNamespace = null;
 
         return new InputFile(
             additionalText,
-            ns,
+            hintNamespace,
             CSharpIdentifier.SanitizeIdentifier(Path.GetFileNameWithoutExtension(additionalText.Path))
         );
     }
@@ -92,14 +92,14 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             context.ReportDiagnostic(diagnostic.ToDiagnostic());
 
         context.AddSource(
-            $"{file.Namespace}.{file.ClassName}.Razor.g.cs",
+            $"{file.HintNamespace}.{file.ClassName}.Razor.g.cs",
             csharpDoc.GeneratedCode
         );
 
         if (!string.IsNullOrEmpty(libraryCode))
         {
             context.AddSource(
-                $"{file.Namespace}.{file.ClassName}.RazorBlade.g.cs",
+                $"{file.HintNamespace}.{file.ClassName}.RazorBlade.g.cs",
                 libraryCode
             );
         }
@@ -122,7 +122,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                 configurationFeature.ConfigureNamespace.Add((codeDoc, node) =>
                 {
                     node.Content = NamespaceVisitor.GetNamespaceDirectiveContent(codeDoc)
-                                   ?? file.Namespace
+                                   ?? file.HintNamespace
                                    ?? "Razor";
                 });
 
@@ -177,7 +177,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
 
     static partial void OnGenerate();
 
-    private record InputFile(AdditionalText AdditionalText, string? Namespace, string ClassName);
+    private record InputFile(AdditionalText AdditionalText, string? HintNamespace, string ClassName);
 
     private record GlobalOptions(CSharpParseOptions ParseOptions, ImmutableArray<SyntaxTree> AdditionalSyntaxTrees);
 }

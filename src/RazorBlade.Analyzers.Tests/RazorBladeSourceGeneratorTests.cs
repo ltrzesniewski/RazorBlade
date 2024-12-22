@@ -395,7 +395,7 @@ public class RazorBladeSourceGeneratorTests
         var analyzerConfigOptionsProvider = new AnalyzerConfigOptionsProviderMock
         {
             { "IsRazorBlade", "True" },
-            { "Namespace", "TestNamespace" }
+            { "HintNamespace", "TestNamespace" }
         };
 
         if (embeddedLibrary)

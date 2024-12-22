@@ -6,7 +6,7 @@
 
     <CompilerVisibleProperty Include="RazorBladeEmbeddedLibrary" />
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="IsRazorBlade" />
-    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Namespace" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="HintNamespace" />
 
     <None Remove="**/*.cshtml" Condition="'$(EnableDefaultItems)' == 'true' and '$(EnableDefaultRazorBladeItems)' == 'true'" />
   </ItemGroup>
@@ -22,7 +22,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <RazorBlade Update="@(RazorBlade)" Namespace="$([MSBuild]::ValueOrDefault('$(RootNamespace).%(RelativeDir)', '').Replace('\', '.').Replace('/', '.').Trim('.'))" />
+      <RazorBlade Update="@(RazorBlade)" HintNamespace="$([MSBuild]::ValueOrDefault('$(RootNamespace).%(RelativeDir)', '').Replace('\', '.').Replace('/', '.').Trim('.'))" />
       <RazorBlade Update="@(RazorBlade)" IsRazorBlade="True" />
 
       <AdditionalFiles Include="@(RazorBlade)" />

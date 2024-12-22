@@ -21,6 +21,13 @@ public static class Program
 
     private static void WriteSeparator()
         => Console.WriteLine("--------------------------------------------------");
+
+    private static void CheckNamespaces()
+    {
+        _ = typeof(global::RazorBlade.IntegrationTest.TestTemplate);
+        _ = typeof(global::RazorBlade.IntegrationTest.Examples.ExampleTemplate);
+        _ = typeof(global::FooBar.OtherNamespace.TestTemplateWithNamespace);
+    }
 }
 
 public class FooBarModelClass
