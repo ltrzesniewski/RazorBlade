@@ -1,17 +1,15 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
+using JetBrains.Annotations;
 
 namespace RazorBlade;
 
-// ReSharper disable once RedundantDisableWarningComment
 #pragma warning disable CA1822
 
 /// <summary>
 /// Utilities for HTML Razor templates.
 /// </summary>
-[SuppressMessage("ReSharper", "MemberCanBeMadeStatic.Global")]
 public sealed class HtmlHelper
 {
 #if NET8_0_OR_GREATER
@@ -26,6 +24,7 @@ public sealed class HtmlHelper
     /// Returns markup that is not HTML encoded.
     /// </summary>
     /// <param name="value">The HTML markup.</param>
+    [PublicAPI]
     public HtmlString Raw(object? value)
         => new(value?.ToString());
 
@@ -33,6 +32,7 @@ public sealed class HtmlHelper
     /// HTML-encodes the provided value.
     /// </summary>
     /// <param name="value">Value to HTML-encode.</param>
+    [PublicAPI]
     public string Encode(object? value)
     {
         var valueString = value?.ToString();

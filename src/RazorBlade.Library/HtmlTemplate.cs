@@ -141,7 +141,7 @@ public abstract class HtmlTemplate<TModel> : HtmlTemplate
     /// <summary>
     /// The model for the template.
     /// </summary>
-    [UsedImplicitly]
+    [PublicAPI]
     public TModel Model { get; }
 
     /// <summary>

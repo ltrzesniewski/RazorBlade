@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 
 namespace RazorBlade;
 
@@ -80,6 +81,7 @@ public abstract class HtmlLayout : HtmlTemplate, IRazorLayout
     /// <summary>
     /// Returns the inner page body.
     /// </summary>
+    [PublicAPI]
     protected internal IEncodedContent RenderBody()
         => GetLayoutInput().Body;
 
@@ -88,6 +90,7 @@ public abstract class HtmlLayout : HtmlTemplate, IRazorLayout
     /// </summary>
     /// <param name="name">The section name.</param>
     /// <returns>The content to write to the output.</returns>
+    [PublicAPI]
     protected internal IEncodedContent RenderSection(string name)
         => RenderSection(name, true);
 
@@ -97,6 +100,7 @@ public abstract class HtmlLayout : HtmlTemplate, IRazorLayout
     /// <param name="name">The section name.</param>
     /// <param name="required">Whether the section is required.</param>
     /// <returns>The content to write to the output.</returns>
+    [PublicAPI]
     protected internal IEncodedContent RenderSection(string name, bool required)
     {
         var renderTask = RenderSectionAsync(name, required);
@@ -111,6 +115,7 @@ public abstract class HtmlLayout : HtmlTemplate, IRazorLayout
     /// </summary>
     /// <param name="name">The section name.</param>
     /// <returns>The content to write to the output.</returns>
+    [PublicAPI]
     protected internal Task<IEncodedContent> RenderSectionAsync(string name)
         => RenderSectionAsync(name, true);
 
@@ -120,6 +125,7 @@ public abstract class HtmlLayout : HtmlTemplate, IRazorLayout
     /// <param name="name">The section name.</param>
     /// <param name="required">Whether the section is required.</param>
     /// <returns>The content to write to the output.</returns>
+    [PublicAPI]
     protected internal async Task<IEncodedContent> RenderSectionAsync(string name, bool required)
     {
         var result = await GetLayoutInput().RenderSectionAsync(name).ConfigureAwait(false);
@@ -137,6 +143,7 @@ public abstract class HtmlLayout : HtmlTemplate, IRazorLayout
     /// Indicates if a given section is defined.
     /// </summary>
     /// <param name="name">The section name.</param>
+    [PublicAPI]
     protected internal bool IsSectionDefined(string name)
         => GetLayoutInput().IsSectionDefined(name);
 

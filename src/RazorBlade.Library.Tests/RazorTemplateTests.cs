@@ -93,6 +93,7 @@ public class RazorTemplateTests
     }
 
     [Test]
+    [SuppressMessage("ReSharper", "MethodHasAsyncOverload")]
 #if NETFRAMEWORK
     [Timeout(10_000)]
 #endif
@@ -207,7 +208,60 @@ public class RazorTemplateTests
         template.Render().ShouldEqual("<b>Bold text</b> - <b>Other bold text</b>");
     }
 
-    private class Template(Func<Template, Task> executeAction) : RazorTemplate
+    [Test]
+    public void should_write_directly_to_output_with_no_layout()
+    {
+        var output = new StringWriter();
+
+        var template = new Template(
+            t =>
+            {
+                t.WriteLiteral("foo");
+                output.ToString().ShouldEqual("foo");
+                return Task.CompletedTask;
+            },
+            () => null
+        );
+
+        template.Render(output);
+        output.ToString().ShouldEqual("foo");
+    }
+
+    [Test]
+    public void should_buffer_output_when_using_layout()
+    {
+        var output = new StringWriter();
+
+        var template = new Template(
+            t =>
+            {
+                t.WriteLiteral("foo");
+                output.ToString().ShouldBeEmpty();
+                return Task.CompletedTask;
+            },
+            () => new EmptyLayout()
+        );
+
+        template.Render(output);
+        output.ToString().ShouldEqual("foo");
+    }
+
+    private abstract class BaseRazorTemplate : RazorTemplate
+    {
+        protected internal override void BeginWriteAttribute(string name, string prefix, int prefixOffset, string suffix, int suffixOffset, int attributeValuesCount)
+        {
+        }
+
+        protected internal override void WriteAttributeValue(string prefix, int prefixOffset, object? value, int valueOffset, int valueLength, bool isLiteral)
+        {
+        }
+
+        protected internal override void EndWriteAttribute()
+        {
+        }
+    }
+
+    private class Template(Func<Template, Task> executeAction, Func<IRazorLayout?>? createLayout = null) : BaseRazorTemplate
     {
         public Template(Action<Template> executeAction)
             : this(t =>
@@ -224,6 +278,9 @@ public class RazorTemplateTests
             await base.ExecuteAsync();
         }
 
+        private protected override IRazorLayout? CreateLayoutInternal()
+            => createLayout?.Invoke();
+
         protected internal override void Write(object? value)
         {
             if (value is IEncodedContent encodedContent)
@@ -231,17 +288,27 @@ public class RazorTemplateTests
             else
                 WriteLiteral(value?.ToString());
         }
+    }
 
-        protected internal override void BeginWriteAttribute(string name, string prefix, int prefixOffset, string suffix, int suffixOffset, int attributeValuesCount)
-        {
-        }
+    private class EmptyLayout : BaseRazorTemplate, IRazorLayout
+    {
+        public Task<IRazorExecutionResult> ExecuteLayoutAsync(IRazorExecutionResult input)
+            => Task.FromResult<IRazorExecutionResult>(new Result(input.Body));
 
-        protected internal override void WriteAttributeValue(string prefix, int prefixOffset, object? value, int valueOffset, int valueLength, bool isLiteral)
-        {
-        }
+        protected internal override void Write(object? value)
+            => throw new InvalidOperationException();
 
-        protected internal override void EndWriteAttribute()
+        private class Result(IEncodedContent body) : IRazorExecutionResult
         {
+            public IEncodedContent Body => body;
+            public IRazorLayout? Layout => null;
+            public CancellationToken CancellationToken => CancellationToken.None;
+
+            public bool IsSectionDefined(string name)
+                => false;
+
+            public Task<IEncodedContent?> RenderSectionAsync(string name)
+                => Task.FromResult<IEncodedContent?>(null);
         }
     }
 

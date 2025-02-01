@@ -28,7 +28,7 @@ public abstract class RazorTemplate : IEncodedContent
     protected internal CancellationToken CancellationToken => _executionScope?.CancellationToken ?? CancellationToken.None;
 
     /// <summary>
-    /// The layout to use.
+    /// The layout to be used with this template.
     /// </summary>
     private protected IRazorLayout? Layout => _executionScope?.Layout;
 
@@ -89,8 +89,8 @@ public abstract class RazorTemplate : IEncodedContent
 
         switch (body)
         {
-            case BufferedContent { Output: var bufferedOutput }:
-                return bufferedOutput.ToString();
+            case BufferedContent bufferedContent:
+                return bufferedContent.ToString();
 
             default: // Fallback case, shouldn't happen
                 var writer = new StringWriter();
@@ -116,15 +116,8 @@ public abstract class RazorTemplate : IEncodedContent
 
         switch (body)
         {
-            case BufferedContent { Output: var bufferedOutput }:
-                if (bufferedOutput.Length == 0)
-                    break;
-
-#if NET6_0_OR_GREATER
-                await textWriter.WriteAsync(bufferedOutput, cancellationToken).ConfigureAwait(false);
-#else
-                await textWriter.WriteAsync(bufferedOutput.ToString()).ConfigureAwait(false);
-#endif
+            case BufferedContent bufferedContent:
+                await bufferedContent.WriteToAsync(textWriter, cancellationToken).ConfigureAwait(false);
                 break;
 
             default: // Fallback case, shouldn't happen
@@ -162,22 +155,22 @@ public abstract class RazorTemplate : IEncodedContent
     }
 
     /// <summary>
-    /// Writes the buffered output to the target output then flushes the output stream.
+    /// Flushes the output stream.
     /// </summary>
     /// <returns>
     /// An empty <see cref="IEncodedContent"/>, which allows using a direct expression: <c>@await FlushAsync()</c>
     /// </returns>
-    /// <remarks>
-    /// This feature is not compatible with layouts.
-    /// </remarks>
     [PublicAPI]
     protected internal async Task<IEncodedContent> FlushAsync()
     {
-        if (_executionScope is not { } executionScope)
-            throw new InvalidOperationException("The template is not executing.");
+#if NET8_0_OR_GREATER
+        await Output.FlushAsync(CancellationToken).ConfigureAwait(false);
+#else
+        CancellationToken.ThrowIfCancellationRequested();
+        await Output.FlushAsync().ConfigureAwait(false);
+#endif
 
-        await executionScope.FlushAsync().ConfigureAwait(false);
-        return HtmlString.Empty;
+        return BufferedContent.Empty;
     }
 
     /// <summary>
@@ -206,6 +199,7 @@ public abstract class RazorTemplate : IEncodedContent
     /// Write already encoded content to the output.
     /// </summary>
     /// <param name="content">The template to render.</param>
+    [PublicAPI]
     protected internal virtual void Write(IEncodedContent? content)
         => content?.WriteTo(Output);
 
@@ -350,25 +344,14 @@ public abstract class RazorTemplate : IEncodedContent
                 _page._executionScope = _previousExecutionScope;
         }
 
-        public abstract Task FlushAsync();
-
         public void PushWriter(TextWriter writer)
             => StartWriter(this, writer);
 
         public virtual TextWriter PopWriter()
             => throw new InvalidOperationException("The writer stack is empty.");
 
-#if NET8_0_OR_GREATER
-        private Task FlushWriterAsync(TextWriter? writer)
-            => writer?.FlushAsync(CancellationToken) ?? Task.CompletedTask;
-#else
-        private static Task FlushWriterAsync(TextWriter? writer)
-            => writer?.FlushAsync() ?? Task.CompletedTask;
-#endif
-
         public sealed class BodyScope : ExecutionScope
         {
-            private readonly TextWriter? _targetOutput;
             private readonly StringWriter? _bufferedOutput;
 
             private Dictionary<string, Func<Task>>? _sections;
@@ -376,8 +359,6 @@ public abstract class RazorTemplate : IEncodedContent
             public BodyScope(RazorTemplate page, TextWriter? targetOutput, IRazorLayout? layout, CancellationToken cancellationToken)
                 : base(page, layout, cancellationToken)
             {
-                _targetOutput = targetOutput;
-
                 Output = targetOutput is not null && layout is null
                     ? targetOutput
                     : _bufferedOutput = new StringWriter();
@@ -415,9 +396,6 @@ public abstract class RazorTemplate : IEncodedContent
                 await sectionAction().ConfigureAwait(false);
                 return sectionScope.ToBufferedContent();
             }
-
-            public override Task FlushAsync()
-                => FlushWriterAsync(_targetOutput);
         }
 
         private sealed class SectionScope : ExecutionScope
@@ -432,9 +410,6 @@ public abstract class RazorTemplate : IEncodedContent
 
             public IEncodedContent ToBufferedContent()
                 => new BufferedContent(_bufferedOutput.GetStringBuilder());
-
-            public override Task FlushAsync()
-                => Task.CompletedTask;
         }
 
         private sealed class WriterScope : ExecutionScope
@@ -444,9 +419,6 @@ public abstract class RazorTemplate : IEncodedContent
             {
                 Output = writer ?? throw new ArgumentNullException(nameof(writer));
             }
-
-            public override Task FlushAsync()
-                => FlushWriterAsync(Output);
 
             public override TextWriter PopWriter()
             {
@@ -490,18 +462,28 @@ public abstract class RazorTemplate : IEncodedContent
     /// </remarks>
     private sealed class BufferedContent : IEncodedContent
     {
-        public static IEncodedContent Empty { get; } = new BufferedContent(new StringBuilder());
+        public static BufferedContent Empty { get; } = new(null);
 
-        public StringBuilder Output { get; }
+        private readonly StringBuilder? _output;
 
-        public BufferedContent(StringBuilder value)
-            => Output = value;
+        public BufferedContent(StringBuilder? value)
+            => _output = value;
 
         public void WriteTo(TextWriter textWriter)
-            => textWriter.Write(Output);
+            => textWriter.Write(_output);
+
+        public Task WriteToAsync(TextWriter textWriter, CancellationToken cancellationToken)
+        {
+#if NET6_0_OR_GREATER
+            return textWriter.WriteAsync(_output, cancellationToken);
+#else
+            cancellationToken.ThrowIfCancellationRequested();
+            return textWriter.WriteAsync(ToString());
+#endif
+        }
 
         public override string ToString()
-            => Output.ToString();
+            => _output?.ToString() ?? string.Empty;
     }
 
     /// <summary>

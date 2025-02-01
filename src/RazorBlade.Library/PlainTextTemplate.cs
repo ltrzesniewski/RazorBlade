@@ -61,7 +61,7 @@ public abstract class PlainTextTemplate<TModel> : PlainTextTemplate
     /// <summary>
     /// The model for the template.
     /// </summary>
-    [UsedImplicitly]
+    [PublicAPI]
     public TModel Model { get; }
 
     /// <summary>
