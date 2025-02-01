@@ -176,44 +176,37 @@ The namespace of the generated class can be customized with the `@namespace` dir
 
 Layout templates may be written by inheriting from the `RazorBlade.HtmlLayout` class, which provides the relevant methods such as `RenderBody` and `RenderSection`. It inherits from `RazorBlade.HtmlTemplate`.
 
-The layout to use can be specified through the `Layout` property of `RazorBlade.HtmlTemplate`. Given that all Razor templates are stateful and not thread-safe, always create a new instance of the layout page to use:
+The layout to use can be specified by overriding the `CreateLayout` method of `RazorBlade.HtmlTemplate`. Given that all Razor templates are stateful and not thread-safe, always create a new instance of the layout page to use:
 
 <!-- snippet: TemplateWithLayout.Usage -->
 <a id='snippet-TemplateWithLayout.Usage'></a>
 ```cshtml
-@{
-    Layout = new LayoutToUse();
+@functions
+{
+    protected override HtmlLayout? CreateLayout()
+        => new LayoutToUse();
 }
 ```
-<sup><a href='/src/RazorBlade.IntegrationTest/Examples/TemplateWithLayout.cshtml#L2-L6' title='Snippet source file'>snippet source</a> | <a href='#snippet-TemplateWithLayout.Usage' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/TemplateWithLayout.cshtml#L2-L8' title='Snippet source file'>snippet source</a> | <a href='#snippet-TemplateWithLayout.Usage' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Layout pages can be nested, and can use sections. Unlike in ASP.NET, RazorBlade does not verify if the body and all sections have been used. Sections may also be executed multiple times.
+
+> [!NOTE]  
+> Layout usage is not compatible with direct output to the provided `TextWriter` and will cause buffering.  
+> You may work around it by replacing layouts with partial templates such as:
+> 
+> ```cshtml
+> @(new Header())
+> Your content
+> @(new Footer())
+> ```
 
 ### Executing templates
 
 The `RazorTemplate` base class provides `Render` and `RenderAsync` methods to execute the template.
 
 Templates are stateful and not thread-safe, so it is advised to always create new instances of the templates to render.
-
-### Flushing partial output
-
-By default, the output of a template is buffered while it is executing, then copied to the provided writer when finished. This is necessary for features such as layouts to be supported, but may not always be desired.
-
-The `RazorTemplate` class provides a `FlushAsync` method which will copy the buffered output to the provided `TextWriter` and then flush the writer:
-
-<!-- snippet: TemplateWithFlush.Usage -->
-<a id='snippet-TemplateWithFlush.Usage'></a>
-```cshtml
-<div>Lightweight content goes here.</div>
-@await FlushAsync()
-<div>Slower to render content goes here.</div>
-```
-<sup><a href='/src/RazorBlade.IntegrationTest/Examples/TemplateWithFlush.cshtml#L2-L6' title='Snippet source file'>snippet source</a> | <a href='#snippet-TemplateWithFlush.Usage' title='Start of snippet'>anchor</a></sup>
-<!-- endSnippet -->
-
-> [!IMPORTANT]  
-> Flushing is not compatible with layout usage.
 
 ### MSBuild
 

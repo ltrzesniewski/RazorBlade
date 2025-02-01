@@ -20,11 +20,10 @@ public class HtmlLayoutTests
             t.Write(" after");
         });
 
-        var page = new Template(t =>
-        {
-            t.Write("body");
-            t.Layout = layout;
-        });
+        var page = new Template(
+            t => t.Write("body"),
+            () => layout
+        );
 
         page.Render().ShouldEqual("before body after");
     }
@@ -39,11 +38,10 @@ public class HtmlLayoutTests
             t.Write(" after");
         });
 
-        var page = new Template(t =>
-        {
-            t.Layout = layout;
-            t.SetSection("foo", "foo section");
-        });
+        var page = new Template(
+            t => t.SetSection("foo", "foo section"),
+            () => layout
+        );
 
         page.Render().ShouldEqual("before foo section after");
     }
@@ -58,19 +56,20 @@ public class HtmlLayoutTests
             t.Write(" afterA");
         });
 
-        var innerLayout = new Layout(t =>
-        {
-            t.Write("beforeB ");
-            t.Write(t.RenderBody());
-            t.Write(" afterB");
-            t.Layout = outerLayout;
-        });
+        var innerLayout = new Layout(
+            t =>
+            {
+                t.Write("beforeB ");
+                t.Write(t.RenderBody());
+                t.Write(" afterB");
+            },
+            () => outerLayout
+        );
 
-        var page = new Template(t =>
-        {
-            t.Write("body");
-            t.Layout = innerLayout;
-        });
+        var page = new Template(
+            t => t.Write("body"),
+            () => innerLayout
+        );
 
         page.Render().ShouldEqual("beforeA beforeB body afterB afterA");
     }
@@ -87,21 +86,22 @@ public class HtmlLayoutTests
             t.Write(t.RenderBody());
         });
 
-        var innerLayout = new Layout(t =>
-        {
-            t.Write(t.RenderSectionAsync("page").GetAwaiter().GetResult());
-            t.Write(t.RenderSection("page2", false));
-            t.SetSection("inner", "innerSection ");
-            t.Write(t.RenderSection("inner", false));
-            t.Write(t.RenderBody());
-            t.Layout = outerLayout;
-        });
+        var innerLayout = new Layout(
+            t =>
+            {
+                t.Write(t.RenderSectionAsync("page").GetAwaiter().GetResult());
+                t.Write(t.RenderSection("page2", false));
+                t.SetSection("inner", "innerSection ");
+                t.Write(t.RenderSection("inner", false));
+                t.Write(t.RenderBody());
+            },
+            () => outerLayout
+        );
 
-        var page = new Template(t =>
-        {
-            t.SetSection("page", "pageSection");
-            t.Layout = innerLayout;
-        });
+        var page = new Template(
+            t => t.SetSection("page", "pageSection"),
+            () => innerLayout
+        );
 
         page.Render().ShouldEqual("innerSection pageSection");
     }
@@ -113,19 +113,21 @@ public class HtmlLayoutTests
 
         var layout = new Layout(t => t.Write(t.RenderSection("section")));
 
-        var page = new Template(t =>
-        {
-            t.Layout = layout;
-            t.DefineSection(
-                "section",
-                () =>
-                {
-                    t.Layout.ShouldBeTheSameAs(layout);
-                    sectionRendered = true;
-                    return Task.CompletedTask;
-                }
-            );
-        });
+        var page = new Template(
+            t =>
+            {
+                t.DefineSection(
+                    "section",
+                    () =>
+                    {
+                        t.Layout.ShouldBeTheSameAs(layout);
+                        sectionRendered = true;
+                        return Task.CompletedTask;
+                    }
+                );
+            },
+            () => layout
+        );
 
         page.Render();
         sectionRendered.ShouldBeTrue();
@@ -136,7 +138,7 @@ public class HtmlLayoutTests
     {
         var layout = new Layout(t => t.Write(t.RenderSection("foo")));
 
-        var page = new Template(t => t.Layout = layout);
+        var page = new Template(_ => { }, () => layout);
 
         Assert.Throws<InvalidOperationException>(() => page.Render());
     }
@@ -150,11 +152,10 @@ public class HtmlLayoutTests
             t.IsSectionDefined("bar").ShouldBeFalse();
         });
 
-        var page = new Template(t =>
-        {
-            t.Layout = layout;
-            t.SetSection("foo", "foo");
-        });
+        var page = new Template(
+            t => t.SetSection("foo", "foo"),
+            () => layout
+        );
 
         page.Render();
         layout.WasExecuted.ShouldBeTrue();
@@ -163,11 +164,14 @@ public class HtmlLayoutTests
     [Test]
     public void should_throw_when_duplicate_section_is_defined()
     {
-        var page = new Template(t =>
-        {
-            t.SetSection("foo", "foo");
-            t.SetSection("foo", "foo");
-        });
+        var page = new Template(
+            t =>
+            {
+                t.SetSection("foo", "foo");
+                t.SetSection("foo", "foo");
+            },
+            () => null
+        );
 
         Assert.Throws<InvalidOperationException>(() => page.Render());
     }
@@ -185,43 +189,29 @@ public class HtmlLayoutTests
     }
 
     [Test]
-    public void should_throw_when_setting_layout_after_flush()
+    public void should_not_throw_when_flushing_with_layout()
     {
         var layout = new Layout(_ => { });
 
-        var page = new Template(async t =>
-        {
-            await t.FlushAsync();
-            t.Layout = layout;
-        });
+        var page = new Template(
+            async t => { await t.FlushAsync(); },
+            () => layout
+        );
 
-        Assert.Throws<InvalidOperationException>(() => page.Render())
-              .ShouldNotBeNull().Message.ShouldEqual("The layout can no longer be changed.");
+        Assert.DoesNotThrow(() => page.Render());
     }
 
-    [Test]
-    public void should_throw_when_flushing_with_layout()
+    private class Template(Func<Template, Task> executeAction, Func<HtmlLayout?> createLayout) : HtmlTemplate
     {
-        var layout = new Layout(_ => { });
-
-        var page = new Template(async t =>
-        {
-            t.Layout = layout;
-            await t.FlushAsync();
-        });
-
-        Assert.Throws<InvalidOperationException>(() => page.Render())
-              .ShouldNotBeNull().Message.ShouldEqual("The output cannot be flushed when a layout is used.");
-    }
-
-    private class Template(Func<Template, Task> executeAction) : HtmlTemplate
-    {
-        public Template(Action<Template> executeAction)
-            : this(t =>
-            {
-                executeAction(t);
-                return Task.CompletedTask;
-            })
+        public Template(Action<Template> executeAction, Func<HtmlLayout?> createLayout)
+            : this(
+                t =>
+                {
+                    executeAction(t);
+                    return Task.CompletedTask;
+                },
+                createLayout
+            )
         {
         }
 
@@ -230,6 +220,9 @@ public class HtmlLayoutTests
             await executeAction(this);
             await base.ExecuteAsync();
         }
+
+        protected internal override HtmlLayout? CreateLayout()
+            => createLayout();
 
         public void SetSection(string name, string content)
         {
@@ -244,7 +237,7 @@ public class HtmlLayoutTests
         }
     }
 
-    private class Layout(Action<Layout> executeAction) : HtmlLayout
+    private class Layout(Action<Layout> executeAction, Func<HtmlLayout?>? createLayout = null) : HtmlLayout
     {
         public bool WasExecuted { get; private set; }
 
@@ -254,6 +247,9 @@ public class HtmlLayoutTests
             WasExecuted = true;
             return base.ExecuteAsync();
         }
+
+        protected internal override HtmlLayout? CreateLayout()
+            => createLayout?.Invoke();
 
         public void SetSection(string name, string content)
         {

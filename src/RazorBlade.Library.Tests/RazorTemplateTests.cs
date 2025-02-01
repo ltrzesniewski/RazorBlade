@@ -138,100 +138,24 @@ public class RazorTemplateTests
     [Test]
     public async Task should_flush_output()
     {
-        var output = new StringWriter();
-        var stepSemaphore = new StepSemaphore();
+        var outputA = new FlushCounter();
+        var outputB = new FlushCounter();
 
         var template = new Template(async t =>
         {
-            using var worker = stepSemaphore.CreateWorker();
-            await worker.WaitForNextStepAsync();
-
-            t.WriteLiteral("foo");
             await t.FlushAsync();
 
-            await worker.WaitForNextStepAsync();
-
-            t.WriteLiteral(" bar");
+            t.PushWriter(outputB);
             await t.FlushAsync();
+            t.PopWriter();
 
-            await worker.WaitForNextStepAsync();
-
-            t.WriteLiteral(" baz");
             await t.FlushAsync();
-
-            await worker.WaitForNextStepAsync();
-
-            t.WriteLiteral(" hello"); // No flush after here
-
-            await worker.WaitForNextStepAsync();
-
-            t.WriteLiteral(" world");
         });
 
-        var task = template.RenderAsync(output);
-        var controller = stepSemaphore.CreateController();
+        await template.RenderAsync(outputA);
 
-        await controller.StartNextStepAndWaitForResultAsync();
-        output.ToString().ShouldEqual("foo");
-        template.Output.ShouldBe<StringWriter>().ToString().ShouldEqual(string.Empty);
-
-        await controller.StartNextStepAndWaitForResultAsync();
-        output.ToString().ShouldEqual("foo bar");
-        template.Output.ShouldBe<StringWriter>().ToString().ShouldEqual(string.Empty);
-
-        await controller.StartNextStepAndWaitForResultAsync();
-        output.ToString().ShouldEqual("foo bar baz");
-        template.Output.ShouldBe<StringWriter>().ToString().ShouldEqual(string.Empty);
-
-        await controller.StartNextStepAndWaitForResultAsync();
-        output.ToString().ShouldEqual("foo bar baz");
-        template.Output.ShouldBe<StringWriter>().ToString().ShouldEqual(" hello");
-
-        await controller.StartNextStepAndWaitForResultAsync();
-        await task;
-        output.ToString().ShouldEqual("foo bar baz hello world");
-        template.Output.ShouldEqual(TextWriter.Null);
-    }
-
-    [Test]
-    public async Task should_buffer_output_until_flushed()
-    {
-        var output = new StringWriter();
-        var stepSemaphore = new StepSemaphore();
-
-        var template = new Template(async t =>
-        {
-            using var worker = stepSemaphore.CreateWorker();
-            await worker.WaitForNextStepAsync();
-
-            t.WriteLiteral("foo");
-            await t.Output.FlushAsync();
-
-            await worker.WaitForNextStepAsync();
-
-            t.WriteLiteral(" bar");
-            await t.Output.FlushAsync();
-
-            await worker.WaitForNextStepAsync();
-
-            t.WriteLiteral(" baz");
-            await t.Output.FlushAsync();
-        });
-
-        var task = template.RenderAsync(output);
-        var controller = stepSemaphore.CreateController();
-
-        await controller.StartNextStepAndWaitForResultAsync();
-        output.ToString().ShouldEqual(string.Empty);
-        template.Output.ShouldBe<StringWriter>().ToString().ShouldEqual("foo");
-
-        await controller.StartNextStepAndWaitForResultAsync();
-        output.ToString().ShouldEqual(string.Empty);
-        template.Output.ShouldBe<StringWriter>().ToString().ShouldEqual("foo bar");
-
-        await controller.StartNextStepAndWaitForResultAsync();
-        await task;
-        output.ToString().ShouldEqual("foo bar baz");
+        outputA.FlushCount.ShouldEqual(2);
+        outputB.FlushCount.ShouldEqual(1);
     }
 
     [Test]
@@ -318,6 +242,17 @@ public class RazorTemplateTests
 
         protected internal override void EndWriteAttribute()
         {
+        }
+    }
+
+    private class FlushCounter : StringWriter
+    {
+        public int FlushCount { get; private set; }
+
+        public override Task FlushAsync()
+        {
+            ++FlushCount;
+            return base.FlushAsync();
         }
     }
 }

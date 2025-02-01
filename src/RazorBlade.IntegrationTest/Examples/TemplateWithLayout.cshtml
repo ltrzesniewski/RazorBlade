@@ -1,6 +1,8 @@
 ﻿@inherits RazorBlade.HtmlTemplate
 @* begin-snippet: TemplateWithLayout.Usage *@
-@{
-    Layout = new LayoutToUse();
+@functions
+{
+    protected override HtmlLayout? CreateLayout()
+        => new LayoutToUse();
 }
 @* end-snippet *@

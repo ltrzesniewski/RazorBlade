@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 using RazorBlade.Support;
 
@@ -16,21 +15,16 @@ public abstract class HtmlTemplate : RazorTemplate
     private AttributeInfo _currentAttribute;
 
     /// <inheritdoc cref="RazorTemplate.Layout" />
-    protected internal new HtmlLayout? Layout
-    {
-        get => base.Layout as HtmlLayout;
-        set => base.Layout = value;
-    }
+    protected internal new HtmlLayout? Layout => base.Layout as HtmlLayout;
 
-    // ReSharper disable once RedundantDisableWarningComment
 #pragma warning disable CA1822
 
     /// <inheritdoc cref="HtmlHelper"/>
-    [SuppressMessage("ReSharper", "MemberCanBeMadeStatic.Global")]
+    [PublicAPI]
     protected HtmlHelper Html => HtmlHelper.Instance;
 
     /// <inheritdoc cref="HtmlHelper.Raw"/>
-    [SuppressMessage("ReSharper", "MemberCanBeMadeStatic.Global")]
+    [PublicAPI]
     protected internal HtmlString Raw(object? value)
         => HtmlHelper.Instance.Raw(value);
 
@@ -105,6 +99,15 @@ public abstract class HtmlTemplate : RazorTemplate
         if (!_currentAttribute.Suppressed)
             WriteLiteral(_currentAttribute.Suffix);
     }
+
+    /// <inheritdoc cref="CreateLayoutInternal"/>
+    [PublicAPI]
+    protected internal virtual HtmlLayout? CreateLayout()
+        => null;
+
+    /// <inheritdoc />
+    private protected sealed override IRazorLayout? CreateLayoutInternal()
+        => CreateLayout();
 
     private struct AttributeInfo
     {

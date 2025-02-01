@@ -1,6 +1,5 @@
 @inherits RazorBlade.HtmlTemplate
 @* ReSharper disable Razor.SectionNotResolved *@
-@{ Layout = new Layout(); }
 <h2>Hello, world!</h2>
 This is the body contents.
 @section Foo {
@@ -8,4 +7,9 @@ This is the body contents.
 }
 @section Bar {
     This is <i>Bar</i>.
+}
+@functions
+{
+    protected override HtmlLayout? CreateLayout()
+        => new Layout();
 }
