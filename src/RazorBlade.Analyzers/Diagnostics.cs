@@ -24,7 +24,7 @@ internal static class Diagnostics
         => new(GetDiagnosticId(id), title, messageFormat, Category, DiagnosticSeverity.Error, true);
 
     private static RazorDiagnosticDescriptor RazorError(Id id, string messageFormat)
-        => new(GetDiagnosticId(id), () => messageFormat, RazorDiagnosticSeverity.Error);
+        => new(GetDiagnosticId(id), messageFormat, RazorDiagnosticSeverity.Error);
 
     public static string GetDiagnosticId(Id id)
         => $"RB{(int)id:D4}";

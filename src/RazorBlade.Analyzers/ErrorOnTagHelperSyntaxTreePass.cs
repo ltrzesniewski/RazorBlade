@@ -18,10 +18,10 @@ internal class ErrorOnTagHelperSyntaxTreePass : RazorEngineFeatureBase, IRazorSy
         if (visitor.Directives.Count == 0)
             return syntaxTree;
 
-        return RazorSyntaxTree.Create(
+        return new RazorSyntaxTree(
             syntaxTree.Root,
             syntaxTree.Source,
-            syntaxTree.Diagnostics.Concat(
+            syntaxTree.Diagnostics.AddRange(
                 visitor.Directives.Select(d => Diagnostics.TagHelpersNotSupported(d.GetSourceSpan(codeDocument.Source)))
             ),
             syntaxTree.Options

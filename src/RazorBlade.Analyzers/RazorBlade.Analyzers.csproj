@@ -1,25 +1,38 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+
+    <!--
+      RS1024: Compare symbols correctly (for Microsoft.AspNetCore.Razor.Utilities.ReferenceEqualityComparer)
+      RS1036: Specify analyzer banned API enforcement setting
+    -->
+    <NoWarn>$(NoWarn);RS1024;RS1036</NoWarn>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS8629;CS8602</WarningsNotAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="[4.0.1]" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" PrivateAssets="all" />
   </ItemGroup>
 
   <PropertyGroup>
     <IsRoslynComponent>true</IsRoslynComponent>
-    <RazorLanguageDir>../../lib/razor/src/Compiler/Microsoft.AspNetCore.Razor.Language/src</RazorLanguageDir>
-    <RazorCodeAnalysisDir>../../lib/razor/src/Compiler/Microsoft.CodeAnalysis.Razor/src</RazorCodeAnalysisDir>
-    <RazorLanguageSupportDir>../../lib/razor/src/Shared/Microsoft.AspNetCore.Razor.LanguageSupport</RazorLanguageSupportDir>
+    <RazorLanguageDir>../../lib/razor/src/Compiler/Microsoft.CodeAnalysis.Razor.Compiler/src/Language</RazorLanguageDir>
+    <RazorCSharpDir>../../lib/razor/src/Compiler/Microsoft.CodeAnalysis.Razor.Compiler/src/CSharp</RazorCSharpDir>
+    <RazorSharedDir>../../lib/razor/src/Shared/Microsoft.AspNetCore.Razor.Utilities.Shared</RazorSharedDir>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="$(RazorLanguageDir)/**/*.cs" Exclude="$(RazorLanguageDir)/obj/**/*.cs" Link="RazorLanguage/Language/%(RecursiveDir)%(FileName)%(Extension)" />
-    <Compile Remove="$(RazorLanguageDir)/Properties/AssemblyInfo.cs" />
+    <Compile Remove="$(RazorLanguageDir)/RazorProjectEngineBuilderExtensions.cs" />
 
-    <Compile Include="$(RazorCodeAnalysisDir)/RazorProjectEngineBuilderExtensions.cs" Link="RazorLanguage/CodeAnalysis/%(FileName)%(Extension)" />
-    <Compile Include="$(RazorLanguageSupportDir)/NullableAttributes.cs" Link="RazorLanguage/LanguageSupport/%(FileName)%(Extension)" />
+    <Compile Include="$(RazorCSharpDir)/**/*.cs" Exclude="$(RazorCSharpDir)/obj/**/*.cs" Link="RazorLanguage/CSharp/%(RecursiveDir)%(FileName)%(Extension)" />
+    <Compile Include="$(RazorSharedDir)/**/*.cs" Exclude="$(RazorSharedDir)/obj/**/*.cs" Link="RazorLanguage/Shared/%(RecursiveDir)%(FileName)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- TODO: Remove -->
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,6 +43,10 @@
 
   <ItemGroup>
     <AdditionalFiles Include="$(RazorLanguageDir)/*.resx" Role="Resource" Namespace="Microsoft.AspNetCore.Razor.Language" Visible="false" />
+    <AdditionalFiles Include="$(RazorCSharpDir)/*.resx" Role="Resource" Namespace="Microsoft.CodeAnalysis.Razor" Visible="false" />
+    <AdditionalFiles Include="$(RazorSharedDir)/Resources/*.resx" Role="Resource" Namespace="Microsoft.AspNetCore.Razor.Utilities.Shared.Resources" Visible="false" />
+
+    <Using Include="Microsoft.AspNetCore.Razor.Utilities.Shared.Resources" />
   </ItemGroup>
 
   <ItemGroup>

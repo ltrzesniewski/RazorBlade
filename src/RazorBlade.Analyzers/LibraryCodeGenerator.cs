@@ -65,7 +65,7 @@ internal class LibraryCodeGenerator
         _additionalSyntaxTrees = additionalSyntaxTrees;
 
         _compilation = _inputCompilation;
-        _writer = new CodeWriter(Environment.NewLine, generatedDoc.Options);
+        _writer = new CodeWriter(generatedDoc.Options);
     }
 
     public string Generate(CancellationToken cancellationToken)
@@ -83,8 +83,8 @@ internal class LibraryCodeGenerator
                 _writer.WriteLine();
             }
 
-            using (_writer.BuildNamespace(_classSymbol.ContainingNamespace.ToDisplayString()))
-            using (_writer.BuildClassDeclaration(["partial"], _classSymbol.Name, null, [], [], useNullableContext: false))
+            using (_writer.Write("namespace ").WriteLine(_classSymbol.ContainingNamespace.ToDisplayString()).BuildScope())
+            using (_writer.Write("partial class ").WriteLine(_classSymbol.Name).BuildScope())
             {
                 GenerateConstructors();
                 GenerateConditionalOnAsync(cancellationToken);
@@ -323,7 +323,7 @@ internal class LibraryCodeGenerator
     private void WriteInheritDoc(ISymbol symbol)
     {
         var cref = DocumentationCommentId.CreateDeclarationId(symbol.OriginalDefinition);
-        if (string.IsNullOrEmpty(cref))
+        if (cref is null or "")
             return;
 
         // Work around https://youtrack.jetbrains.com/issue/RIDER-84751

@@ -118,7 +118,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                 configurationFeature.ConfigureClass.Add((_, node) =>
                 {
                     node.ClassName = file.ClassName;
-                    node.BaseType = "global::RazorBlade.HtmlTemplate";
+                    node.BaseType = new BaseTypeWithModel("global::RazorBlade.HtmlTemplate");
 
                     node.Modifiers.Clear();
                     node.Modifiers.Add(SyntaxFacts.GetText(file.Accessibility ?? globalOptions.DefaultAccessibility ?? Accessibility.Internal));

@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using RazorBlade.Analyzers.Support;
 using RazorBlade.MetaAnalyzers.Support;
@@ -65,7 +66,9 @@ public class ResourcesSourceGenerator : IIncrementalGenerator
                 var name = item.Attribute("name")?.Value ?? string.Empty;
                 var value = item.Element("value")?.Value ?? string.Empty;
 
-                writer.WriteLine($"internal static string {name}");
+                var propertyName = SanitizeIdentifier(name);
+
+                writer.WriteLine($"internal static string {propertyName}");
                 writer.WriteIndent();
                 writer.Write("=> ");
                 writer.WriteVerbatimString(value);
@@ -95,7 +98,7 @@ public class ResourcesSourceGenerator : IIncrementalGenerator
 
                     writer.WriteLine($"internal static string Format{name}({argsSb})");
                     writer.WriteIndent();
-                    writer.WriteLine($"=> string.Format(CultureInfo.InvariantCulture, {name}, {paramsSb});");
+                    writer.WriteLine($"=> string.Format(CultureInfo.InvariantCulture, {propertyName}, {paramsSb});");
                     writer.WriteLine();
                 }
             }
@@ -103,6 +106,9 @@ public class ResourcesSourceGenerator : IIncrementalGenerator
 
         context.AddSource($"{className}.g.cs", writer.ToString());
     }
+
+    private static string SanitizeIdentifier(string name)
+        => name.Length > 0 && SyntaxFacts.IsIdentifierStartCharacter(name[0]) ? name : $"_{name}";
 
     private record InputFile(AdditionalText AdditionalText, string Namespace);
 }

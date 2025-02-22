@@ -56,7 +56,7 @@ internal class InputFile : IEquatable<InputFile>
         return new InputFile(
             additionalText,
             hintNamespace,
-            CSharpIdentifier.SanitizeIdentifier(Path.GetFileNameWithoutExtension(additionalText.Path)),
+            CSharpIdentifier.SanitizeIdentifier(Path.GetFileNameWithoutExtension(additionalText.Path).AsSpan()),
             accessibility,
             diagnostics
         );
