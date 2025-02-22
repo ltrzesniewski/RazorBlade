@@ -143,7 +143,10 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         );
 
         var codeDoc = engine.Process(
-            RazorSourceDocument.Create(sourceText.ToString(), file.AdditionalText.Path, sourceText.Encoding ?? Encoding.UTF8),
+            RazorSourceDocument.Create(
+                SourceText.From(sourceText.ToString(), sourceText.Encoding),
+                RazorSourceDocumentProperties.Create(file.AdditionalText.Path, relativePath: null)
+            ),
             FileKinds.Legacy,
             [],
             []
