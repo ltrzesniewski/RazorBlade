@@ -1,12 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <DiscoverGlobalAnalyzerConfigFiles>false</DiscoverGlobalAnalyzerConfigFiles>
 
     <!--
       RS1024: Compare symbols correctly (for Microsoft.AspNetCore.Razor.Utilities.ReferenceEqualityComparer)
       RS1036: Specify analyzer banned API enforcement setting
     -->
     <NoWarn>$(NoWarn);RS1024;RS1036</NoWarn>
+
+    <!-- Caused by RoslynCSharpTokenizer -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);CS8629;CS8602</WarningsNotAsErrors>
   </PropertyGroup>
 
@@ -19,6 +22,8 @@
     <RazorLanguageDir>../../lib/razor/src/Compiler/Microsoft.CodeAnalysis.Razor.Compiler/src/Language</RazorLanguageDir>
     <RazorCSharpDir>../../lib/razor/src/Compiler/Microsoft.CodeAnalysis.Razor.Compiler/src/CSharp</RazorCSharpDir>
     <RazorSharedDir>../../lib/razor/src/Shared/Microsoft.AspNetCore.Razor.Utilities.Shared</RazorSharedDir>
+    <AspNetCoreObjectPoolDir>../../lib/aspnetcore/src/ObjectPool/src</AspNetCoreObjectPoolDir>
+    <AspNetCoreSharedDir>../../lib/aspnetcore/src/Shared</AspNetCoreSharedDir>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,12 +32,9 @@
 
     <Compile Include="$(RazorCSharpDir)/**/*.cs" Exclude="$(RazorCSharpDir)/obj/**/*.cs" Link="RazorLanguage/CSharp/%(RecursiveDir)%(FileName)%(Extension)" />
     <Compile Include="$(RazorSharedDir)/**/*.cs" Exclude="$(RazorSharedDir)/obj/**/*.cs" Link="RazorLanguage/Shared/%(RecursiveDir)%(FileName)%(Extension)" />
-  </ItemGroup>
 
-  <ItemGroup>
-    <!-- TODO: Remove -->
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.0" />
-    <PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
+    <Compile Include="$(AspNetCoreObjectPoolDir)/**/*.cs" Exclude="$(AspNetCoreObjectPoolDir)/obj/**/*.cs" Link="RazorLanguage/AspNetCore/ObjectPool/%(RecursiveDir)%(FileName)%(Extension)" />
+    <Compile Include="$(AspNetCoreSharedDir)/ThrowHelpers/ArgumentNullThrowHelper.cs" Exclude="$(AspNetCoreSharedDir)/obj/**/*.cs" Link="RazorLanguage/AspNetCore/Shared/%(RecursiveDir)%(FileName)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
