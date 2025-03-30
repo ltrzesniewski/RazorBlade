@@ -449,6 +449,106 @@ public class RazorBladeSourceGeneratorTests
         );
     }
 
+    [Test]
+    public Task should_import_relevant_files()
+    {
+        return Verify(
+            """
+            Hello
+            """,
+            """
+            class WrongBase : RazorBlade.HtmlTemplate;
+            class CorrectBase : RazorBlade.HtmlTemplate;
+            """,
+            config: new()
+            {
+                FilePath = "./Path/Dir/TestFile.cshtml",
+                AdditionalTexts =
+                [
+                    new AdditionalTextMock("@inherits WrongBase", "./Path/Dir/Unrelated/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@inherits CorrectBase", "./Path/Dir/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@inherits WrongBase", "./Path/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@inherits WrongBase", "./Path/OtherDir/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@inherits WrongBase", "./OtherPath/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@inherits WrongBase", "./_ViewImports.cshtml")
+                ]
+            }
+        );
+    }
+
+    [Test]
+    public Task should_import_relevant_files_reversed()
+    {
+        return Verify(
+            """
+            Hello
+            """,
+            """
+            class WrongBase : RazorBlade.HtmlTemplate;
+            class CorrectBase : RazorBlade.HtmlTemplate;
+            """,
+            config: new()
+            {
+                FilePath = "./Path/Dir/TestFile.cshtml",
+                AdditionalTexts =
+                [
+                    new AdditionalTextMock("@inherits WrongBase", "./_ViewImports.cshtml"),
+                    new AdditionalTextMock("@inherits WrongBase", "./OtherPath/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@inherits WrongBase", "./Path/OtherDir/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@inherits WrongBase", "./Path/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@inherits CorrectBase", "./Path/Dir/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@inherits WrongBase", "./Path/Dir/Unrelated/_ViewImports.cshtml")
+                ]
+            }
+        );
+    }
+
+    [Test]
+    public Task should_import_all_relevant_files()
+    {
+        return Verify(
+            """
+            Hello
+            """,
+            """
+            namespace A { class Foo; }
+            namespace B { class Foo; }
+            namespace C { class Foo; }
+            namespace D { class Foo; }
+            namespace E { class Foo; }
+            namespace F { class Foo; }
+            """,
+            config: new()
+            {
+                ExpectDiagnostics = true,
+                FilePath = "./Path/Dir/TestFile.cshtml",
+                AdditionalTexts =
+                [
+                    new AdditionalTextMock("@using A", "./Path/Dir/Unrelated/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@using B", "./Path/Dir/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@using C", "./Path/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@using D", "./Path/OtherDir/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@using E", "./OtherPath/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@using F", "./_ViewImports.cshtml")
+                ]
+            }
+        );
+    }
+
+    [Test]
+    public Task should_not_generate_code_for_imports_file()
+    {
+        return Verify(
+            """
+            @namespace Test
+            """,
+            config: new()
+            {
+                FilePath = "./Path/Dir/_ViewImports.cshtml"
+            }
+        );
+    }
+
     private static GeneratorDriverRunResult Generate(string input,
                                                      string? csharpCode,
                                                      TestConfig config)
@@ -513,7 +613,7 @@ public class RazorBladeSourceGeneratorTests
                                            .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithNullableContextOptions(NullableContextOptions.Enable));
 
         var result = CSharpGeneratorDriver.Create(new RazorBladeSourceGenerator())
-                                          .AddAdditionalTexts([new AdditionalTextMock(input, "./TestFile.cshtml")])
+                                          .AddAdditionalTexts([new AdditionalTextMock(input, config.FilePath), ..config.AdditionalTexts])
                                           .WithUpdatedAnalyzerConfigOptions(analyzerConfigOptionsProvider)
                                           .RunGeneratorsAndUpdateCompilation(compilation, out var updatedCompilation, out _)
                                           .GetRunResult();
@@ -533,7 +633,8 @@ public class RazorBladeSourceGeneratorTests
                 if (!diagnostics.IsEmpty)
                     Console.WriteLine(result.GeneratedTrees.FirstOrDefault());
 
-                diagnostics.ShouldBeEmpty();
+                if (!config.ExpectDiagnostics)
+                    diagnostics.ShouldBeEmpty();
             }
         }
 
@@ -559,5 +660,8 @@ public class RazorBladeSourceGeneratorTests
         public bool EmbeddedLibrary { get; init; }
         public bool NetStandard { get; init; }
         public bool ExpectErrors { get; init; }
+        public bool ExpectDiagnostics { get; init; }
+        public string FilePath { get; init; } = "./TestFile.cshtml";
+        public AdditionalTextMock[] AdditionalTexts { get; init; } = [];
     }
 }
