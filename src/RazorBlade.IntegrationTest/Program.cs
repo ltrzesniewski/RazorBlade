@@ -12,6 +12,10 @@ public static class Program
         WriteTemplate(new PageWithLayout());
         WriteTemplate(new PageWithFlush());
 
+        WriteTemplate(new Imports.ImportA());
+        WriteTemplate(new Imports.Inner.ImportB());
+        WriteTemplate(new Imports.Other.ImportC());
+
         CheckNamespaces();
         CheckAccessibility();
 

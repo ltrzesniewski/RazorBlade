@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -9,7 +11,6 @@ using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Razor;
-using Microsoft.CodeAnalysis.Text;
 using RazorBlade.Analyzers.Support;
 using SyntaxKind = Microsoft.CodeAnalysis.CSharp.SyntaxKind;
 
@@ -29,8 +30,12 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                                        return GlobalOptions.Create((CSharpParseOptions)parseOptions, optionsProvider, embeddedLibrary);
                                    });
 
+        var imports = context.AdditionalTextsProvider
+                             .Where(static i => IsImportFile(i.Path))
+                             .Collect();
+
         var inputFiles = context.AdditionalTextsProvider
-                                .Where(static i => i.Path.EndsWith(".cshtml", StringComparison.OrdinalIgnoreCase))
+                                .Where(static i => i.Path.EndsWith(".cshtml", StringComparison.OrdinalIgnoreCase) && !IsImportFile(i.Path))
                                 .Combine(context.AnalyzerConfigOptionsProvider)
                                 .Select(static (pair, _) =>
                                 {
@@ -45,16 +50,17 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         );
 
         context.RegisterSourceOutput(
-            inputFiles.Combine(globalOptions)
+            inputFiles.Combine(imports)
+                      .Combine(globalOptions)
                       .Combine(context.CompilationProvider)
                       .WithLambdaComparer((a, b) => a.Left.Equals(b.Left), pair => pair.Left.GetHashCode()), // Ignore the compilation for updates
             static (context, pair) =>
             {
-                var ((inputFile, globalOptions), compilation) = pair;
+                var (((inputFile, imports), globalOptions), compilation) = pair;
 
                 try
                 {
-                    Generate(context, inputFile, globalOptions, compilation);
+                    Generate(context, inputFile, imports, globalOptions, compilation);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
@@ -62,19 +68,25 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                 }
             }
         );
+
+        static bool IsImportFile(string path)
+            => string.Equals(Path.GetFileName(path), "_ViewImports.cshtml", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static void Generate(SourceProductionContext context, InputFile file, GlobalOptions globalOptions, Compilation compilation)
+    private static void Generate(SourceProductionContext context,
+                                 InputFile file,
+                                 ImmutableArray<AdditionalText> imports,
+                                 GlobalOptions globalOptions,
+                                 Compilation compilation)
     {
         OnGenerate();
 
         file.ReportDiagnostics(context);
 
-        var sourceText = file.AdditionalText.GetText();
-        if (sourceText is null)
+        var csharpDoc = GenerateRazorCode(file, imports, globalOptions);
+        if (csharpDoc is null)
             return;
 
-        var csharpDoc = GenerateRazorCode(sourceText, file, globalOptions);
         var libraryCode = GenerateLibrarySpecificCode(csharpDoc, globalOptions, compilation, context.CancellationToken);
 
         foreach (var diagnostic in csharpDoc.Diagnostics)
@@ -94,8 +106,14 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         }
     }
 
-    private static RazorCSharpDocument GenerateRazorCode(SourceText sourceText, InputFile file, GlobalOptions globalOptions)
+    private static RazorCSharpDocument? GenerateRazorCode(InputFile file,
+                                                          ImmutableArray<AdditionalText> imports,
+                                                          GlobalOptions globalOptions)
     {
+        var sourceText = file.AdditionalText.GetText();
+        if (sourceText is null)
+            return null;
+
         var engine = RazorProjectEngine.Create(
             RazorConfiguration.Default,
             RazorProjectFileSystem.Empty,
@@ -145,11 +163,30 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         var codeDoc = engine.Process(
             RazorSourceDocument.Create(sourceText.ToString(), file.AdditionalText.Path, sourceText.Encoding ?? Encoding.UTF8),
             FileKinds.Legacy,
-            [],
+            GetImportsToApply(file.AdditionalText, imports),
             []
         );
 
         return codeDoc.GetCSharpDocument();
+
+        static RazorSourceDocument[] GetImportsToApply(AdditionalText sourceText, ImmutableArray<AdditionalText> imports)
+        {
+            if (imports.IsEmpty)
+                return [];
+
+            var sourceDirPath = NormalizeDirectoryPath(sourceText.Path);
+
+            return imports.Select(i => (import: i, dirPath: NormalizeDirectoryPath(i.Path)))
+                          .Where(i => !string.IsNullOrEmpty(i.dirPath) && sourceDirPath.StartsWith(i.dirPath, StringComparison.OrdinalIgnoreCase))
+                          .OrderBy(i => i.dirPath.Length)
+                          .Select(i => (i.import, text: i.import.GetText()!))
+                          .Where(i => i.text is not null)
+                          .Select(i => RazorSourceDocument.Create(i.text.ToString(), i.import.Path, i.text.Encoding ?? Encoding.UTF8))
+                          .ToArray();
+
+            static string NormalizeDirectoryPath(string path)
+                => Path.GetFullPath(Path.GetDirectoryName(path) ?? string.Empty).Replace(Path.DirectorySeparatorChar, '/').TrimEnd('/') + '/';
+        }
     }
 
     private static string GenerateLibrarySpecificCode(RazorCSharpDocument generatedDoc, GlobalOptions globalOptions, Compilation compilation, CancellationToken cancellationToken)
