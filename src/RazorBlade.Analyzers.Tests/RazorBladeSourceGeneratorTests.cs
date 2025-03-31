@@ -591,6 +591,25 @@ public class RazorBladeSourceGeneratorTests
         );
     }
 
+    [Test]
+    public Task should_error_on_model_in_imports()
+    {
+        return Verify(
+            """
+            Hello
+            """,
+            config: new()
+            {
+                ExpectErrors = true,
+                FilePath = "./Path/Dir/TestFile.cshtml",
+                AdditionalTexts =
+                [
+                    new AdditionalTextMock("@model string", "./Path/Dir/_ViewImports.cshtml"),
+                ]
+            }
+        );
+    }
+
     private static GeneratorDriverRunResult Generate(string input,
                                                      string? csharpCode,
                                                      TestConfig config)
