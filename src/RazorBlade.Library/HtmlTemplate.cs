@@ -160,3 +160,20 @@ public abstract class HtmlTemplate<TModel> : HtmlTemplate
     protected HtmlTemplate()
         => throw new NotSupportedException("Use the constructor overload that takes a model.");
 }
+
+/// <summary>
+/// Base class for HTML templates with a layout.
+/// </summary>
+/// <remarks>
+/// Special HTML characters will be escaped.
+/// </remarks>
+/// <typeparam name="TLayout">The layout type.</typeparam>
+public abstract class HtmlTemplateWithLayout<TLayout> : HtmlTemplate
+    where TLayout : HtmlLayout, new()
+{
+    /// <summary>
+    /// Creates a <typeparamref name="TLayout"/> instance to be used with this template.
+    /// </summary>
+    protected internal override HtmlLayout CreateLayout()
+        => new TLayout();
+}

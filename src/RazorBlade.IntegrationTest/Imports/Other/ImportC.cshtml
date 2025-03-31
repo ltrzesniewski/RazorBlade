@@ -1,1 +1,2 @@
-ImportC: @(typeof(ImportC).BaseType?.Name)
+@{ var baseType = typeof(ImportC).BaseType!; }
+ImportC: @(baseType.Name) of @(baseType.GetGenericArguments()[0].Name)
