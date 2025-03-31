@@ -153,6 +153,7 @@ For HTML templates, specify one of the following base classes with an `@inherits
 
 - `RazorBlade.HtmlTemplate`
 - `RazorBlade.HtmlTemplate<TModel>`
+- `RazorBlade.HtmlTemplateWithLayout<TLayout>` (automatically applies the given layout)
 - `RazorBlade.HtmlLayout` (for layouts only)
 
 If you'd like to write a plain text template (which never escapes HTML), the following classes are available:
@@ -190,6 +191,16 @@ The layout to use can be specified by overriding the `CreateLayout` method of `R
 <sup><a href='/src/RazorBlade.IntegrationTest/Examples/TemplateWithLayout.cshtml#L2-L8' title='Snippet source file'>snippet source</a> | <a href='#snippet-TemplateWithLayout.Usage' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
+This can be simplified by using the `HtmlTemplateWithLayout<TLayout>` class, which can be useful in `_ViewImports.cshtml` files:
+
+<!-- snippet: TemplateWithLayoutFromBase.cshtml -->
+<a id='snippet-TemplateWithLayoutFromBase.cshtml'></a>
+```cshtml
+@inherits RazorBlade.HtmlTemplateWithLayout<LayoutToUse>
+```
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/TemplateWithLayoutFromBase.cshtml#L1-L1' title='Snippet source file'>snippet source</a> | <a href='#snippet-TemplateWithLayoutFromBase.cshtml' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
 Layout pages can be nested, and can use sections. Unlike in ASP.NET, RazorBlade does not verify if the body and all sections have been used. Sections may also be executed multiple times.
 
 > [!NOTE]  
@@ -201,6 +212,12 @@ Layout pages can be nested, and can use sections. Unlike in ASP.NET, RazorBlade 
 > Your content
 > @(new Footer())
 > ```
+
+### Import files: `_ViewImports.cshtml`
+
+RazorBlade automatically applies the [`_ViewImports.cshtml` files](https://learn.microsoft.com/en-us/aspnet/core/mvc/views/layout#importing-shared-directives) from the project root to the given template directory.
+
+These files can define default values for `@using`, `@inherits` and `@namespace`. For instance, an `@inherits RazorBlade.HtmlTemplateWithLayout<LayoutToUse>` directive in a `_ViewImports.cshtml` file will set a common default layout type for the templates in its directory and subdirectories.
 
 ### Executing templates
 
