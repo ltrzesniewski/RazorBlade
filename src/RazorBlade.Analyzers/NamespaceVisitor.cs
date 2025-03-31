@@ -12,6 +12,16 @@ internal class NamespaceVisitor : SyntaxWalker
     public static string? GetNamespaceDirectiveContent(RazorCodeDocument codeDocument)
     {
         var visitor = new NamespaceVisitor();
+
+        if (codeDocument.GetImportSyntaxTrees() is { } importSyntaxTrees)
+        {
+            foreach (var importSyntaxTree in importSyntaxTrees)
+            {
+                if (importSyntaxTree != null)
+                    visitor.Visit(importSyntaxTree.Root);
+            }
+        }
+
         visitor.Visit(codeDocument.GetSyntaxTree().Root);
         return visitor._lastNamespaceContent;
     }

@@ -14,7 +14,7 @@ public static class Program
 
         WriteTemplate(new Imports.ImportA());
         WriteTemplate(new Imports.Inner.ImportB());
-        WriteTemplate(new Imports.Other.ImportC());
+        WriteTemplate(new NamespaceOfImportC.ImportC());
 
         CheckNamespaces();
         CheckAccessibility();

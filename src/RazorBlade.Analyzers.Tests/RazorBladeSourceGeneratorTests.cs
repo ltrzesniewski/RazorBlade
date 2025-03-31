@@ -549,6 +549,48 @@ public class RazorBladeSourceGeneratorTests
         );
     }
 
+    [Test]
+    public Task should_resolve_namespace_from_imports()
+    {
+        return Verify(
+            """
+            Hello
+            """,
+            config: new()
+            {
+                FilePath = "./Path/Dir/TestFile.cshtml",
+                AdditionalTexts =
+                [
+                    new AdditionalTextMock("@namespace WrongNamespace", "./Path/Dir/Unrelated/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@namespace CorrectNamespace", "./Path/Dir/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@namespace WrongNamespace", "./Path/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@namespace WrongNamespace", "./Path/OtherDir/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@namespace WrongNamespace", "./OtherPath/_ViewImports.cshtml"),
+                    new AdditionalTextMock("@namespace WrongNamespace", "./_ViewImports.cshtml")
+                ]
+            }
+        );
+    }
+
+    [Test]
+    public Task should_override_namespace_from_imports()
+    {
+        return Verify(
+            """
+            @namespace OverridenNamespace
+            Hello
+            """,
+            config: new()
+            {
+                FilePath = "./Path/Dir/TestFile.cshtml",
+                AdditionalTexts =
+                [
+                    new AdditionalTextMock("@namespace NamespaceFromImports", "./Path/Dir/_ViewImports.cshtml"),
+                ]
+            }
+        );
+    }
+
     private static GeneratorDriverRunResult Generate(string input,
                                                      string? csharpCode,
                                                      TestConfig config)
