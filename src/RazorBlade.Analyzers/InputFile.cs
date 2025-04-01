@@ -30,14 +30,8 @@ internal class InputFile : IEquatable<InputFile>
         _diagnostics = diagnostics;
     }
 
-    public static InputFile? Create(AdditionalText additionalText, AnalyzerConfigOptionsProvider optionsProvider)
+    public static InputFile Create(AdditionalText additionalText, AnalyzerConfigOptions options)
     {
-        var options = optionsProvider.GetOptions(additionalText);
-
-        options.TryGetValue(Constants.FileOptions.IsRazorBlade, out var isTargetFile);
-        if (!string.Equals(isTargetFile, bool.TrueString, StringComparison.OrdinalIgnoreCase))
-            return null;
-
         var diagnostics = new List<Diagnostic>();
         var accessibility = (Accessibility?)null;
 

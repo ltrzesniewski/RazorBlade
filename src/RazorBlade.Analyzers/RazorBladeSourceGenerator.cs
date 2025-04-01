@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Razor.Language.Extensions;
 using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Razor;
 using RazorBlade.Analyzers.Support;
 using SyntaxKind = Microsoft.CodeAnalysis.CSharp.SyntaxKind;
@@ -31,18 +32,19 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                                    });
 
         var imports = context.AdditionalTextsProvider
-                             .Where(static i => IsImportFile(i.Path))
+                             .Where(static additionalText => IsImportFilePath(additionalText.Path))
+                             .Combine(context.AnalyzerConfigOptionsProvider)
+                             .Select(static (pair, _) => (AdditionalText: pair.Left, Options: pair.Right.GetOptions(pair.Left)))
+                             .Where(static pair => IsRazorBladeFile(pair.Options))
+                             .Select(static (pair, _) => pair.AdditionalText)
                              .Collect();
 
         var inputFiles = context.AdditionalTextsProvider
-                                .Where(static i => i.Path.EndsWith(".cshtml", StringComparison.OrdinalIgnoreCase) && !IsImportFile(i.Path))
+                                .Where(static additionalText => IsInputFilePath(additionalText.Path))
                                 .Combine(context.AnalyzerConfigOptionsProvider)
-                                .Select(static (pair, _) =>
-                                {
-                                    var (additionalText, optionsProvider) = pair;
-                                    return InputFile.Create(additionalText, optionsProvider);
-                                })
-                                .WhereNotNull();
+                                .Select(static (pair, _) => (AdditionalText: pair.Left, Options: pair.Right.GetOptions(pair.Left)))
+                                .Where(static pair => IsRazorBladeFile(pair.Options))
+                                .Select(static (pair, _) => InputFile.Create(pair.AdditionalText, pair.Options));
 
         context.RegisterSourceOutput(
             globalOptions,
@@ -53,7 +55,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             inputFiles.Combine(imports)
                       .Combine(globalOptions)
                       .Combine(context.CompilationProvider)
-                      .WithLambdaComparer((a, b) => a.Left.Equals(b.Left), pair => pair.Left.GetHashCode()), // Ignore the compilation for updates
+                      .WithLambdaComparer(static (a, b) => a.Left.Equals(b.Left), pair => pair.Left.GetHashCode()), // Ignore the compilation for updates
             static (context, pair) =>
             {
                 var (((inputFile, imports), globalOptions), compilation) = pair;
@@ -69,8 +71,16 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             }
         );
 
-        static bool IsImportFile(string path)
+        static bool IsInputFilePath(string path)
+            => path.EndsWith(".cshtml", StringComparison.OrdinalIgnoreCase)
+               && !IsImportFilePath(path);
+
+        static bool IsImportFilePath(string path)
             => string.Equals(Path.GetFileName(path), "_ViewImports.cshtml", StringComparison.OrdinalIgnoreCase);
+
+        static bool IsRazorBladeFile(AnalyzerConfigOptions options)
+            => options.TryGetValue(Constants.FileOptions.IsRazorBlade, out var isTargetFile)
+               && string.Equals(isTargetFile, bool.TrueString, StringComparison.OrdinalIgnoreCase);
     }
 
     private static void Generate(SourceProductionContext context,
@@ -176,12 +186,12 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
 
             var sourceDirPath = NormalizeDirectoryPath(sourceText.Path);
 
-            return imports.Select(i => (import: i, dirPath: NormalizeDirectoryPath(i.Path)))
-                          .Where(i => !string.IsNullOrEmpty(i.dirPath) && sourceDirPath.StartsWith(i.dirPath, StringComparison.OrdinalIgnoreCase))
-                          .OrderBy(i => i.dirPath.Length)
-                          .Select(i => (i.import, text: i.import.GetText()!))
-                          .Where(i => i.text is not null)
-                          .Select(i => RazorSourceDocument.Create(i.text.ToString(), i.import.Path, i.text.Encoding ?? Encoding.UTF8))
+            return imports.Select(i => (Import: i, DirectoryPath: NormalizeDirectoryPath(i.Path)))
+                          .Where(i => !string.IsNullOrEmpty(i.DirectoryPath) && sourceDirPath.StartsWith(i.DirectoryPath, StringComparison.OrdinalIgnoreCase))
+                          .OrderBy(i => i.DirectoryPath.Length)
+                          .Select(i => (i.Import, Text: i.Import.GetText()!))
+                          .Where(i => i.Text is not null)
+                          .Select(i => RazorSourceDocument.Create(i.Text.ToString(), i.Import.Path, i.Text.Encoding ?? Encoding.UTF8))
                           .ToArray();
 
             static string NormalizeDirectoryPath(string path)
@@ -189,7 +199,10 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         }
     }
 
-    private static string GenerateLibrarySpecificCode(RazorCSharpDocument generatedDoc, GlobalOptions globalOptions, Compilation compilation, CancellationToken cancellationToken)
+    private static string GenerateLibrarySpecificCode(RazorCSharpDocument generatedDoc,
+                                                      GlobalOptions globalOptions,
+                                                      Compilation compilation,
+                                                      CancellationToken cancellationToken)
     {
         var generator = new LibraryCodeGenerator(
             generatedDoc,
