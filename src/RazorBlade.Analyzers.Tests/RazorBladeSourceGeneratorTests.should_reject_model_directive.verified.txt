@@ -2,12 +2,12 @@
   Diagnostics: [
     {
       Location: .\TestFile.cshtml: (0,0)-(0,13),
-      Message: The @model directive is not supported in RazorBlade due to lack of IDE support. Use the @inherits directive instead: @inherits RazorBlade.HtmlTemplate<FooBar>,
+      Message: The @model directive is not supported in RazorBlade due to lack of IDE support. Use the @inherits directive instead: @inherits RazorBlade.HtmlTemplate<string>,
       Severity: Error,
       Descriptor: {
         Id: RB0002,
-        Title: The @model directive is not supported in RazorBlade due to lack of IDE support. Use the @inherits directive instead: @inherits RazorBlade.HtmlTemplate<FooBar>,
-        MessageFormat: The @model directive is not supported in RazorBlade due to lack of IDE support. Use the @inherits directive instead: @inherits RazorBlade.HtmlTemplate<FooBar>,
+        Title: The @model directive is not supported in RazorBlade due to lack of IDE support. Use the @inherits directive instead: @inherits RazorBlade.HtmlTemplate<string>,
+        MessageFormat: The @model directive is not supported in RazorBlade due to lack of IDE support. Use the @inherits directive instead: @inherits RazorBlade.HtmlTemplate<string>,
         Category: RazorBlade,
         DefaultSeverity: Error,
         IsEnabledByDefault: true

@@ -45,6 +45,24 @@ public class RazorBladeSourceGeneratorTests
     }
 
     [Test]
+    public Task should_handle_new_csharp_features()
+    {
+        return Verify(
+            """
+            @using System.Collections.Generic
+            @functions
+            {
+                public partial string Name { get; }
+                public partial string Name => "Foo";
+
+                public T Foo<T>(T value) where T : allows ref struct => value;
+                public string Foo<T>(params IEnumerable<T> values) => "a\eb";
+            }
+            """
+        );
+    }
+
+    [Test]
     public Task should_set_namespace()
     {
         return Verify(
@@ -74,6 +92,7 @@ public class RazorBladeSourceGeneratorTests
             """,
             """
             using System;
+            using System.Collections.Generic;
             using RazorBlade.Support;
 
             namespace Foo;
@@ -96,6 +115,12 @@ public class RazorBladeSourceGeneratorTests
 
                 [TemplateConstructor]
                 protected BaseClass(in int foo, ref int bar, out int baz, params int[] qux)
+                {
+                    baz = 42;
+                }
+
+                [TemplateConstructor]
+                protected BaseClass(in int foo, ref int bar, out int baz, params IEnumerable<int> qux)
                 {
                     baz = 42;
                 }
@@ -230,7 +255,7 @@ public class RazorBladeSourceGeneratorTests
     {
         return Verify(
             """
-            @model FooBar
+            @model string
             """,
             config: new()
             {
@@ -465,12 +490,12 @@ public class RazorBladeSourceGeneratorTests
                 FilePath = "./Path/Dir/TestFile.cshtml",
                 AdditionalTexts =
                 [
-                    new AdditionalTextMock("@inherits WrongBase", "./Path/Dir/Unrelated/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@inherits CorrectBase", "./Path/Dir/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@inherits WrongBase", "./Path/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@inherits WrongBase", "./Path/OtherDir/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@inherits WrongBase", "./OtherPath/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@inherits WrongBase", "./_ViewImports.cshtml")
+                    RazorAdditionalText("@inherits WrongBase", "./Path/Dir/Unrelated/_ViewImports.cshtml"),
+                    RazorAdditionalText("@inherits CorrectBase", "./Path/Dir/_ViewImports.cshtml"),
+                    RazorAdditionalText("@inherits WrongBase", "./Path/_ViewImports.cshtml"),
+                    RazorAdditionalText("@inherits WrongBase", "./Path/OtherDir/_ViewImports.cshtml"),
+                    RazorAdditionalText("@inherits WrongBase", "./OtherPath/_ViewImports.cshtml"),
+                    RazorAdditionalText("@inherits WrongBase", "./_ViewImports.cshtml")
                 ]
             }
         );
@@ -492,12 +517,12 @@ public class RazorBladeSourceGeneratorTests
                 FilePath = "./Path/Dir/TestFile.cshtml",
                 AdditionalTexts =
                 [
-                    new AdditionalTextMock("@inherits WrongBase", "./_ViewImports.cshtml"),
-                    new AdditionalTextMock("@inherits WrongBase", "./OtherPath/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@inherits WrongBase", "./Path/OtherDir/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@inherits WrongBase", "./Path/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@inherits CorrectBase", "./Path/Dir/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@inherits WrongBase", "./Path/Dir/Unrelated/_ViewImports.cshtml")
+                    RazorAdditionalText("@inherits WrongBase", "./_ViewImports.cshtml"),
+                    RazorAdditionalText("@inherits WrongBase", "./OtherPath/_ViewImports.cshtml"),
+                    RazorAdditionalText("@inherits WrongBase", "./Path/OtherDir/_ViewImports.cshtml"),
+                    RazorAdditionalText("@inherits WrongBase", "./Path/_ViewImports.cshtml"),
+                    RazorAdditionalText("@inherits CorrectBase", "./Path/Dir/_ViewImports.cshtml"),
+                    RazorAdditionalText("@inherits WrongBase", "./Path/Dir/Unrelated/_ViewImports.cshtml")
                 ]
             }
         );
@@ -524,12 +549,12 @@ public class RazorBladeSourceGeneratorTests
                 FilePath = "./Path/Dir/TestFile.cshtml",
                 AdditionalTexts =
                 [
-                    new AdditionalTextMock("@using A", "./Path/Dir/Unrelated/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@using B", "./Path/Dir/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@using C", "./Path/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@using D", "./Path/OtherDir/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@using E", "./OtherPath/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@using F", "./_ViewImports.cshtml")
+                    RazorAdditionalText("@using A", "./Path/Dir/Unrelated/_ViewImports.cshtml"),
+                    RazorAdditionalText("@using B", "./Path/Dir/_ViewImports.cshtml"),
+                    RazorAdditionalText("@using C", "./Path/_ViewImports.cshtml"),
+                    RazorAdditionalText("@using D", "./Path/OtherDir/_ViewImports.cshtml"),
+                    RazorAdditionalText("@using E", "./OtherPath/_ViewImports.cshtml"),
+                    RazorAdditionalText("@using F", "./_ViewImports.cshtml")
                 ]
             }
         );
@@ -561,12 +586,12 @@ public class RazorBladeSourceGeneratorTests
                 FilePath = "./Path/Dir/TestFile.cshtml",
                 AdditionalTexts =
                 [
-                    new AdditionalTextMock("@namespace WrongNamespace", "./Path/Dir/Unrelated/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@namespace CorrectNamespace", "./Path/Dir/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@namespace WrongNamespace", "./Path/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@namespace WrongNamespace", "./Path/OtherDir/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@namespace WrongNamespace", "./OtherPath/_ViewImports.cshtml"),
-                    new AdditionalTextMock("@namespace WrongNamespace", "./_ViewImports.cshtml")
+                    RazorAdditionalText("@namespace WrongNamespace", "./Path/Dir/Unrelated/_ViewImports.cshtml"),
+                    RazorAdditionalText("@namespace CorrectNamespace", "./Path/Dir/_ViewImports.cshtml"),
+                    RazorAdditionalText("@namespace WrongNamespace", "./Path/_ViewImports.cshtml"),
+                    RazorAdditionalText("@namespace WrongNamespace", "./Path/OtherDir/_ViewImports.cshtml"),
+                    RazorAdditionalText("@namespace WrongNamespace", "./OtherPath/_ViewImports.cshtml"),
+                    RazorAdditionalText("@namespace WrongNamespace", "./_ViewImports.cshtml")
                 ]
             }
         );
@@ -585,7 +610,7 @@ public class RazorBladeSourceGeneratorTests
                 FilePath = "./Path/Dir/TestFile.cshtml",
                 AdditionalTexts =
                 [
-                    new AdditionalTextMock("@namespace NamespaceFromImports", "./Path/Dir/_ViewImports.cshtml"),
+                    RazorAdditionalText("@namespace NamespaceFromImports", "./Path/Dir/_ViewImports.cshtml"),
                 ]
             }
         );
@@ -604,7 +629,7 @@ public class RazorBladeSourceGeneratorTests
                 FilePath = "./Path/Dir/TestFile.cshtml",
                 AdditionalTexts =
                 [
-                    new AdditionalTextMock("@model string", "./Path/Dir/_ViewImports.cshtml"),
+                    RazorAdditionalText("@model string", "./Path/Dir/_ViewImports.cshtml"),
                 ]
             }
         );
@@ -709,6 +734,9 @@ public class RazorBladeSourceGeneratorTests
         var result = Generate(input, csharpCode, config ?? new());
         return Verifier.Verify(result);
     }
+
+    private static AdditionalTextMock RazorAdditionalText([StringSyntax("razor")] string text, string path)
+        => new(text, path);
 
     private class TestConfig
     {

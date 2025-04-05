@@ -24,5 +24,11 @@ namespace TestNamespace
             : base(in foo, ref bar, out baz, qux)
         {
         }
+
+        /// <inheritdoc cref="M:Foo.BaseClass.#ctor(System.Int32@,System.Int32@,System.Int32@,System.Collections.Generic.IEnumerable{System.Int32})" />
+        public TestFile(in int foo, ref int bar, out int baz, params global::System.Collections.Generic.IEnumerable<int> qux)
+            : base(in foo, ref bar, out baz, qux)
+        {
+        }
     }
 }
