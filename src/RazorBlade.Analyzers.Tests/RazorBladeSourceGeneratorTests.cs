@@ -671,7 +671,7 @@ public class RazorBladeSourceGeneratorTests
 
         if (config.EmbeddedLibrary)
         {
-            analyzerConfigOptionsProvider.Add(Constants.GlobalOptions.EmbeddedLibrary, "true");
+            analyzerConfigOptionsProvider.Add(Constants.GlobalOptions.EmbeddedLibrary, bool.TrueString);
         }
         else
         {
@@ -742,7 +742,7 @@ public class RazorBladeSourceGeneratorTests
     {
         public Dictionary<string, string> ConfigOptions { get; } = new()
         {
-            { Constants.FileOptions.IsRazorBlade, "True" },
+            { Constants.FileOptions.IsRazorBlade, bool.TrueString },
             { Constants.FileOptions.HintNamespace, "TestNamespace" }
         };
 

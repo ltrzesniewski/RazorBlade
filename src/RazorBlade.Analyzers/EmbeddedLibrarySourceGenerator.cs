@@ -2,6 +2,7 @@
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using RazorBlade.Analyzers.Support;
 
 namespace RazorBlade.Analyzers;
 
@@ -15,7 +16,7 @@ public class EmbeddedLibrarySourceGenerator : IIncrementalGenerator
         var embeddedLibrary = EmbeddedLibraryFlagProvider(context);
 
         var langVersion = context.ParseOptionsProvider
-                                 .Select((parseOptions, _) => ((CSharpParseOptions)parseOptions).LanguageVersion);
+                                 .Select(static (parseOptions, _) => ((CSharpParseOptions)parseOptions).LanguageVersion);
 
         var input = embeddedLibrary.Combine(langVersion);
 
@@ -42,11 +43,7 @@ public class EmbeddedLibrarySourceGenerator : IIncrementalGenerator
 
     private static IncrementalValueProvider<bool> EmbeddedLibraryFlagProvider(IncrementalGeneratorInitializationContext context)
         => context.AnalyzerConfigOptionsProvider
-                  .Select(
-                      static (i, _) => i.GlobalOptions.TryGetValue(Constants.GlobalOptions.EmbeddedLibrary, out var embeddedLibraryStr)
-                                       && bool.TryParse(embeddedLibraryStr, out var embeddedLibrary)
-                                       && embeddedLibrary
-                  );
+                  .Select(static (i, _) => i.GlobalOptions.GetBooleanValue(Constants.GlobalOptions.EmbeddedLibrary));
 
     public static IncrementalValueProvider<ImmutableArray<SyntaxTree>> EmbeddedLibraryProvider(IncrementalGeneratorInitializationContext context)
         => context.ParseOptionsProvider

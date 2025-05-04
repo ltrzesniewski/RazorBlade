@@ -58,7 +58,7 @@ public class EmbeddedLibrarySourceGeneratorTests
         var runResult = CSharpGeneratorDriver.Create([new EmbeddedLibrarySourceGenerator().AsSourceGenerator()], parseOptions: parseOptions)
                                              .WithUpdatedAnalyzerConfigOptions(new AnalyzerConfigOptionsProviderMock
                                              {
-                                                 { Constants.GlobalOptions.EmbeddedLibrary, "True" }
+                                                 { Constants.GlobalOptions.EmbeddedLibrary, bool.TrueString }
                                              })
                                              .RunGeneratorsAndUpdateCompilation(compilation, out var updatedCompilation, out _)
                                              .GetRunResult();

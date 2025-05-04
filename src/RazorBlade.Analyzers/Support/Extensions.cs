@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace RazorBlade.Analyzers.Support;
 
@@ -44,6 +45,11 @@ internal static class Extensions
             symbol = symbol.BaseType;
         }
     }
+
+    public static bool GetBooleanValue(this AnalyzerConfigOptions configOptions, string key)
+        => configOptions.TryGetValue(key, out var stringValue)
+           && bool.TryParse(stringValue, out var boolValue)
+           && boolValue;
 
     private sealed class LambdaComparer<T>(Func<T, T, bool> equals, Func<T, int> getHashCode) : IEqualityComparer<T>
     {

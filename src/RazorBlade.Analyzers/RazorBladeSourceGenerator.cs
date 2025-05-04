@@ -55,7 +55,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             inputFiles.Combine(imports)
                       .Combine(globalOptions)
                       .Combine(context.CompilationProvider)
-                      .WithLambdaComparer(static (a, b) => a.Left.Equals(b.Left), pair => pair.Left.GetHashCode()), // Ignore the compilation for updates
+                      .WithLambdaComparer(static (a, b) => a.Left.Equals(b.Left), static pair => pair.Left.GetHashCode()), // Ignore the compilation for updates
             static (context, pair) =>
             {
                 var (((inputFile, imports), globalOptions), compilation) = pair;
@@ -79,8 +79,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             => string.Equals(Path.GetFileName(path), "_ViewImports.cshtml", StringComparison.OrdinalIgnoreCase);
 
         static bool IsRazorBladeFile(AnalyzerConfigOptions options)
-            => options.TryGetValue(Constants.FileOptions.IsRazorBlade, out var isTargetFile)
-               && string.Equals(isTargetFile, bool.TrueString, StringComparison.OrdinalIgnoreCase);
+            => options.GetBooleanValue(Constants.FileOptions.IsRazorBlade);
     }
 
     private static void Generate(SourceProductionContext context,
