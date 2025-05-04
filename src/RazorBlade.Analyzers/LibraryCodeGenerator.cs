@@ -187,7 +187,7 @@ internal class LibraryCodeGenerator
         var isTemplateSync = IsTemplateSync();
         var hiddenMethodSignatures = new HashSet<string>(StringComparer.Ordinal);
 
-        foreach (var baseClass in _classSymbol.SelfAndBasesTypes().Skip(1))
+        foreach (var baseClass in _classSymbol.SelfAndBaseTypes().Skip(1))
         {
             foreach (var methodSymbol in baseClass.GetMembers().OfType<IMethodSymbol>())
             {
@@ -246,7 +246,7 @@ internal class LibraryCodeGenerator
             if (!diagnosticLocations.Contains(executeMethodSyntax.Identifier.GetLocation()))
                 return false;
 
-            var defineSectionMethod = _classSymbol.SelfAndBasesTypes()
+            var defineSectionMethod = _classSymbol.SelfAndBaseTypes()
                                                   .SelectMany(t => t.GetMembers(defineSectionMethodName))
                                                   .OfType<IMethodSymbol>()
                                                   .FirstOrDefault(m => m.Parameters is

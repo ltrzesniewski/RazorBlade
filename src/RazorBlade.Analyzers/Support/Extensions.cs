@@ -37,7 +37,7 @@ internal static class Extensions
             ? "@" + name
             : name;
 
-    public static IEnumerable<INamedTypeSymbol> SelfAndBasesTypes(this INamedTypeSymbol? symbol)
+    public static IEnumerable<INamedTypeSymbol> SelfAndBaseTypes(this INamedTypeSymbol? symbol)
     {
         while (symbol is not null)
         {
