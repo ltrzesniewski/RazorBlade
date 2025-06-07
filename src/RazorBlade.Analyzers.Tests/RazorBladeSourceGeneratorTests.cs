@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
@@ -727,6 +728,7 @@ public class RazorBladeSourceGeneratorTests
         return result;
     }
 
+    [MustUseReturnValue]
     private static Task Verify([StringSyntax("razor")] string input,
                                [StringSyntax("csharp")] string? csharpCode = null,
                                TestConfig? config = null)

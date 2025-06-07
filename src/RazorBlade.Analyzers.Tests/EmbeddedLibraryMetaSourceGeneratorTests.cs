@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
@@ -123,6 +124,7 @@ public class EmbeddedLibraryMetaSourceGeneratorTests
         return result;
     }
 
+    [MustUseReturnValue]
     private static Task Verify([StringSyntax("csharp")] string input)
     {
         var result = Generate(input);
