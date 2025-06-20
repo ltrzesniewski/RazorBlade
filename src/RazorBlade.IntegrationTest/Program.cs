@@ -16,6 +16,8 @@ public static class Program
         WriteTemplate(new Imports.Inner.ImportB());
         WriteTemplate(new NamespaceOfImportC.ImportC());
 
+        WriteTemplate(new Examples.TemplateWithPartials());
+
         CheckNamespaces();
         CheckAccessibility();
 

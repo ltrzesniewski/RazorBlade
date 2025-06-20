@@ -1,0 +1,27 @@
+﻿@using System.Collections.Generic
+@inherits RazorBlade.HtmlTemplate
+
+@* begin-snippet: TemplateWithPartials.Simple *@
+<ul>
+    @foreach (var item in ListItems)
+    {
+        @(new MyPartial { Value = item })
+    }
+</ul>
+@* end-snippet *@
+
+@* begin-snippet: TemplateWithPartials.SingleInstance *@
+@{ var partialInstance = new MyPartial(); }
+<ul>
+    @foreach (var item in ListItems)
+    {
+        partialInstance.Value = item;
+        @partialInstance
+    }
+</ul>
+@* end-snippet *@
+
+@functions
+{
+    public IReadOnlyList<string> ListItems => ["Foo", "Bar", "Foobar"];
+}

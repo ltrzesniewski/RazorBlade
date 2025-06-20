@@ -169,9 +169,43 @@ You can also write your own base classes. Marking a constructor with `[TemplateC
 
 HTML escaping can be avoided by using the `@Html.Raw(value)` method, just like in ASP.NET. The `IEncodedContent` interface represents content which does not need to be escaped. The `HtmlString` class is a simple implementation of this interface.
 
-Templates can be included in other templates by evaluating them, since they implement `IEncodedContent`. For instance, a `Footer` template can be included by writing `@(new Footer())`. Remember to always create a new instance of the template to include, even if it doesn't contain custom code, as templates are stateful and not thread-safe.
-
 The namespace of the generated class can be customized with the `@namespace` directive. The default value is deduced from the file location.
+
+### Partials
+
+Templates can be included in other templates by evaluating them, as they implement `IEncodedContent`. For instance, a `Footer` template can be included by writing `@(new Footer())`.
+
+Since templates are stateful and not thread-safe, the simplest way to avoid race conditions is to always create a new instance of a partial to render:
+
+<!-- snippet: TemplateWithPartials.Simple -->
+<a id='snippet-TemplateWithPartials.Simple'></a>
+```cshtml
+<ul>
+    @foreach (var item in ListItems)
+    {
+        @(new MyPartial { Value = item })
+    }
+</ul>
+```
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/TemplateWithPartials.cshtml#L4-L11' title='Snippet source file'>snippet source</a> | <a href='#snippet-TemplateWithPartials.Simple' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+But you may also reuse a single partial instance as long as it is only accessible to the template instance which uses it:
+
+<!-- snippet: TemplateWithPartials.SingleInstance -->
+<a id='snippet-TemplateWithPartials.SingleInstance'></a>
+```cshtml
+@{ var partialInstance = new MyPartial(); }
+<ul>
+    @foreach (var item in ListItems)
+    {
+        partialInstance.Value = item;
+        @partialInstance
+    }
+</ul>
+```
+<sup><a href='/src/RazorBlade.IntegrationTest/Examples/TemplateWithPartials.cshtml#L13-L22' title='Snippet source file'>snippet source</a> | <a href='#snippet-TemplateWithPartials.SingleInstance' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
 
 ### Layouts
 

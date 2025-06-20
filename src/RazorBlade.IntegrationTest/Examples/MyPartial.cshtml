@@ -1,0 +1,6 @@
+﻿@inherits RazorBlade.HtmlTemplate
+    <li>@Value (@(Value?.Length ?? 0) characters)</li>
+@functions
+{
+    public string? Value { get; set; }
+}
