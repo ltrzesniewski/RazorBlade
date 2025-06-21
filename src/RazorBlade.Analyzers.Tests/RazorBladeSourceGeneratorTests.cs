@@ -636,6 +636,49 @@ public class RazorBladeSourceGeneratorTests
         );
     }
 
+    [Test]
+    public Task should_handle_typeparam()
+    {
+        return Verify(
+            """
+            @typeparam T1
+            @typeparam T2 where T2 : struct
+            Hello, @typeof(T1) and @typeof(T2)!
+            @NeedsStruct(default(T2))
+
+            @functions {
+                T NeedsStruct<T>(T value) where T : struct => value;
+            }
+            """
+        );
+    }
+
+    [Test]
+    public Task should_handle_typeparam_with_additional_library_code()
+    {
+        return Verify(
+            """
+            @typeparam T1
+            @typeparam T2 where T2 : struct
+            @inherits Foo.BaseClass<T2>
+            """,
+            """
+            using RazorBlade.Support;
+
+            namespace Foo;
+
+            public abstract class BaseClass<T> : RazorBlade.HtmlTemplate<T>
+                where T : struct
+            {
+                [TemplateConstructor]
+                protected BaseClass(T value)
+                {
+                }
+            }
+            """
+        );
+    }
+
     private static GeneratorDriverRunResult Generate(string input,
                                                      string? csharpCode,
                                                      TestConfig config)

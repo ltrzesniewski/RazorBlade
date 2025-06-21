@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.AspNetCore.Razor.Language.CodeGeneration;
+using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -84,7 +85,14 @@ internal class LibraryCodeGenerator
             }
 
             using (_writer.BuildNamespace(_classSymbol.ContainingNamespace.ToDisplayString()))
-            using (_writer.BuildClassDeclaration(["partial"], _classSymbol.Name, null, [], [], useNullableContext: false))
+            using (_writer.BuildClassDeclaration(
+                       ["partial"],
+                       _classSymbol.Name,
+                       null,
+                       [],
+                       _classSymbol.TypeParameters.Select(param => new TypeParameter { ParameterName = param.Name }).ToList(),
+                       useNullableContext: false
+                   ))
             {
                 GenerateConstructors();
                 GenerateConditionalOnAsync(cancellationToken);

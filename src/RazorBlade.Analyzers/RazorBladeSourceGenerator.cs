@@ -130,6 +130,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             {
                 ModelDirective.Register(cfg);
                 SectionDirective.Register(cfg);
+                TypeParamDirective.Register(cfg);
 
                 cfg.SetCSharpLanguageVersion(globalOptions.ParseOptions.LanguageVersion);
 
