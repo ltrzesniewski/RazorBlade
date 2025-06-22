@@ -259,6 +259,23 @@ The `RazorTemplate` base class provides `Render` and `RenderAsync` methods to ex
 
 Templates are stateful and not thread-safe, so it is advised to always create new instances of the templates to render.
 
+### Supported directives
+
+The following [Razor directives](https://learn.microsoft.com/en-us/aspnet/core/mvc/views/razor#directives) are supported:
+
+- `@attribute`
+- `@functions`
+- `@implements`
+- `@inherits`
+- `@namespace`
+- `@section`
+- `@typeparam`
+
+The following ones are rejected:
+
+- `@model` - Use a base class such as `HtmlTemplate<TModel>` instead.
+- `@addTagHelper`, `@removeTagHelper`, `@tagHelperPrefix` - [Tag helpers](https://learn.microsoft.com/en-us/aspnet/core/mvc/views/tag-helpers/intro) would require ASP.NET.
+
 ### MSBuild
 
 The source generator will process `RazorBlade` MSBuild items which have the `.cshtml` file extension.

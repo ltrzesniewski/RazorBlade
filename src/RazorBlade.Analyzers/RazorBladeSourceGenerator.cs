@@ -122,23 +122,7 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         if (sourceText is null)
             return null;
 
-        var engine = RazorProjectEngine.Create(
-            RazorConfiguration.Default,
-            RazorProjectFileSystem.Empty,
-            builder =>
-            {
-                builder.SetCSharpLanguageVersion(globalOptions.ParseOptions.LanguageVersion);
-
-                RazorBladeDocumentFeature.Register(builder, file, globalOptions);
-
-                ModelDirective.Register(builder);
-                SectionDirective.Register(builder);
-                TagHelperDirective.Register(builder);
-                TypeParamDirective.Register(builder);
-
-                builder.AddTargetExtension(new TemplateTargetExtension { TemplateTypeName = "HelperResult" });
-            }
-        );
+        var engine = BuildRazorEngine(file, globalOptions);
 
         var codeDoc = engine.Process(
             RazorSourceDocument.Create(sourceText.ToString(), file.AdditionalText.Path, sourceText.Encoding ?? Encoding.UTF8),
@@ -167,6 +151,27 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             static string NormalizeDirectoryPath(string path)
                 => Path.GetFullPath(Path.GetDirectoryName(path) ?? string.Empty).Replace(Path.DirectorySeparatorChar, '/').TrimEnd('/') + '/';
         }
+    }
+
+    internal static RazorProjectEngine BuildRazorEngine(InputFile? file, GlobalOptions? globalOptions)
+    {
+        return RazorProjectEngine.Create(
+            RazorConfiguration.Default,
+            RazorProjectFileSystem.Empty,
+            builder =>
+            {
+                builder.SetCSharpLanguageVersion(globalOptions?.ParseOptions.LanguageVersion ?? LanguageVersion.Latest);
+
+                RazorBladeDocumentFeature.Register(builder, file, globalOptions);
+
+                ModelDirective.Register(builder);
+                SectionDirective.Register(builder);
+                TagHelperDirective.Register(builder);
+                TypeParamDirective.Register(builder);
+
+                builder.AddTargetExtension(new TemplateTargetExtension { TemplateTypeName = "HelperResult" });
+            }
+        );
     }
 
     private static string GenerateLibrarySpecificCode(RazorCSharpDocument generatedDoc,

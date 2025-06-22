@@ -13,24 +13,24 @@ namespace RazorBlade.Analyzers.Features;
 
 internal static class RazorBladeDocumentFeature
 {
-    public static void Register(RazorProjectEngineBuilder builder, InputFile file, GlobalOptions globalOptions)
+    public static void Register(RazorProjectEngineBuilder builder, InputFile? file, GlobalOptions? globalOptions)
     {
         var config = GetDefaultDocumentClassifierPassFeature(builder);
 
         config.ConfigureNamespace.Add((codeDoc, node) =>
         {
             node.Content = NamespaceVisitor.GetNamespaceDirectiveContent(codeDoc)
-                           ?? file.HintNamespace
+                           ?? file?.HintNamespace
                            ?? "Razor";
         });
 
         config.ConfigureClass.Add((_, node) =>
         {
-            node.ClassName = file.ClassName;
+            node.ClassName = file?.ClassName ?? "Template";
             node.BaseType = "global::RazorBlade.HtmlTemplate";
 
             node.Modifiers.Clear();
-            node.Modifiers.Add(SyntaxFacts.GetText(file.Accessibility ?? globalOptions.DefaultAccessibility ?? Accessibility.Internal));
+            node.Modifiers.Add(SyntaxFacts.GetText(file?.Accessibility ?? globalOptions?.DefaultAccessibility ?? Accessibility.Internal));
             node.Modifiers.Add(SyntaxFacts.GetText(SyntaxKind.PartialKeyword));
 
             // Enable nullable reference types for the class definition node, as they may be needed for the base class.
