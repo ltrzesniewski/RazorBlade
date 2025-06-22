@@ -1,0 +1,17 @@
+﻿{
+  Diagnostics: [
+    {
+      Location: .\TestFile.cshtml: (0,16)-(0,20),
+      Message: 'TBar' is not valid in this position. Valid options are 'where',
+      Severity: Error,
+      Descriptor: {
+        Id: RZ1040,
+        Title: 'TBar' is not valid in this position. Valid options are 'where',
+        MessageFormat: 'TBar' is not valid in this position. Valid options are 'where',
+        Category: RazorBlade,
+        DefaultSeverity: Error,
+        IsEnabledByDefault: true
+      }
+    }
+  ]
+}

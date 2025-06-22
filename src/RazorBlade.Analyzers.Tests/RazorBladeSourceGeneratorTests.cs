@@ -679,6 +679,60 @@ public class RazorBladeSourceGeneratorTests
         );
     }
 
+    [Test]
+    public Task should_error_on_invalid_typeparam()
+    {
+        return Verify(
+            """
+            @typeparam TFoo TBar
+            """,
+            config: new()
+            {
+                ExpectErrors = true
+            }
+        );
+    }
+
+    [Test]
+    public Task should_handle_attribute()
+    {
+        return Verify(
+            """
+            @using System
+            @attribute [Obsolete("Hello!")]
+            """
+        );
+    }
+
+    [Test]
+    public Task should_error_on_invalid_attribute()
+    {
+        return Verify(
+            """
+            @using System
+            @attribute [Obsolete
+            """,
+            config: new()
+            {
+                ExpectDiagnostics = true
+            }
+        );
+    }
+
+    [Test]
+    public Task should_handle_implements()
+    {
+        return Verify(
+            """
+            @using System
+            @implements IDisposable
+            @functions {
+                public void Dispose() { }
+            }
+            """
+        );
+    }
+
     private static GeneratorDriverRunResult Generate(string input,
                                                      string? csharpCode,
                                                      TestConfig config)
