@@ -9,6 +9,7 @@ public static class Program
         WriteSeparator();
         WriteTemplate(new TestTemplate { Name = "World" });
         WriteTemplate(new TestTemplateWithModel(new FooBarModelClass { Foo = "Foo", Bar = "Bar" }));
+        WriteTemplate(new TestGenericTemplate<string, int>("Hello"));
         WriteTemplate(new PageWithLayout());
         WriteTemplate(new PageWithFlush());
 

@@ -1,0 +1,12 @@
+@using System
+@typeparam TModel
+@typeparam TOther where TOther : struct
+@inherits RazorBlade.HtmlTemplate<TModel>
+
+@Model
+@FuncOfStruct(default(TOther))
+
+@functions {
+    public static string FuncOfStruct<T>(T value) where T : struct
+        => $"Default value: {value}";
+}
