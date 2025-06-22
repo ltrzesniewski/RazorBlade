@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.AspNetCore.Razor.Language.Intermediate;
 
-namespace RazorBlade.Analyzers;
+namespace RazorBlade.Analyzers.Features;
 
 internal static class ModelDirective
 {

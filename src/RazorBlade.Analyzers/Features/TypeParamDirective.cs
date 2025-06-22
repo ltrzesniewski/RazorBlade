@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.AspNetCore.Razor.Language.Components;
 using Microsoft.AspNetCore.Razor.Language.Intermediate;
 
-namespace RazorBlade.Analyzers;
+namespace RazorBlade.Analyzers.Features;
 
 internal static class TypeParamDirective
 {
@@ -31,8 +31,8 @@ internal static class TypeParamDirective
             if (typeParamReferences.Count == 0)
                 return;
 
-            var @class = documentNode.FindPrimaryClass();
-            if (@class == null)
+            var primaryClass = documentNode.FindPrimaryClass();
+            if (primaryClass is null)
                 return;
 
             foreach (var typeParamReference in typeParamReferences)
@@ -41,7 +41,7 @@ internal static class TypeParamDirective
                 if (typeParamNode.HasDiagnostics)
                     continue;
 
-                @class.TypeParameters.Add(new TypeParameter
+                primaryClass.TypeParameters.Add(new TypeParameter
                 {
                     ParameterName = typeParamNode.Tokens.First().Content,
                     Constraints = typeParamNode.Tokens.Skip(1).FirstOrDefault()?.Content

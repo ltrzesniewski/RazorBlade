@@ -7,13 +7,12 @@ using System.Text;
 using System.Threading;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.AspNetCore.Razor.Language.Extensions;
-using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Razor;
+using RazorBlade.Analyzers.Features;
 using RazorBlade.Analyzers.Support;
-using SyntaxKind = Microsoft.CodeAnalysis.CSharp.SyntaxKind;
 
 namespace RazorBlade.Analyzers;
 
@@ -126,47 +125,18 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         var engine = RazorProjectEngine.Create(
             RazorConfiguration.Default,
             RazorProjectFileSystem.Empty,
-            cfg =>
+            builder =>
             {
-                ModelDirective.Register(cfg);
-                SectionDirective.Register(cfg);
-                TypeParamDirective.Register(cfg);
+                builder.SetCSharpLanguageVersion(globalOptions.ParseOptions.LanguageVersion);
 
-                cfg.SetCSharpLanguageVersion(globalOptions.ParseOptions.LanguageVersion);
+                RazorBladeDocumentFeature.Register(builder, file, globalOptions);
 
-                var configurationFeature = cfg.Features.OfType<DefaultDocumentClassifierPassFeature>().Single();
+                ModelDirective.Register(builder);
+                SectionDirective.Register(builder);
+                TagHelperDirective.Register(builder);
+                TypeParamDirective.Register(builder);
 
-                configurationFeature.ConfigureNamespace.Add((codeDoc, node) =>
-                {
-                    node.Content = NamespaceVisitor.GetNamespaceDirectiveContent(codeDoc)
-                                   ?? file.HintNamespace
-                                   ?? "Razor";
-                });
-
-                configurationFeature.ConfigureClass.Add((_, node) =>
-                {
-                    node.ClassName = file.ClassName;
-                    node.BaseType = "global::RazorBlade.HtmlTemplate";
-
-                    node.Modifiers.Clear();
-                    node.Modifiers.Add(SyntaxFacts.GetText(file.Accessibility ?? globalOptions.DefaultAccessibility ?? Accessibility.Internal));
-                    node.Modifiers.Add(SyntaxFacts.GetText(SyntaxKind.PartialKeyword));
-
-                    // Enable nullable reference types for the class definition node, as they may be needed for the base class.
-                    node.Annotations[CommonAnnotations.NullableContext] = CommonAnnotations.NullableContext;
-                });
-
-                configurationFeature.ConfigureMethod.Add((_, node) =>
-                {
-                    node.Modifiers.Clear();
-                    node.Modifiers.Add(SyntaxFacts.GetText(Accessibility.Protected));
-                    node.Modifiers.Add(SyntaxFacts.GetText(SyntaxKind.AsyncKeyword));
-                    node.Modifiers.Add(SyntaxFacts.GetText(SyntaxKind.OverrideKeyword));
-                });
-
-                cfg.Features.Add(new ErrorOnTagHelperSyntaxTreePass());
-
-                cfg.AddTargetExtension(new TemplateTargetExtension { TemplateTypeName = "HelperResult" });
+                builder.AddTargetExtension(new TemplateTargetExtension { TemplateTypeName = "HelperResult" });
             }
         );
 
