@@ -21,16 +21,15 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var globalOptions = context.ParseOptionsProvider
-                                   .Combine(context.AnalyzerConfigOptionsProvider)
-                                   .Combine(EmbeddedLibrarySourceGenerator.EmbeddedLibraryProvider(context))
-                                   .Select(static (pair, _) =>
-                                   {
-                                       var ((parseOptions, optionsProvider), embeddedLibrary) = pair;
-                                       return GlobalOptions.Create((CSharpParseOptions)parseOptions, optionsProvider, embeddedLibrary);
-                                   });
-
-        var engine = globalOptions.Select(static (options, _) => BuildRazorEngine(options));
+        var engine = context.ParseOptionsProvider
+                            .Combine(context.AnalyzerConfigOptionsProvider)
+                            .Combine(EmbeddedLibrarySourceGenerator.EmbeddedLibraryProvider(context))
+                            .Select(static (pair, _) =>
+                            {
+                                var ((parseOptions, optionsProvider), embeddedLibrary) = pair;
+                                return GlobalOptions.Create((CSharpParseOptions)parseOptions, optionsProvider, embeddedLibrary);
+                            })
+                            .Select(static (globalOptions, _) => new RazorBladeEngine(globalOptions));
 
         var imports = context.AdditionalTextsProvider
                              .Where(static additionalText => IsImportFilePath(additionalText.Path))
@@ -48,23 +47,22 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                                 .Select(static (pair, _) => InputFile.Create(pair.AdditionalText, pair.Options));
 
         context.RegisterSourceOutput(
-            globalOptions,
-            static (context, globalOptions) => globalOptions.ReportDiagnostics(context)
+            engine,
+            static (context, engine) => engine.GlobalOptions.ReportDiagnostics(context)
         );
 
         context.RegisterSourceOutput(
             inputFiles.Combine(imports)
-                      .Combine(globalOptions)
                       .Combine(engine)
                       .Combine(context.CompilationProvider)
                       .WithLambdaComparer(static (a, b) => a.Left.Equals(b.Left), static pair => pair.Left.GetHashCode()), // Ignore the compilation for updates
             static (context, pair) =>
             {
-                var ((((inputFile, imports), globalOptions), engine), compilation) = pair;
+                var (((inputFile, allImports), engine), compilation) = pair;
 
                 try
                 {
-                    Generate(context, inputFile, imports, globalOptions, engine, compilation);
+                    Generate(context, inputFile, allImports, engine, compilation);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
@@ -85,113 +83,35 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
     }
 
     private static void Generate(SourceProductionContext context,
-                                 InputFile file,
-                                 ImmutableArray<AdditionalText> imports,
-                                 GlobalOptions globalOptions,
-                                 DefaultRazorProjectEngine engine,
+                                 InputFile inputFile,
+                                 ImmutableArray<AdditionalText> allImports,
+                                 RazorBladeEngine engine,
                                  Compilation compilation)
     {
         OnGenerate();
 
-        file.ReportDiagnostics(context);
+        inputFile.ReportDiagnostics(context);
 
-        var csharpDoc = GenerateRazorCode(file, imports, engine);
+        var csharpDoc = engine.Process(inputFile, allImports);
         if (csharpDoc is null)
             return;
 
-        var libraryCode = GenerateLibrarySpecificCode(csharpDoc, globalOptions, compilation, context.CancellationToken);
+        var libraryCode = GenerateLibrarySpecificCode(csharpDoc, engine.GlobalOptions, compilation, context.CancellationToken);
 
         foreach (var diagnostic in csharpDoc.Diagnostics)
             context.ReportDiagnostic(diagnostic.ToDiagnostic());
 
         context.AddSource(
-            $"{file.HintNamespace}.{file.ClassName}.Razor.g.cs",
+            $"{inputFile.HintNamespace}.{inputFile.ClassName}.Razor.g.cs",
             csharpDoc.GeneratedCode
         );
 
         if (!string.IsNullOrEmpty(libraryCode))
         {
             context.AddSource(
-                $"{file.HintNamespace}.{file.ClassName}.RazorBlade.g.cs",
+                $"{inputFile.HintNamespace}.{inputFile.ClassName}.RazorBlade.g.cs",
                 libraryCode
             );
-        }
-    }
-
-    private static RazorCSharpDocument? GenerateRazorCode(InputFile inputFile,
-                                                          ImmutableArray<AdditionalText> imports,
-                                                          DefaultRazorProjectEngine engine)
-    {
-        var codeDoc = CreateRazorCodeDocument(engine, inputFile, imports);
-        if (codeDoc is null)
-            return null;
-
-        engine.Engine.Process(codeDoc);
-
-        return codeDoc.GetCSharpDocument();
-    }
-
-    internal static DefaultRazorProjectEngine BuildRazorEngine(GlobalOptions? globalOptions)
-    {
-        return (DefaultRazorProjectEngine)RazorProjectEngine.Create(
-            RazorConfiguration.Default,
-            RazorProjectFileSystem.Empty,
-            builder =>
-            {
-                builder.SetCSharpLanguageVersion(globalOptions?.ParseOptions.LanguageVersion ?? LanguageVersion.Latest);
-
-                RazorBladeDocumentFeature.Register(builder, globalOptions);
-
-                ModelDirective.Register(builder);
-                SectionDirective.Register(builder);
-                TagHelperDirective.Register(builder);
-                TypeParamDirective.Register(builder);
-
-                builder.AddTargetExtension(new TemplateTargetExtension { TemplateTypeName = "HelperResult" });
-            }
-        );
-    }
-
-    private static RazorCodeDocument? CreateRazorCodeDocument(DefaultRazorProjectEngine engine, InputFile inputFile, ImmutableArray<AdditionalText> imports)
-    {
-        var sourceText = inputFile.AdditionalText.GetText();
-        if (sourceText is null)
-            return null;
-
-        var sourceDocument = RazorSourceDocument.Create(
-            sourceText.ToString(),
-            inputFile.AdditionalText.Path,
-            sourceText.Encoding ?? Encoding.UTF8
-        );
-
-        var codeDocument = engine.CreateCodeDocumentCore(
-            sourceDocument,
-            FileKinds.Legacy,
-            GetImportsToApply(inputFile.AdditionalText, imports)
-        );
-
-        // We have to create the RazorCodeDocument manually in order to be able to set this item before the engine processing.
-        codeDocument.Items[typeof(InputFile)] = inputFile;
-
-        return codeDocument;
-
-        static RazorSourceDocument[] GetImportsToApply(AdditionalText sourceText, ImmutableArray<AdditionalText> imports)
-        {
-            if (imports.IsEmpty)
-                return [];
-
-            var sourceDirPath = NormalizeDirectoryPath(sourceText.Path);
-
-            return imports.Select(i => (Import: i, DirectoryPath: NormalizeDirectoryPath(i.Path)))
-                          .Where(i => !string.IsNullOrEmpty(i.DirectoryPath) && sourceDirPath.StartsWith(i.DirectoryPath, StringComparison.OrdinalIgnoreCase))
-                          .OrderBy(i => i.DirectoryPath.Length)
-                          .Select(i => (i.Import, Text: i.Import.GetText()!))
-                          .Where(i => i.Text is not null)
-                          .Select(i => RazorSourceDocument.Create(i.Text.ToString(), i.Import.Path, i.Text.Encoding ?? Encoding.UTF8))
-                          .ToArray();
-
-            static string NormalizeDirectoryPath(string path)
-                => Path.GetFullPath(Path.GetDirectoryName(path) ?? string.Empty).Replace(Path.DirectorySeparatorChar, '/').TrimEnd('/') + '/';
         }
     }
 

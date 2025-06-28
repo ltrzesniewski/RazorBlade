@@ -28,6 +28,16 @@ internal class GlobalOptions : IEquatable<GlobalOptions>
         _diagnostics = diagnostics;
     }
 
+    public static GlobalOptions CreateEmpty()
+    {
+        return new GlobalOptions(
+            CSharpParseOptions.Default,
+            null,
+            ImmutableArray<SyntaxTree>.Empty,
+            new List<Diagnostic>()
+        );
+    }
+
     public static GlobalOptions Create(CSharpParseOptions parseOptions,
                                        AnalyzerConfigOptionsProvider optionsProvider,
                                        ImmutableArray<SyntaxTree> additionalSyntaxTrees)
