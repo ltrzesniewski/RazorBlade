@@ -13,24 +13,26 @@ namespace RazorBlade.Analyzers.Features;
 
 internal static class RazorBladeDocumentFeature
 {
-    public static void Register(RazorProjectEngineBuilder builder, InputFile? file, GlobalOptions? globalOptions)
+    public static void Register(RazorProjectEngineBuilder builder, GlobalOptions? globalOptions)
     {
         var config = GetDefaultDocumentClassifierPassFeature(builder);
 
         config.ConfigureNamespace.Add((codeDoc, node) =>
         {
             node.Content = NamespaceVisitor.GetNamespaceDirectiveContent(codeDoc)
-                           ?? file?.HintNamespace
+                           ?? GetInputFile(codeDoc)?.HintNamespace
                            ?? "Razor";
         });
 
-        config.ConfigureClass.Add((_, node) =>
+        config.ConfigureClass.Add((codeDoc, node) =>
         {
-            node.ClassName = file?.ClassName ?? "Template";
+            var inputFile = GetInputFile(codeDoc);
+
+            node.ClassName = inputFile?.ClassName ?? "Template";
             node.BaseType = "global::RazorBlade.HtmlTemplate";
 
             node.Modifiers.Clear();
-            node.Modifiers.Add(SyntaxFacts.GetText(file?.Accessibility ?? globalOptions?.DefaultAccessibility ?? Accessibility.Internal));
+            node.Modifiers.Add(SyntaxFacts.GetText(inputFile?.Accessibility ?? globalOptions?.DefaultAccessibility ?? Accessibility.Internal));
             node.Modifiers.Add(SyntaxFacts.GetText(SyntaxKind.PartialKeyword));
 
             // Enable nullable reference types for the class definition node, as they may be needed for the base class.
@@ -60,6 +62,9 @@ internal static class RazorBladeDocumentFeature
 
         return configurationFeature;
     }
+
+    private static InputFile? GetInputFile(RazorCodeDocument codeDocument)
+        => codeDocument.Items[typeof(InputFile)] as InputFile;
 
     private class NamespaceVisitor : SyntaxWalker
     {

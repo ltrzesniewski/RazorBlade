@@ -737,7 +737,7 @@ public class RazorBladeSourceGeneratorTests
     [Test]
     public Task should_support_known_directives()
     {
-        var engine = RazorBladeSourceGenerator.BuildRazorEngine(null, null);
+        var engine = RazorBladeSourceGenerator.BuildRazorEngine(null);
         var feature = engine.Engine.GetFeature<DefaultRazorDirectiveFeature>().ShouldNotBeNull();
 
         var directives = feature.DirectivesByFileKind[FileKinds.Legacy]

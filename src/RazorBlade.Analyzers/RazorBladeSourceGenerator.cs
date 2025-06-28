@@ -30,6 +30,8 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                                        return GlobalOptions.Create((CSharpParseOptions)parseOptions, optionsProvider, embeddedLibrary);
                                    });
 
+        var engine = globalOptions.Select(static (options, _) => BuildRazorEngine(options));
+
         var imports = context.AdditionalTextsProvider
                              .Where(static additionalText => IsImportFilePath(additionalText.Path))
                              .Combine(context.AnalyzerConfigOptionsProvider)
@@ -53,15 +55,16 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         context.RegisterSourceOutput(
             inputFiles.Combine(imports)
                       .Combine(globalOptions)
+                      .Combine(engine)
                       .Combine(context.CompilationProvider)
                       .WithLambdaComparer(static (a, b) => a.Left.Equals(b.Left), static pair => pair.Left.GetHashCode()), // Ignore the compilation for updates
             static (context, pair) =>
             {
-                var (((inputFile, imports), globalOptions), compilation) = pair;
+                var ((((inputFile, imports), globalOptions), engine), compilation) = pair;
 
                 try
                 {
-                    Generate(context, inputFile, imports, globalOptions, compilation);
+                    Generate(context, inputFile, imports, globalOptions, engine, compilation);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
@@ -85,13 +88,14 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
                                  InputFile file,
                                  ImmutableArray<AdditionalText> imports,
                                  GlobalOptions globalOptions,
+                                 DefaultRazorProjectEngine engine,
                                  Compilation compilation)
     {
         OnGenerate();
 
         file.ReportDiagnostics(context);
 
-        var csharpDoc = GenerateRazorCode(file, imports, globalOptions);
+        var csharpDoc = GenerateRazorCode(file, imports, engine);
         if (csharpDoc is null)
             return;
 
@@ -114,24 +118,62 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
         }
     }
 
-    private static RazorCSharpDocument? GenerateRazorCode(InputFile file,
+    private static RazorCSharpDocument? GenerateRazorCode(InputFile inputFile,
                                                           ImmutableArray<AdditionalText> imports,
-                                                          GlobalOptions globalOptions)
+                                                          DefaultRazorProjectEngine engine)
     {
-        var sourceText = file.AdditionalText.GetText();
+        var codeDoc = CreateRazorCodeDocument(engine, inputFile, imports);
+        if (codeDoc is null)
+            return null;
+
+        engine.Engine.Process(codeDoc);
+
+        return codeDoc.GetCSharpDocument();
+    }
+
+    internal static DefaultRazorProjectEngine BuildRazorEngine(GlobalOptions? globalOptions)
+    {
+        return (DefaultRazorProjectEngine)RazorProjectEngine.Create(
+            RazorConfiguration.Default,
+            RazorProjectFileSystem.Empty,
+            builder =>
+            {
+                builder.SetCSharpLanguageVersion(globalOptions?.ParseOptions.LanguageVersion ?? LanguageVersion.Latest);
+
+                RazorBladeDocumentFeature.Register(builder, globalOptions);
+
+                ModelDirective.Register(builder);
+                SectionDirective.Register(builder);
+                TagHelperDirective.Register(builder);
+                TypeParamDirective.Register(builder);
+
+                builder.AddTargetExtension(new TemplateTargetExtension { TemplateTypeName = "HelperResult" });
+            }
+        );
+    }
+
+    private static RazorCodeDocument? CreateRazorCodeDocument(DefaultRazorProjectEngine engine, InputFile inputFile, ImmutableArray<AdditionalText> imports)
+    {
+        var sourceText = inputFile.AdditionalText.GetText();
         if (sourceText is null)
             return null;
 
-        var engine = BuildRazorEngine(file, globalOptions);
-
-        var codeDoc = engine.Process(
-            RazorSourceDocument.Create(sourceText.ToString(), file.AdditionalText.Path, sourceText.Encoding ?? Encoding.UTF8),
-            FileKinds.Legacy,
-            GetImportsToApply(file.AdditionalText, imports),
-            []
+        var sourceDocument = RazorSourceDocument.Create(
+            sourceText.ToString(),
+            inputFile.AdditionalText.Path,
+            sourceText.Encoding ?? Encoding.UTF8
         );
 
-        return codeDoc.GetCSharpDocument();
+        var codeDocument = engine.CreateCodeDocumentCore(
+            sourceDocument,
+            FileKinds.Legacy,
+            GetImportsToApply(inputFile.AdditionalText, imports)
+        );
+
+        // We have to create the RazorCodeDocument manually in order to be able to set this item before the engine processing.
+        codeDocument.Items[typeof(InputFile)] = inputFile;
+
+        return codeDocument;
 
         static RazorSourceDocument[] GetImportsToApply(AdditionalText sourceText, ImmutableArray<AdditionalText> imports)
         {
@@ -151,27 +193,6 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
             static string NormalizeDirectoryPath(string path)
                 => Path.GetFullPath(Path.GetDirectoryName(path) ?? string.Empty).Replace(Path.DirectorySeparatorChar, '/').TrimEnd('/') + '/';
         }
-    }
-
-    internal static RazorProjectEngine BuildRazorEngine(InputFile? file, GlobalOptions? globalOptions)
-    {
-        return RazorProjectEngine.Create(
-            RazorConfiguration.Default,
-            RazorProjectFileSystem.Empty,
-            builder =>
-            {
-                builder.SetCSharpLanguageVersion(globalOptions?.ParseOptions.LanguageVersion ?? LanguageVersion.Latest);
-
-                RazorBladeDocumentFeature.Register(builder, file, globalOptions);
-
-                ModelDirective.Register(builder);
-                SectionDirective.Register(builder);
-                TagHelperDirective.Register(builder);
-                TypeParamDirective.Register(builder);
-
-                builder.AddTargetExtension(new TemplateTargetExtension { TemplateTypeName = "HelperResult" });
-            }
-        );
     }
 
     private static string GenerateLibrarySpecificCode(RazorCSharpDocument generatedDoc,
