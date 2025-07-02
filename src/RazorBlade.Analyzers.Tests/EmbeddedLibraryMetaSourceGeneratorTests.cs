@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -106,7 +105,7 @@ public class EmbeddedLibraryMetaSourceGeneratorTests
                                           {
                                               SkipGlobal = true
                                           })
-                                          .AddAdditionalTexts(ImmutableArray.Create<AdditionalText>(new AdditionalTextMock(input, "./TestFile.cs")))
+                                          .AddAdditionalTexts([new AdditionalTextMock(input.ReplaceLineEndings("\r\n"), "./TestFile.cs")])
                                           .WithUpdatedAnalyzerConfigOptions(new AnalyzerConfigOptionsProviderMock
                                           {
                                               { "build_metadata.AdditionalFiles.Role", "Library" }

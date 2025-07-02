@@ -812,7 +812,7 @@ public class RazorBladeSourceGeneratorTests
                                            .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithNullableContextOptions(NullableContextOptions.Enable));
 
         var result = CSharpGeneratorDriver.Create(new RazorBladeSourceGenerator())
-                                          .AddAdditionalTexts([new AdditionalTextMock(input, config.FilePath), ..config.AdditionalTexts])
+                                          .AddAdditionalTexts([new AdditionalTextMock(input.ReplaceLineEndings("\r\n"), config.FilePath), ..config.AdditionalTexts])
                                           .WithUpdatedAnalyzerConfigOptions(analyzerConfigOptionsProvider)
                                           .RunGeneratorsAndUpdateCompilation(compilation, out var updatedCompilation, out _)
                                           .GetRunResult();
@@ -850,7 +850,7 @@ public class RazorBladeSourceGeneratorTests
     }
 
     private static AdditionalTextMock RazorAdditionalText([StringSyntax("razor")] string text, string path)
-        => new(text, path);
+        => new(text.ReplaceLineEndings("\r\n"), path);
 
     private class TestConfig
     {
