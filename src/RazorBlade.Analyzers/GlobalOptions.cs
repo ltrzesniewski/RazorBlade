@@ -34,7 +34,7 @@ internal class GlobalOptions : IEquatable<GlobalOptions>
             CSharpParseOptions.Default,
             null,
             ImmutableArray<SyntaxTree>.Empty,
-            new List<Diagnostic>()
+            []
         );
     }
 

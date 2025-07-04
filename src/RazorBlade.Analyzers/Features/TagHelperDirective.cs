@@ -37,7 +37,7 @@ internal static class TagHelperDirective
 
         private class DirectiveVisitor : SyntaxWalker
         {
-            public List<RazorDirectiveSyntax> Directives { get; } = new();
+            public List<RazorDirectiveSyntax> Directives { get; } = [];
 
             public override void VisitRazorDirective(RazorDirectiveSyntax node)
             {

@@ -88,7 +88,7 @@ public sealed class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
 
         using (writer.BlockScope())
         {
-            writer.WriteLine("public static readonly File[] Files = {");
+            writer.WriteLine("public static readonly File[] Files = [");
 
             using (writer.IndentScope())
             {
@@ -96,9 +96,9 @@ public sealed class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
                     writer.WriteLine($"""new("{memberName}", {memberName}),""");
             }
 
-            writer.WriteLine("};");
+            writer.WriteLine("];");
             writer.WriteLine();
-            writer.WriteLine("public record struct File(string Name, string Source);");
+            writer.WriteLine("public readonly record struct File(string Name, string Source);");
         }
 
         context.AddSource("Files.g.cs", writer.ToString());
@@ -156,7 +156,7 @@ public sealed class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
 
     private sealed class AccessibilityLevelRewriter : CSharpSyntaxWalker
     {
-        private readonly HashSet<SyntaxToken> _toReplace = new();
+        private readonly HashSet<SyntaxToken> _toReplace = [];
         private bool _isTopLevel;
 
         public new SyntaxNode Visit(SyntaxNode root)
