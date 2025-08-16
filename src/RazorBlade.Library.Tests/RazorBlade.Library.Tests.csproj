@@ -2,7 +2,6 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0;net6.0</TargetFrameworks>
     <TargetFrameworks Condition="$([System.OperatingSystem]::IsWindows())">$(TargetFrameworks);net48</TargetFrameworks>
-    <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,9 +9,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
-    <PackageReference Include="NUnit" Version="4.3.2" />
-    <PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="[17.13.0]" />
+    <PackageReference Include="NUnit" Version="4.4.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="5.1.0" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'" />
   </ItemGroup>
 
