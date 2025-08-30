@@ -118,7 +118,6 @@ public sealed class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
         // - Add #nullable enable
         // - Make public top-level types internal
         // - Make protected internal members protected
-        // - Remove JetBrains annotations
 
         // language=csharp
         sourceText = $"""
@@ -133,7 +132,6 @@ public sealed class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
         var root = syntaxTree.GetRoot(cancellationToken);
 
         root = new AccessibilityLevelRewriter().Visit(root);
-        root = new RemoveJetBrainsAnnotationsRewriter().Visit(root);
 
         return root.ToFullString();
     }
@@ -227,79 +225,6 @@ public sealed class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
                         break;
                 }
             }
-        }
-    }
-
-    private sealed class RemoveJetBrainsAnnotationsRewriter : CSharpSyntaxRewriter
-    {
-        [SuppressMessage("ReSharper", "StringLiteralTypo")]
-        private static readonly HashSet<string> _attributes =
-        [
-            "CanBeNull", "NotNull", "ItemNotNull", "ItemCanBeNull", "StringFormatMethod", "StructuredMessageTemplate", "ValueProvider", "ValueRange",
-            "NonNegativeValue", "InvokerParameterName", "NotifyPropertyChangedInvocator", "ContractAnnotation", "LocalizationRequired",
-            "CannotApplyEqualityOperator", "Component", "BaseTypeRequired", "UsedImplicitly", "MeansImplicitUse", "PublicAPI", "InstantHandle",
-            "MustUseReturnValue", "RequireStaticDelegate", "ProvidesContext", "PathReference", "SourceTemplate", "Macro", "CollectionAccess", "AssertionMethod",
-            "AssertionCondition", "TerminatesProgram", "LinqTunnel", "NoEnumeration", "RegexPattern", "LanguageInjection", "NoReorder", "CodeTemplate",
-            "AspChildControlType", "AspDataField", "AspDataFields", "AspMethodProperty", "AspRequiredAttribute", "AspTypeProperty", "AspMvcAreaMasterLocationFormat",
-            "AspMvcAreaPartialViewLocationFormat", "AspMvcAreaViewLocationFormat", "AspMvcMasterLocationFormat", "AspMvcPartialViewLocationFormat",
-            "AspMvcViewLocationFormat", "AspMvcAction", "AspMvcArea", "AspMvcController", "AspMvcMaster", "AspMvcModelType", "AspMvcPartialView",
-            "AspMvcSuppressViewError", "AspMvcDisplayTemplate", "AspMvcEditorTemplate", "AspMvcTemplate", "AspMvcView", "AspMvcViewComponent",
-            "AspMvcViewComponentView", "AspMvcActionSelector", "RouteTemplate", "RouteParameterConstraint", "UriString", "AspRouteConvention",
-            "AspDefaultRouteValues", "AspRouteValuesConstraints", "AspRouteOrder", "AspRouteVerbs", "AspAttributeRouting", "AspMinimalApiDeclaration",
-            "AspMinimalApiHandler", "HtmlElementAttributes", "HtmlAttributeValue", "RazorSection", "RazorImportNamespace", "RazorInjection",
-            "RazorDirective", "RazorPageBaseType", "RazorHelperCommon", "RazorLayout", "RazorWriteLiteralMethod", "RazorWriteMethod", "RazorWriteMethodParameter",
-            "XamlItemsControl", "XamlItemBindingOfItemsControl", "XamlItemStyleOfItemsControl", "XamlOneWayBindingModeByDefault", "XamlTwoWayBindingModeByDefault"
-
-            // "Pure" can be confused with System.Diagnostics.Contracts.PureAttribute, so we don't remove it.
-        ];
-
-        private SyntaxTriviaList _pendingLeadingTrivia = SyntaxTriviaList.Empty;
-
-        public override SyntaxNode? VisitUsingDirective(UsingDirectiveSyntax node)
-        {
-            if (node.Name.ToString() == "JetBrains.Annotations")
-                return null;
-
-            return node;
-        }
-
-        public override SyntaxNode? VisitAttribute(AttributeSyntax node)
-        {
-            if (_attributes.Contains(node.Name.ToString()))
-                return null;
-
-            return node;
-        }
-
-        public override SyntaxNode? VisitAttributeList(AttributeListSyntax node)
-        {
-            node = node.WithOpenBracketToken(VisitToken(node.OpenBracketToken));
-
-            var newAttributes = node.Attributes;
-
-            for (var i = node.Attributes.Count - 1; i >= 0; i--)
-            {
-                if (VisitListElement(node.Attributes[i]) is null)
-                    newAttributes = newAttributes.RemoveAt(i);
-            }
-
-            if (newAttributes.Count != 0)
-                return node.WithAttributes(newAttributes);
-
-            _pendingLeadingTrivia = node.GetLeadingTrivia();
-            return null;
-        }
-
-        public override SyntaxToken VisitToken(SyntaxToken token)
-        {
-            if (_pendingLeadingTrivia.Any())
-            {
-                var trivia = _pendingLeadingTrivia;
-                _pendingLeadingTrivia = SyntaxTriviaList.Empty;
-                return token.WithLeadingTrivia(trivia);
-            }
-
-            return token;
         }
     }
 }
