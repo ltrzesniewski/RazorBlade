@@ -1,0 +1,115 @@
+﻿namespace RazorBlade
+{
+    public sealed class HtmlHelper
+    {
+        public HtmlHelper() { }
+        public string Encode(object? value) { }
+        public RazorBlade.HtmlString Raw(object? value) { }
+    }
+    public abstract class HtmlLayout : RazorBlade.HtmlTemplate
+    {
+        protected HtmlLayout() { }
+        protected bool IsSectionDefined(string name) { }
+        public new void Render(System.Threading.CancellationToken cancellationToken = default) { }
+        public new void Render(System.IO.TextWriter textWriter, System.Threading.CancellationToken cancellationToken = default) { }
+        public new System.Threading.Tasks.Task<string> RenderAsync(System.Threading.CancellationToken cancellationToken = default) { }
+        public new System.Threading.Tasks.Task RenderAsync(System.IO.TextWriter textWriter, System.Threading.CancellationToken cancellationToken = default) { }
+        protected RazorBlade.IEncodedContent RenderBody() { }
+        protected RazorBlade.IEncodedContent RenderSection(string name) { }
+        protected RazorBlade.IEncodedContent RenderSection(string name, bool required) { }
+        protected System.Threading.Tasks.Task<RazorBlade.IEncodedContent> RenderSectionAsync(string name) { }
+        protected System.Threading.Tasks.Task<RazorBlade.IEncodedContent> RenderSectionAsync(string name, bool required) { }
+    }
+    public sealed class HtmlString : RazorBlade.IEncodedContent
+    {
+        public HtmlString(string? value) { }
+        public static RazorBlade.HtmlString Empty { get; }
+        public override string ToString() { }
+    }
+    public abstract class HtmlTemplate : RazorBlade.RazorTemplate
+    {
+        protected HtmlTemplate() { }
+        protected RazorBlade.HtmlHelper Html { get; }
+        protected new RazorBlade.HtmlLayout? Layout { get; }
+        protected override void BeginWriteAttribute(string name, string prefix, int prefixOffset, string suffix, int suffixOffset, int attributeValuesCount) { }
+        protected virtual RazorBlade.HtmlLayout? CreateLayout() { }
+        protected override void EndWriteAttribute() { }
+        protected RazorBlade.HtmlString Raw(object? value) { }
+        protected override void Write(object? value) { }
+        protected override void WriteAttributeValue(string prefix, int prefixOffset, object? value, int valueOffset, int valueLength, bool isLiteral) { }
+    }
+    public abstract class HtmlTemplateWithLayout<TLayout> : RazorBlade.HtmlTemplate
+        where TLayout : RazorBlade.HtmlLayout, new ()
+    {
+        protected HtmlTemplateWithLayout() { }
+        protected override RazorBlade.HtmlLayout CreateLayout() { }
+    }
+    public abstract class HtmlTemplate<TModel> : RazorBlade.HtmlTemplate
+    {
+        protected HtmlTemplate() { }
+        [RazorBlade.Support.TemplateConstructor]
+        protected HtmlTemplate(TModel model) { }
+        public TModel Model { get; }
+    }
+    public interface IEncodedContent
+    {
+        void WriteTo(System.IO.TextWriter textWriter);
+    }
+    public abstract class PlainTextTemplate : RazorBlade.RazorTemplate
+    {
+        protected PlainTextTemplate() { }
+        protected override void BeginWriteAttribute(string name, string prefix, int prefixOffset, string suffix, int suffixOffset, int attributeValuesCount) { }
+        protected override void EndWriteAttribute() { }
+        protected override void Write(object? value) { }
+        protected override void WriteAttributeValue(string prefix, int prefixOffset, object? value, int valueOffset, int valueLength, bool isLiteral) { }
+    }
+    public abstract class PlainTextTemplate<TModel> : RazorBlade.PlainTextTemplate
+    {
+        protected PlainTextTemplate() { }
+        [RazorBlade.Support.TemplateConstructor]
+        protected PlainTextTemplate(TModel model) { }
+        public TModel Model { get; }
+    }
+    public abstract class RazorTemplate : RazorBlade.IEncodedContent
+    {
+        protected RazorTemplate() { }
+        protected System.Threading.CancellationToken CancellationToken { get; }
+        protected System.IO.TextWriter Output { get; }
+        protected abstract void BeginWriteAttribute(string name, string prefix, int prefixOffset, string suffix, int suffixOffset, int attributeValuesCount);
+        protected void DefineSection(string name, System.Func<System.Threading.Tasks.Task> action) { }
+        protected abstract void EndWriteAttribute();
+        protected virtual System.Threading.Tasks.Task ExecuteAsync() { }
+        protected System.Threading.Tasks.Task<RazorBlade.IEncodedContent> FlushAsync() { }
+        protected System.IO.TextWriter PopWriter() { }
+        protected void PushWriter(System.IO.TextWriter writer) { }
+        [RazorBlade.Support.ConditionalOnAsync(false, Message="The generated template is async. Use RenderAsync instead.")]
+        public string Render(System.Threading.CancellationToken cancellationToken = default) { }
+        [RazorBlade.Support.ConditionalOnAsync(false, Message="The generated template is async. Use RenderAsync instead.")]
+        public void Render(System.IO.TextWriter textWriter, System.Threading.CancellationToken cancellationToken = default) { }
+        public System.Threading.Tasks.Task<string> RenderAsync(System.Threading.CancellationToken cancellationToken = default) { }
+        public System.Threading.Tasks.Task RenderAsync(System.IO.TextWriter textWriter, System.Threading.CancellationToken cancellationToken = default) { }
+        protected virtual void Write(RazorBlade.IEncodedContent? content) { }
+        protected abstract void Write(object? value);
+        protected abstract void WriteAttributeValue(string prefix, int prefixOffset, object? value, int valueOffset, int valueLength, bool isLiteral);
+        protected virtual void WriteLiteral(string? value) { }
+        protected sealed class HelperResult : RazorBlade.IEncodedContent
+        {
+            public HelperResult(System.Func<System.IO.TextWriter, System.Threading.Tasks.Task> action) { }
+            public void WriteTo(System.IO.TextWriter textWriter) { }
+        }
+    }
+}
+namespace RazorBlade.Support
+{
+    [System.AttributeUsage(System.AttributeTargets.Method)]
+    public sealed class ConditionalOnAsyncAttribute : System.Attribute
+    {
+        public ConditionalOnAsyncAttribute(bool async) { }
+        public string? Message { get; set; }
+    }
+    [System.AttributeUsage(System.AttributeTargets.Constructor)]
+    public sealed class TemplateConstructorAttribute : System.Attribute
+    {
+        public TemplateConstructorAttribute() { }
+    }
+}

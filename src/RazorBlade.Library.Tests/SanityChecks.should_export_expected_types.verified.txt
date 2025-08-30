@@ -1,0 +1,14 @@
+﻿[
+  RazorBlade.HtmlHelper,
+  RazorBlade.HtmlLayout,
+  RazorBlade.HtmlString,
+  RazorBlade.HtmlTemplate,
+  RazorBlade.HtmlTemplate`1,
+  RazorBlade.HtmlTemplateWithLayout`1,
+  RazorBlade.IEncodedContent,
+  RazorBlade.PlainTextTemplate,
+  RazorBlade.PlainTextTemplate`1,
+  RazorBlade.RazorTemplate,
+  RazorBlade.Support.ConditionalOnAsyncAttribute,
+  RazorBlade.Support.TemplateConstructorAttribute
+]
