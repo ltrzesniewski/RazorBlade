@@ -15,5 +15,6 @@ Thumbs.db
 *.binlog
 *.orig
 
-*.received.txt
-*.received.cs
+# Verify
+*.received.*
+*.received/

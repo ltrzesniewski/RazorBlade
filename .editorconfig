@@ -23,9 +23,15 @@ indent_style = tab
 [*.md]
 trim_trailing_whitespace = false
 
+# Verify
 [*.{received,verified}.{txt,cs}]
-trim_trailing_whitespace = false
+charset = utf-8-bom
+end_of_line = lf
+indent_size = unset
+indent_style = unset
 insert_final_newline = false
+tab_width = unset
+trim_trailing_whitespace = false
 
 ### dotnet settings
 [*.cs]

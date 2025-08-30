@@ -12,6 +12,10 @@ namespace RazorBlade.Library.Tests;
 public class SanityChecks
 {
     [Test]
+    public Task should_respect_verify_conventions()
+        => VerifyChecks.Run();
+
+    [Test]
     public Task should_export_expected_namespaces()
     {
         return Verifier.Verify(
