@@ -5,7 +5,6 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
 using RazorBlade.Support;
 
 namespace RazorBlade;
@@ -160,7 +159,6 @@ public abstract class RazorTemplate : IEncodedContent
     /// <returns>
     /// An empty <see cref="IEncodedContent"/>, which allows using a direct expression: <c>@await FlushAsync()</c>
     /// </returns>
-    [PublicAPI]
     protected internal async Task<IEncodedContent> FlushAsync()
     {
 #if NET8_0_OR_GREATER
@@ -176,7 +174,6 @@ public abstract class RazorTemplate : IEncodedContent
     /// <summary>
     /// Executes the template and appends the result to <see cref="Output"/>.
     /// </summary>
-    [PublicAPI]
     protected internal virtual Task ExecuteAsync()
         => Task.CompletedTask; // The IDE complains when this method is abstract :(
 
@@ -184,7 +181,6 @@ public abstract class RazorTemplate : IEncodedContent
     /// Writes a literal value to the output.
     /// </summary>
     /// <param name="value">The value to write.</param>
-    [PublicAPI]
     protected internal virtual void WriteLiteral(string? value)
         => Output.Write(value);
 
@@ -192,14 +188,12 @@ public abstract class RazorTemplate : IEncodedContent
     /// Write a value to the output.
     /// </summary>
     /// <param name="value">The value to write.</param>
-    [PublicAPI]
     protected internal abstract void Write(object? value);
 
     /// <summary>
     /// Write already encoded content to the output.
     /// </summary>
     /// <param name="content">The template to render.</param>
-    [PublicAPI]
     protected internal virtual void Write(IEncodedContent? content)
         => content?.WriteTo(Output);
 
@@ -212,7 +206,6 @@ public abstract class RazorTemplate : IEncodedContent
     /// <param name="suffix">The suffix, consisting of the end quote.</param>
     /// <param name="suffixOffset">The suffix offset in the Razor file.</param>
     /// <param name="attributeValuesCount">The count of attribute value parts, which is the count of subsequent <see cref="WriteAttributeValue"/> calls.</param>
-    [PublicAPI]
     [EditorBrowsable(EditorBrowsableState.Never)]
     protected internal abstract void BeginWriteAttribute(string name, string prefix, int prefixOffset, string suffix, int suffixOffset, int attributeValuesCount);
 
@@ -225,14 +218,12 @@ public abstract class RazorTemplate : IEncodedContent
     /// <param name="valueOffset">The value offset in the Razor file.</param>
     /// <param name="valueLength">The value length in the Razor file.</param>
     /// <param name="isLiteral">Whether the value is a literal.</param>
-    [PublicAPI]
     [EditorBrowsable(EditorBrowsableState.Never)]
     protected internal abstract void WriteAttributeValue(string prefix, int prefixOffset, object? value, int valueOffset, int valueLength, bool isLiteral);
 
     /// <summary>
     /// Ends writing an attribute.
     /// </summary>
-    [PublicAPI]
     [EditorBrowsable(EditorBrowsableState.Never)]
     protected internal abstract void EndWriteAttribute();
 
@@ -241,7 +232,6 @@ public abstract class RazorTemplate : IEncodedContent
     /// </summary>
     /// <param name="name">The name of the section.</param>
     /// <param name="action">The action which renders the section.</param>
-    [PublicAPI]
     [EditorBrowsable(EditorBrowsableState.Never)]
     protected internal void DefineSection(string name, Func<Task> action)
     {
@@ -255,7 +245,6 @@ public abstract class RazorTemplate : IEncodedContent
     /// Pushes a writer on the stack.
     /// </summary>
     /// <param name="writer">The writer to use.</param>
-    [PublicAPI]
     [EditorBrowsable(EditorBrowsableState.Never)]
     protected internal void PushWriter(TextWriter writer)
     {
@@ -268,7 +257,6 @@ public abstract class RazorTemplate : IEncodedContent
     /// <summary>
     /// Pops the last writer pushed on the stack.
     /// </summary>
-    [PublicAPI]
     [EditorBrowsable(EditorBrowsableState.Never)]
     protected internal TextWriter PopWriter()
     {
@@ -489,7 +477,6 @@ public abstract class RazorTemplate : IEncodedContent
     /// <summary>
     /// Represents a deferred write operation.
     /// </summary>
-    [PublicAPI]
     protected internal sealed class HelperResult : IEncodedContent
     {
         private readonly Func<TextWriter, Task> _action;

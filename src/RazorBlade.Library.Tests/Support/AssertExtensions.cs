@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using JetBrains.Annotations;
 using NUnit.Framework;
 
 namespace RazorBlade.Tests.Support;
@@ -30,11 +29,9 @@ internal static class AssertExtensions
         return actual as TExpected ?? throw new AssertionException($"Expected instance of {typeof(TExpected).Name}");
     }
 
-    [ContractAnnotation("notnull => halt")]
     public static void ShouldBeNull(this object? actual)
         => Assert.That(actual, Is.Null);
 
-    [ContractAnnotation("null => halt")]
     public static T ShouldNotBeNull<T>(this T? actual)
         where T : class
     {

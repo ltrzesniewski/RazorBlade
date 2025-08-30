@@ -1,5 +1,5 @@
 using System;
-using JetBrains.Annotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace RazorBlade.Support;
 
@@ -15,7 +15,7 @@ public sealed class TemplateConstructorAttribute : Attribute
 /// Specifies if a method should be used depending on the template being sync or async.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
-[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
+[SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
 public sealed class ConditionalOnAsyncAttribute : Attribute
 {
     /// <summary>
@@ -27,6 +27,7 @@ public sealed class ConditionalOnAsyncAttribute : Attribute
     /// Marks a method as meant to be used in a sync or async template.
     /// </summary>
     /// <param name="async">True for methods meant to be used in async templates, and false for methods meant to be used for sync templates.</param>
+    [SuppressMessage("ReSharper", "UnusedParameter.Local")]
     public ConditionalOnAsyncAttribute(bool async)
     {
     }

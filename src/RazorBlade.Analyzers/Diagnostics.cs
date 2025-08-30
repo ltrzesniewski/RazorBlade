@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -9,6 +9,7 @@ internal static class Diagnostics
 {
     public const string Category = "RazorBlade";
 
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public enum Id
     {
         InternalError = 1,
@@ -16,7 +17,7 @@ internal static class Diagnostics
         ConditionalOnAsync = 3,
         EmbeddedLibraryUnsupportedCSharpVersion = 4,
         TagHelpersNotSupported = 5,
-        [UsedImplicitly] UsingWithRazorSdk = 6,
+        UsingWithRazorSdk = 6,
         InvalidAccessibility = 7
     }
 

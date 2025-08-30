@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
-using JetBrains.Annotations;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -113,7 +112,7 @@ public sealed class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
         writer.WriteLine("internal static partial class EmbeddedLibrary");
     }
 
-    private static string TransformSource([LanguageInjection("csharp")] string sourceText, CancellationToken cancellationToken)
+    private static string TransformSource([StringSyntax("csharp")] string sourceText, CancellationToken cancellationToken)
     {
         // - Add header comment
         // - Add #nullable enable

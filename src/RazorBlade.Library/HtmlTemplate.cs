@@ -1,5 +1,4 @@
 ﻿using System;
-using JetBrains.Annotations;
 using RazorBlade.Support;
 
 namespace RazorBlade;
@@ -20,11 +19,9 @@ public abstract class HtmlTemplate : RazorTemplate
 #pragma warning disable CA1822
 
     /// <inheritdoc cref="HtmlHelper"/>
-    [PublicAPI]
     protected HtmlHelper Html => HtmlHelper.Instance;
 
     /// <inheritdoc cref="HtmlHelper.Raw"/>
-    [PublicAPI]
     protected internal HtmlString Raw(object? value)
         => HtmlHelper.Instance.Raw(value);
 
@@ -101,7 +98,6 @@ public abstract class HtmlTemplate : RazorTemplate
     }
 
     /// <inheritdoc cref="CreateLayoutInternal"/>
-    [PublicAPI]
     protected internal virtual HtmlLayout? CreateLayout()
         => null;
 
@@ -141,7 +137,6 @@ public abstract class HtmlTemplate<TModel> : HtmlTemplate
     /// <summary>
     /// The model for the template.
     /// </summary>
-    [PublicAPI]
     public TModel Model { get; }
 
     /// <summary>

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.CodeDom.Compiler;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using JetBrains.Annotations;
 
 namespace RazorBlade.MetaAnalyzers.Support;
 
@@ -20,10 +20,10 @@ internal class SourceWriter
     public void WriteLine()
         => _writer.WriteLine();
 
-    public void WriteLine([LanguageInjection("csharp")] string value)
+    public void WriteLine([StringSyntax("csharp")] string value)
         => _writer.WriteLine(value);
 
-    public void Write([LanguageInjection("csharp")] string value)
+    public void Write([StringSyntax("csharp")] string value)
         => _writer.Write(value);
 
     public void WriteIndent()

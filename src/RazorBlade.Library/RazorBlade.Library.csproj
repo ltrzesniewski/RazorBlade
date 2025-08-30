@@ -4,5 +4,4 @@
     <RootNamespace>RazorBlade</RootNamespace>
     <LangVersion>10.0</LangVersion>
   </PropertyGroup>
-
 </Project>

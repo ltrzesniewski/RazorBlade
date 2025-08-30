@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Text;
-using JetBrains.Annotations;
 
 namespace RazorBlade;
 
@@ -24,7 +23,6 @@ public sealed class HtmlHelper
     /// Returns markup that is not HTML encoded.
     /// </summary>
     /// <param name="value">The HTML markup.</param>
-    [PublicAPI]
     public HtmlString Raw(object? value)
         => new(value?.ToString());
 
@@ -32,7 +30,6 @@ public sealed class HtmlHelper
     /// HTML-encodes the provided value.
     /// </summary>
     /// <param name="value">Value to HTML-encode.</param>
-    [PublicAPI]
     public string Encode(object? value)
     {
         var valueString = value?.ToString();

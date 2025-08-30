@@ -1,11 +1,11 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using JetBrains.Annotations;
 using MyApplication;
 
 namespace RazorBlade.IntegrationTest.Examples
 {
     [SuppressMessage("ReSharper", "UnusedVariable")]
-    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
+    [SuppressMessage("ReSharper", "UnusedType.Global")]
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
     internal class Examples
     {
         public static void ExampleTemplateUsage()
