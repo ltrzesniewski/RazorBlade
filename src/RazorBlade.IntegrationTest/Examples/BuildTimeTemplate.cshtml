@@ -1,0 +1,9 @@
+﻿@inherits RazorBlade.CSharpGenerator
+
+public static class BuildTimeGeneratedClass
+{
+@for (var i = 0; i < 5; i++)
+{
+    @:public static string Foo@(i) => "Bar@(i)";
+}
+}

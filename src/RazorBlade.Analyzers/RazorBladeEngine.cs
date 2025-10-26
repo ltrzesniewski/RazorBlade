@@ -6,7 +6,6 @@ using System.Text;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.AspNetCore.Razor.Language.Extensions;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Razor;
 using RazorBlade.Analyzers.Features;
 
@@ -40,15 +39,14 @@ internal class RazorBladeEngine
         );
     }
 
-    public RazorCSharpDocument? Process(InputFile inputFile, ImmutableArray<AdditionalText> allImports)
+    public RazorCodeDocument? Process(InputFile inputFile, ImmutableArray<AdditionalText> allImports)
     {
         var codeDocument = CreateRazorCodeDocument(inputFile, allImports);
-        if (codeDocument is null)
-            return null;
 
-        RazorEngine.Engine.Process(codeDocument);
+        if (codeDocument is not null)
+            RazorEngine.Engine.Process(codeDocument);
 
-        return codeDocument.GetCSharpDocument();
+        return codeDocument;
     }
 
     private RazorCodeDocument? CreateRazorCodeDocument(InputFile inputFile, ImmutableArray<AdditionalText> allImports)

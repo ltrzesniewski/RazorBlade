@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Linq;
+using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using RazorBlade.Analyzers.Support;
@@ -55,12 +56,15 @@ public class EmbeddedLibrarySourceGenerator : IIncrementalGenerator
                       if (!embeddedLibrary)
                           return ImmutableArray<SyntaxTree>.Empty;
 
-                      return EmbeddedLibrary.Files
-                                            .Select(file => CSharpSyntaxTree.ParseText(
-                                                        file.Source,
-                                                        (CSharpParseOptions?)parseOptions,
-                                                        cancellationToken: cancellationToken
-                                                    ))
-                                            .ToImmutableArray();
+                      return GetSyntaxTrees((CSharpParseOptions?)parseOptions, cancellationToken);
                   });
+
+    public static ImmutableArray<SyntaxTree> GetSyntaxTrees(CSharpParseOptions? parseOptions, CancellationToken cancellationToken)
+        => EmbeddedLibrary.Files
+                          .Select(file => CSharpSyntaxTree.ParseText(
+                                      file.Source,
+                                      parseOptions,
+                                      cancellationToken: cancellationToken
+                                  ))
+                          .ToImmutableArray();
 }

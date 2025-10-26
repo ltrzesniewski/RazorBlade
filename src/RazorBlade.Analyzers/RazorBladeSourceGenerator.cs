@@ -2,16 +2,11 @@
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using Microsoft.AspNetCore.Razor.Language;
-using Microsoft.AspNetCore.Razor.Language.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.Razor;
-using RazorBlade.Analyzers.Features;
 using RazorBlade.Analyzers.Support;
 
 namespace RazorBlade.Analyzers;
@@ -90,20 +85,34 @@ public partial class RazorBladeSourceGenerator : IIncrementalGenerator
     {
         OnGenerate();
 
+        var cancellationToken = context.CancellationToken;
+
         inputFile.ReportDiagnostics(context);
 
-        var csharpDoc = engine.Process(inputFile, allImports);
-        if (csharpDoc is null)
+        if (engine.Process(inputFile, allImports) is not { } codeDocument)
             return;
 
-        var libraryCode = GenerateLibrarySpecificCode(csharpDoc, engine.GlobalOptions, compilation, context.CancellationToken);
+        if (codeDocument.GetCSharpDocument() is not { } csharpDocument)
+            return;
 
-        foreach (var diagnostic in csharpDoc.Diagnostics)
+        foreach (var diagnostic in csharpDocument.Diagnostics)
             context.ReportDiagnostic(diagnostic.ToDiagnostic());
+
+        if (BuildTimeTemplateRunner.TryGenerate(codeDocument, cancellationToken) is { } buildTimeTemplateOutput)
+        {
+            context.AddSource(
+                $"{inputFile.HintNamespace}.{inputFile.ClassName}.CSharp.g.cs",
+                buildTimeTemplateOutput
+            );
+
+            return;
+        }
+
+        var libraryCode = GenerateLibrarySpecificCode(csharpDocument, engine.GlobalOptions, compilation, context.CancellationToken);
 
         context.AddSource(
             $"{inputFile.HintNamespace}.{inputFile.ClassName}.Razor.g.cs",
-            csharpDoc.GeneratedCode
+            csharpDocument.GeneratedCode
         );
 
         if (!string.IsNullOrEmpty(libraryCode))

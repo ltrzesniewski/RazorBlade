@@ -30,15 +30,15 @@ internal class InputFile : IEquatable<InputFile>
         _diagnostics = diagnostics;
     }
 
-    public static InputFile Create(AdditionalText additionalText, AnalyzerConfigOptions options)
+    public static InputFile Create(AdditionalText additionalText, AnalyzerConfigOptions? options)
     {
         var diagnostics = new List<Diagnostic>();
         var accessibility = (Accessibility?)null;
 
-        if (!options.TryGetValue(Constants.FileOptions.HintNamespace, out var hintNamespace))
+        if (options?.TryGetValue(Constants.FileOptions.HintNamespace, out var hintNamespace) != true)
             hintNamespace = null;
 
-        if (options.TryGetValue(Constants.FileOptions.Accessibility, out var accessibilityStr)
+        if (options?.TryGetValue(Constants.FileOptions.Accessibility, out var accessibilityStr) == true
             && !string.IsNullOrEmpty(accessibilityStr))
         {
             if (GlobalOptions.TryParseTopLevelAccessibility(accessibilityStr, out var value))
