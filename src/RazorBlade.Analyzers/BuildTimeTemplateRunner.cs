@@ -1,11 +1,14 @@
-﻿using System.IO;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Scripting.Hosting;
+using RazorBlade.Analyzers.Support;
 
 namespace RazorBlade.Analyzers;
 
@@ -72,19 +75,78 @@ internal static class BuildTimeTemplateRunner
 
         peStream.Position = 0;
 
-        // TODO: Remove dependency on the Scripting assemblies
+        using var assemblyLoader = AssemblyLoader.Create();
+        var assembly = assemblyLoader.LoadFromStream(peStream);
 
-        using var publicLoader = new InteractiveAssemblyLoader();
+        return assembly.GetType(_baseClassName)
+                       .EnsureNotNull($"Could not find type {_baseClassName} in generated assembly")
+                       .GetMethod("Run", BindingFlags.NonPublic | BindingFlags.Static)
+                       .EnsureNotNull("Could not find expected method in generated assembly")
+                       .Invoke(null, [])
+                       .EnsureNotNull("The build-time template returned null.") as string;
+    }
 
-        var loaderField = typeof(InteractiveAssemblyLoader).GetField("_runtimeAssemblyLoader", BindingFlags.NonPublic | BindingFlags.Instance)!;
-        var loader = loaderField.GetValue(publicLoader);
+    private abstract class AssemblyLoader : IDisposable
+    {
+        private static readonly Type? _alcType = Type.GetType("System.Runtime.Loader.AssemblyLoadContext, System.Runtime.Loader, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", false);
 
-        var assembly = (Assembly)loaderField.FieldType
-                                            .GetMethod("LoadFromStream", BindingFlags.Instance | BindingFlags.Public)!
-                                            .Invoke(loader, [peStream, null]);
+        public static AssemblyLoader Create()
+            => _alcType is not null
+                ? new AlcAssemblyLoader()
+                : new FrameworkAssemblyLoader();
 
-        return assembly.GetType(_baseClassName)!
-                       .GetMethod("Run", BindingFlags.NonPublic | BindingFlags.Static)!
-                       .Invoke(null, []) as string;
+        public abstract void Dispose();
+        public abstract Assembly LoadFromStream(MemoryStream peStream);
+
+        private class AlcAssemblyLoader : AssemblyLoader
+        {
+            private static readonly MethodInfo _loadFromStream;
+            private static readonly MethodInfo _unload;
+
+            private object? _alc;
+
+            static AlcAssemblyLoader()
+            {
+                Debug.Assert(_alcType is not null);
+
+                _loadFromStream = _alcType?.GetMethod("LoadFromStream", BindingFlags.Instance | BindingFlags.Public, null, [typeof(Stream)], null)
+                                  ?? throw new InvalidOperationException("Could not find AssemblyLoadContext.LoadFromStream method.");
+
+                _unload = _alcType.GetMethod("Unload", BindingFlags.Instance | BindingFlags.Public, null, [], null)
+                          ?? throw new InvalidOperationException("Could not find AssemblyLoadContext.Unload method.");
+            }
+
+            public AlcAssemblyLoader()
+            {
+                Debug.Assert(_alcType is not null);
+
+                _alc = Activator.CreateInstance(_alcType, null, true)
+                                .EnsureNotNull("Could not create AssemblyLoadContext.");
+            }
+
+            public override Assembly LoadFromStream(MemoryStream peStream)
+                => _loadFromStream.Invoke(_alc.EnsureNotNull("AssemblyLoadContext is not available"), [peStream]) as Assembly
+                   ?? throw new InvalidOperationException("Could not load generated assembly.");
+
+            public override void Dispose()
+            {
+                _unload.Invoke(_alc, []);
+                _alc = null;
+            }
+        }
+
+        private class FrameworkAssemblyLoader : AssemblyLoader
+        {
+            public override Assembly LoadFromStream(MemoryStream peStream)
+            {
+                Debug.Assert(RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework", StringComparison.Ordinal));
+
+                return Assembly.Load(peStream.ToArray());
+            }
+
+            public override void Dispose()
+            {
+            }
+        }
     }
 }

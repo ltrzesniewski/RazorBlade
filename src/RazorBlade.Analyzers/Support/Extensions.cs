@@ -15,6 +15,10 @@ internal static class Extensions
         where T : class
         => provider.Where(static item => item is not null)!;
 
+    public static T EnsureNotNull<T>(this T? value, string errorMessage)
+        where T : class
+        => value ?? throw new InvalidOperationException(errorMessage);
+
     public static IncrementalValuesProvider<T> WithLambdaComparer<T>(this IncrementalValuesProvider<T> source, Func<T, T, bool> equals, Func<T, int> getHashCode)
         => source.WithComparer(new LambdaComparer<T>(equals, getHashCode));
 
