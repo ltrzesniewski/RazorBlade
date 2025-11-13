@@ -1,10 +1,12 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using Microsoft.CodeAnalysis;
 
 // ReSharper disable once CheckNamespace
 namespace System;
 
+[Embedded]
 internal readonly struct Index : IEquatable<Index>
 {
     private readonly int _value;
