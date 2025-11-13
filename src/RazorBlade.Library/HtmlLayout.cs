@@ -44,7 +44,7 @@ public abstract class HtmlLayout : HtmlTemplate, IRazorLayout
     [EditorBrowsable(EditorBrowsableState.Never)]
     [SuppressMessage("ReSharper", "UnusedParameter.Global")]
     [SuppressMessage("ReSharper", "MemberCanBeMadeStatic.Global")]
-    public new void Render(CancellationToken cancellationToken = default)
+    public new string Render(CancellationToken cancellationToken = default)
         => throw new InvalidOperationException(_contentsRequiredErrorMessage);
 
     /// <summary>

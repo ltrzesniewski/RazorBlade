@@ -10,7 +10,7 @@
     {
         protected HtmlLayout() { }
         protected bool IsSectionDefined(string name) { }
-        public new void Render(System.Threading.CancellationToken cancellationToken = default) { }
+        public new string Render(System.Threading.CancellationToken cancellationToken = default) { }
         public new void Render(System.IO.TextWriter textWriter, System.Threading.CancellationToken cancellationToken = default) { }
         public new System.Threading.Tasks.Task<string> RenderAsync(System.Threading.CancellationToken cancellationToken = default) { }
         public new System.Threading.Tasks.Task RenderAsync(System.IO.TextWriter textWriter, System.Threading.CancellationToken cancellationToken = default) { }
