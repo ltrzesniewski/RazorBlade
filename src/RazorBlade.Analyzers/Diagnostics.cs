@@ -14,7 +14,7 @@ internal static class Diagnostics
     {
         InternalError = 1,
         ModelDirectiveNotSupported = 2,
-        ConditionalOnAsync = 3,
+        // ConditionalOnAsync = 3, // Removed feature
         EmbeddedLibraryUnsupportedCSharpVersion = 4,
         TagHelpersNotSupported = 5,
         UsingWithRazorSdk = 6,

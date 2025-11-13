@@ -5,7 +5,6 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using RazorBlade.Support;
 
 namespace RazorBlade;
 
@@ -38,7 +37,6 @@ public abstract class RazorTemplate : IEncodedContent
     /// <remarks>
     /// Use this only if the template does not use <c>@async</c> directives.
     /// </remarks>
-    [ConditionalOnAsync(false, Message = $"The generated template is async. Use {nameof(RenderAsync)} instead.")]
     public string Render(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -59,7 +57,6 @@ public abstract class RazorTemplate : IEncodedContent
     /// <remarks>
     /// Use this only if the template does not use <c>@async</c> directives.
     /// </remarks>
-    [ConditionalOnAsync(false, Message = $"The generated template is async. Use {nameof(RenderAsync)} instead.")]
     public void Render(TextWriter textWriter, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

@@ -82,9 +82,7 @@
         protected System.Threading.Tasks.Task<RazorBlade.IEncodedContent> FlushAsync() { }
         protected System.IO.TextWriter PopWriter() { }
         protected void PushWriter(System.IO.TextWriter writer) { }
-        [RazorBlade.Support.ConditionalOnAsync(false, Message="The generated template is async. Use RenderAsync instead.")]
         public string Render(System.Threading.CancellationToken cancellationToken = default) { }
-        [RazorBlade.Support.ConditionalOnAsync(false, Message="The generated template is async. Use RenderAsync instead.")]
         public void Render(System.IO.TextWriter textWriter, System.Threading.CancellationToken cancellationToken = default) { }
         public System.Threading.Tasks.Task<string> RenderAsync(System.Threading.CancellationToken cancellationToken = default) { }
         public System.Threading.Tasks.Task RenderAsync(System.IO.TextWriter textWriter, System.Threading.CancellationToken cancellationToken = default) { }
@@ -101,12 +99,6 @@
 }
 namespace RazorBlade.Support
 {
-    [System.AttributeUsage(System.AttributeTargets.Method)]
-    public sealed class ConditionalOnAsyncAttribute : System.Attribute
-    {
-        public ConditionalOnAsyncAttribute(bool async) { }
-        public string? Message { get; set; }
-    }
     [System.AttributeUsage(System.AttributeTargets.Constructor)]
     public sealed class TemplateConstructorAttribute : System.Attribute
     {

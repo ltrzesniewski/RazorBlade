@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.AspNetCore.Razor.Language.CodeGeneration;
@@ -32,16 +30,6 @@ internal class LibraryCodeGenerator
                                   | SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
         );
 
-    private static readonly SymbolDisplayFormat _paramFootprintFormat
-        = new(
-            globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Omitted,
-            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
-            genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
-            memberOptions: SymbolDisplayMemberOptions.IncludeContainingType,
-            parameterOptions: SymbolDisplayParameterOptions.IncludeType,
-            miscellaneousOptions: SymbolDisplayMiscellaneousOptions.UseSpecialTypes
-        );
-
     private readonly RazorCSharpDocument _generatedDoc;
     private readonly Compilation _inputCompilation;
     private readonly CSharpParseOptions _parseOptions;
@@ -50,7 +38,6 @@ internal class LibraryCodeGenerator
     private bool _hasCode;
 
     private INamedTypeSymbol? _classSymbol;
-    private ImmutableArray<Diagnostic> _diagnostics;
     private Compilation _compilation;
     private SemanticModel? _semanticModel;
     private ClassDeclarationSyntax? _classDeclarationSyntax;
@@ -95,7 +82,6 @@ internal class LibraryCodeGenerator
                    ))
             {
                 GenerateConstructors();
-                GenerateConditionalOnAsync(cancellationToken);
             }
         }
 
@@ -125,8 +111,6 @@ internal class LibraryCodeGenerator
         _classSymbol = _classDeclarationSyntax is not null
             ? _semanticModel.GetDeclaredSymbol(_classDeclarationSyntax, cancellationToken)
             : null;
-
-        _diagnostics = _semanticModel.GetDiagnostics(cancellationToken: cancellationToken);
     }
 
     private void GenerateConstructors()
@@ -173,153 +157,6 @@ internal class LibraryCodeGenerator
         }
     }
 
-    private void GenerateConditionalOnAsync(CancellationToken cancellationToken)
-    {
-        const string executeAsyncMethodName = "ExecuteAsync";
-        const string defineSectionMethodName = "DefineSection";
-
-        var conditionalOnAsyncAttribute = _compilation.GetTypeByMetadataName("RazorBlade.Support.ConditionalOnAsyncAttribute");
-        if (conditionalOnAsyncAttribute is null)
-            return;
-
-        var executeMethodSyntax = _classDeclarationSyntax?.ChildNodes()
-                                                         .Where(m => m.IsKind(SyntaxKind.MethodDeclaration))
-                                                         .OfType<MethodDeclarationSyntax>()
-                                                         .FirstOrDefault(m => m.Identifier.ValueText == executeAsyncMethodName
-                                                                              && m.Modifiers.Any(SyntaxKind.AsyncKeyword)
-                                                                              && m.ParameterList.Parameters.Count == 0);
-
-        if (executeMethodSyntax is null)
-            return;
-
-        var isTemplateSync = IsTemplateSync();
-        var hiddenMethodSignatures = new HashSet<string>(StringComparer.Ordinal);
-
-        foreach (var baseClass in _classSymbol.SelfAndBaseTypes().Skip(1))
-        {
-            foreach (var methodSymbol in baseClass.GetMembers().OfType<IMethodSymbol>())
-            {
-                if (methodSymbol.IsStatic
-                    || methodSymbol.DeclaredAccessibility != Accessibility.Public
-                    || !methodSymbol.CanBeReferencedByName)
-                {
-                    continue;
-                }
-
-                var attributeData = methodSymbol.GetAttribute(conditionalOnAsyncAttribute);
-                if (attributeData?.ConstructorArguments.FirstOrDefault().Value is not bool shouldBeUsedOnAsync || shouldBeUsedOnAsync != isTemplateSync)
-                    continue;
-
-                if (!hiddenMethodSignatures.Add(GetMethodSignatureFootprint(methodSymbol)))
-                    continue;
-
-                StartMember();
-
-                WriteInheritDoc(methodSymbol);
-
-                // This currently doesn't have the intended effect, but leave it anyway :'(
-                _writer.WriteLine("[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]");
-
-                WriteObsoleteAttribute(
-                    attributeData.NamedArguments.FirstOrDefault(i => i.Key == "Message").Value.Value as string
-                    ?? $"This method should not be used on {(isTemplateSync ? "a synchronous" : "an asynchronous")} template.",
-                    Diagnostics.GetDiagnosticId(Diagnostics.Id.ConditionalOnAsync)
-                );
-
-                _writer.Write("public new ")
-                       .Write(methodSymbol.ReturnType.ToDisplayString(_paramSignatureFormat))
-                       .Write(" ")
-                       .Write(methodSymbol.Name.EscapeCSharpKeyword());
-
-                WriteGenericParameters(methodSymbol);
-                WriteParametersSignature(methodSymbol);
-                _writer.WriteLine();
-
-                using (_writer.IndentScope())
-                {
-                    _writer.Write("=> base.").Write(methodSymbol.Name.EscapeCSharpKeyword());
-                    WriteGenericParameters(methodSymbol);
-                    WriteParametersCall(methodSymbol);
-                    _writer.WriteLine(";");
-                }
-            }
-        }
-
-        bool IsTemplateSync()
-        {
-            // CS1998 = This async method lacks 'await' operators and will run synchronously.
-            // The ExecuteAsync and all the DefineSection methods need to have this diagnostic for the template to be considered synchronous.
-
-            var diagnosticLocations = _diagnostics.Where(i => i.Id == "CS1998").Select(i => i.Location).ToHashSet();
-            if (!diagnosticLocations.Contains(executeMethodSyntax.Identifier.GetLocation()))
-                return false;
-
-            var defineSectionMethod = _classSymbol.SelfAndBaseTypes()
-                                                  .SelectMany(t => t.GetMembers(defineSectionMethodName))
-                                                  .OfType<IMethodSymbol>()
-                                                  .FirstOrDefault(m => m.Parameters is
-                                                  [
-                                                      { Type.SpecialType: SpecialType.System_String },
-                                                      { Type.TypeKind: TypeKind.Delegate }
-                                                  ]);
-
-            if (defineSectionMethod is null || executeMethodSyntax.Body is not { } executeMethodBody)
-                return true;
-
-            foreach (var node in executeMethodBody.DescendantNodes())
-            {
-                if (node is InvocationExpressionSyntax
-                    {
-                        ArgumentList.Arguments:
-                        [
-                            { Expression: LiteralExpressionSyntax { RawKind: (int)SyntaxKind.StringLiteralExpression } },
-                            { Expression: ParenthesizedLambdaExpressionSyntax { AsyncKeyword.RawKind: (int)SyntaxKind.AsyncKeyword } lambda }
-                        ],
-                        Expression: IdentifierNameSyntax { Identifier.ValueText: defineSectionMethodName } expression
-                    }
-                    && !diagnosticLocations.Contains(lambda.ArrowToken.GetLocation())
-                    && SymbolEqualityComparer.Default.Equals(_semanticModel.GetSymbolInfo(expression, cancellationToken).Symbol, defineSectionMethod)
-                   )
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        static string GetMethodSignatureFootprint(IMethodSymbol methodSymbol)
-        {
-            var sb = new StringBuilder();
-
-            foreach (var parameterSymbol in methodSymbol.Parameters)
-            {
-                if (parameterSymbol.RefKind != RefKind.None)
-                    sb.Append("ref ");
-
-                sb.Append(parameterSymbol.Type.ToDisplayString(_paramFootprintFormat));
-                sb.Append(';');
-            }
-
-            return sb.ToString();
-        }
-
-        void WriteObsoleteAttribute(string message, string diagnosticId)
-        {
-            var obsoleteAttributeType = _compilation.GetTypeByMetadataName("System.ObsoleteAttribute");
-            if (obsoleteAttributeType is null)
-                return; // Shouldn't happen
-
-            _writer.Write("[global::System.Obsolete(");
-            _writer.Write(SyntaxFactory.Literal(message).ToString());
-
-            if (obsoleteAttributeType.MemberNames.Contains("DiagnosticId"))
-                _writer.Write($@", DiagnosticId = ""{diagnosticId}""");
-
-            _writer.WriteLine(")]");
-        }
-    }
-
     private void StartMember()
     {
         if (_hasCode)
@@ -338,25 +175,7 @@ internal class LibraryCodeGenerator
         if (cref.IndexOf('~') is >= 0 and var index)
             cref = cref.Substring(0, index);
 
-        _writer.WriteLine($@"/// <inheritdoc cref=""{cref}"" />");
-    }
-
-    private void WriteGenericParameters(IMethodSymbol methodSymbol)
-    {
-        if (!methodSymbol.IsGenericMethod)
-            return;
-
-        _writer.Write("<");
-
-        foreach (var typeParam in methodSymbol.TypeParameters)
-        {
-            if (typeParam.Ordinal != 0)
-                _writer.WriteParameterSeparator();
-
-            _writer.Write(typeParam.ToDisplayString(_paramSignatureFormat));
-        }
-
-        _writer.Write(">");
+        _writer.WriteLine($"""/// <inheritdoc cref="{cref}" />""");
     }
 
     private void WriteParametersSignature(IMethodSymbol methodSymbol)

@@ -9,6 +9,5 @@
   RazorBlade.PlainTextTemplate,
   RazorBlade.PlainTextTemplate`1,
   RazorBlade.RazorTemplate,
-  RazorBlade.Support.ConditionalOnAsyncAttribute,
   RazorBlade.Support.TemplateConstructorAttribute
 ]

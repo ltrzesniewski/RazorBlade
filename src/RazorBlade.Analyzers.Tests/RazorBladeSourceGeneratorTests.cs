@@ -267,88 +267,6 @@ public class RazorBladeSourceGeneratorTests
     }
 
     [Test]
-    public Task should_mark_sync_methods_as_obsolete_on_async_templates()
-    {
-        return Verify(
-            """
-            @using System.Threading.Tasks
-            @await Task.FromResult(42)
-            """
-        );
-    }
-
-    [Test]
-    public Task should_mark_sync_methods_as_obsolete_on_async_templates_netstandard()
-    {
-        return Verify(
-            """
-            @using System.Threading.Tasks
-            @await Task.FromResult(42)
-            """,
-            config: new()
-            {
-                NetStandard = true
-            }
-        );
-    }
-
-    [Test]
-    public Task should_handle_conditional_on_async_attribute()
-    {
-        return Verify(
-            """
-            @inherits Foo.BaseClassC
-            @using System.Threading.Tasks
-            @await Task.FromResult(42)
-            """,
-            """
-            using System;
-            using System.Threading.Tasks;
-            using RazorBlade.Support;
-
-            namespace Foo;
-
-            public abstract class BaseClassA<TModel>
-            {
-                protected abstract Task ExecuteAsync();
-                protected void Write(object? value) {}
-                protected void WriteLiteral(object? value) {}
-
-                [ConditionalOnAsyncAttribute(false, Message = "Hello!")]
-                public void OnlyOnSync(int i) {}
-
-                [ConditionalOnAsyncAttribute(true, Message = "Hello")]
-                public void OnlyOnAsync(int i) {}
-
-                [ConditionalOnAsyncAttribute(false, Message = "Hello!")]
-                public void Generic(TModel i) {}
-
-                [ConditionalOnAsyncAttribute(false, Message = "Hello!")]
-                public void Generic<TValueA, @int>(TModel i, TValueA j) {}
-            }
-
-            public abstract class BaseClassB : BaseClassA<string>
-            {
-                [ConditionalOnAsyncAttribute(false, Message = "Hello")]
-                public void SomeParams(float @double, string? str = @"foo\""bar", DayOfWeek day = DayOfWeek.Friday) {}
-
-                [ConditionalOnAsyncAttribute(false, Message = @"\""\")]
-                public void SomeParams(in int foo, ref int bar, out int baz, params int[] qux) { baz = 42; }
-            }
-
-            public abstract class BaseClassC : BaseClassB
-            {
-                [ConditionalOnAsyncAttribute(false, Message = "Hello, world!")]
-                public new void OnlyOnSync(int i) {}
-
-                [ConditionalOnAsyncAttribute(false, Message = "Hello, double")]
-                public void OnlyOnSync(double i) {}
-            }
-            """
-        );
-    }
-
-    [Test]
     public Task should_reject_tag_helper_directives()
     {
         return Verify(
@@ -371,19 +289,6 @@ public class RazorBladeSourceGeneratorTests
             @section SectionName { Section content }
             After section
             @section OtherSectionName { Answer is @(42) }
-            """
-        );
-    }
-
-    [Test]
-    public Task should_detect_async_sections()
-    {
-        return Verify(
-            """
-            @using System.Threading.Tasks
-            @if (42.ToString() == "42") {
-                @section SectionName { @await Task.FromResult(42) }
-            }
             """
         );
     }
