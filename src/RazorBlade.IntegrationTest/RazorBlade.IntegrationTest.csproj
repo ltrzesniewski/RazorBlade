@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MarkdownSnippets.MsBuild" Version="27.0.2" PrivateAssets="all" />
+    <PackageReference Include="MarkdownSnippets.MsBuild" Version="28.0.2" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

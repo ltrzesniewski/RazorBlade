@@ -10,6 +10,7 @@ public static class Program
     private const string _bold = "\e[1m";
     private const string _red = "\e[91m";
     private const string _green = "\e[92m";
+    private const string _yellow = "\e[93m";
 
     private static bool _success;
 
@@ -20,9 +21,7 @@ public static class Program
         CheckTemplates(args.Contains("--write"));
         CheckNamespaces();
         CheckAccessibility();
-
-        if (args.Contains("--aot"))
-            CheckAot();
+        CheckAot(args.Contains("--aot"));
 
         Console.WriteLine();
         Console.WriteLine($"{_bold}Integration tests: {(_success ? $"{_green}PASSED" : $"{_red}FAILED")}{_reset}");
@@ -91,9 +90,15 @@ public static class Program
         Check(typeof(PublicTemplate).IsPublic);
     }
 
-    private static void CheckAot()
+    private static void CheckAot(bool run)
     {
         Header("AOT");
+
+        if (!run)
+        {
+            Ignore();
+            return;
+        }
 
         Check(!RuntimeFeature.IsDynamicCodeSupported);
         Check(string.IsNullOrEmpty(GetAssemblyLocation()));
@@ -128,6 +133,11 @@ public static class Program
     {
         Console.WriteLine($"  {_red}FAILED:{_reset} {message}");
         _success = false;
+    }
+
+    private static void Ignore()
+    {
+        Console.WriteLine($"  {_yellow}IGNORED{_reset}");
     }
 }
 
