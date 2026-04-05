@@ -8,6 +8,7 @@ public static class Program
 {
     private const string _reset = "\e[0m";
     private const string _bold = "\e[1m";
+    private const string _italic = "\e[3m";
     private const string _red = "\e[91m";
     private const string _green = "\e[92m";
     private const string _yellow = "\e[93m";
@@ -34,21 +35,68 @@ public static class Program
     {
         Header("Templates");
 
-        CheckTemplate(new TestTemplate { Name = "World" });
-        CheckTemplate(new TestTemplateWithModel(new FooBarModelClass { Foo = "Foo", Bar = "Bar" }));
-        CheckTemplate(new TestGenericTemplate<string, int>("Hello"));
-        CheckTemplate(new PageWithLayout());
-        CheckTemplate(new PageWithFlush());
+        CheckTemplate(
+            new TestTemplate { Name = "World" },
+            [
+                "<b>Hello, World!</b>",
+                "&lt;br&gt;\n<br>",
+                "---\nFooter"
+            ]
+        );
 
-        CheckTemplate(new Imports.ImportA());
-        CheckTemplate(new Imports.Inner.ImportB());
-        CheckTemplate(new NamespaceOfImportC.ImportC());
+        CheckTemplate(
+            new TestTemplateWithModel(new FooBarModelClass { Foo = "Foo", Bar = "Bar" }),
+            [
+                "<b>Hello, Foo!</b>\nBar"
+            ]
+        );
 
+        CheckTemplate(
+            new TestGenericTemplate<string, int>("Hello"),
+            [
+                "Default value: 0"
+            ]
+        );
+
+        CheckTemplate(
+            new PageWithLayout(),
+            [
+                """
+                <div>Outer layout header</div>
+                <h1>Header</h1>
+                This is the inner layout.
+                """
+            ]
+        );
+
+        CheckTemplate(
+            new PageWithFlush(),
+            [
+                """
+                <h2>Hello, world!</h2>
+                Before flush.
+
+                After flush.
+
+                After 2nd flush.
+                """
+            ]
+        );
+
+        // Imports
+        CheckTemplate(new Imports.ImportA(), ["ImportA: BaseOfImportA"]);
+        CheckTemplate(new Imports.Inner.ImportB(), ["ImportB: BaseOfImportB"]);
+        CheckTemplate(new NamespaceOfImportC.ImportC(), ["Layout for C", "ImportC: HtmlTemplateWithLayout`1 of LayoutForC"]);
+
+        // Examples
         CheckTemplate(new Examples.TemplateWithPartials());
 
         return;
 
-        void CheckTemplate(RazorTemplate template, [CallerArgumentExpression(nameof(template))] string? code = null)
+        void CheckTemplate(RazorTemplate template,
+                           string[]? expectedOutput = null,
+                           [CallerArgumentExpression(nameof(template))]
+                           string? code = null)
         {
             try
             {
@@ -64,6 +112,14 @@ public static class Program
                 }
 
                 Pass(code);
+
+                foreach (var expected in expectedOutput ?? [])
+                {
+                    Check(
+                        result.ReplaceLineEndings("\n").Contains(expected.ReplaceLineEndings("\n")),
+                        $"{code} {_bold}contains{_reset} \"{expected.ReplaceLineEndings($"{_italic}<EOL>{_reset}")}\""
+                    );
+                }
             }
             catch (Exception ex)
             {
