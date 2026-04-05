@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/Build/">
+    <File Path="../.editorconfig" />
+    <File Path="../.gitattributes" />
+    <File Path="../.github/workflows/build.yml" />
+    <File Path="../.gitignore" />
+    <File Path="../README.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="mdsnippets.json" />
+    <File Path="NuGetReadme.md" />
+  </Folder>
+  <Project Path="RazorBlade.Analyzers.Tests/RazorBlade.Analyzers.Tests.csproj" />
+  <Project Path="RazorBlade.Analyzers/RazorBlade.Analyzers.csproj" />
+  <Project Path="RazorBlade.IntegrationTest.Embedded/RazorBlade.IntegrationTest.Embedded.csproj" />
+  <Project Path="RazorBlade.IntegrationTest/RazorBlade.IntegrationTest.csproj" />
+  <Project Path="RazorBlade.Library.Tests/RazorBlade.Library.Tests.csproj" />
+  <Project Path="RazorBlade.Library/RazorBlade.Library.csproj" />
+  <Project Path="RazorBlade.MetaAnalyzers/RazorBlade.MetaAnalyzers.csproj" />
+  <Project Path="RazorBlade/RazorBlade.csproj" />
+</Solution>

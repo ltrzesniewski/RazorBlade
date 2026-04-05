@@ -29,16 +29,16 @@ jobs:
           dotnet-version: ${{ env.BUILD_DOTNET_VERSION }}
 
       - name: Restore
-        run: dotnet restore src/RazorBlade.sln
+        run: dotnet restore src/RazorBlade.slnx
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore src/RazorBlade.sln
+        run: dotnet build --configuration Release --no-restore src/RazorBlade.slnx
 
       - name: Pack
-        run: dotnet pack --configuration Release --no-build src/RazorBlade.sln
+        run: dotnet pack --configuration Release --no-build src/RazorBlade.slnx
 
       - name: Test
-        run: dotnet test --configuration Release --no-build src/RazorBlade.sln
+        run: dotnet test --configuration Release --no-build src/RazorBlade.slnx
 
       - name: Integration Test
         run: dotnet publish --configuration Release --no-build --output ./bin/aot src/RazorBlade.IntegrationTest/RazorBlade.IntegrationTest.csproj && ./bin/aot/RazorBlade.IntegrationTest.exe --aot
@@ -66,13 +66,13 @@ jobs:
           dotnet-version: ${{ env.BUILD_DOTNET_VERSION }}
 
       - name: Restore
-        run: dotnet restore src/RazorBlade.sln
+        run: dotnet restore src/RazorBlade.slnx
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore src/RazorBlade.sln
+        run: dotnet build --configuration Release --no-restore src/RazorBlade.slnx
 
       - name: Test
-        run: dotnet test --configuration Release --no-build src/RazorBlade.sln
+        run: dotnet test --configuration Release --no-build src/RazorBlade.slnx
 
       - name: Integration Test
         run: dotnet publish --configuration Release --no-build --output ./bin/aot src/RazorBlade.IntegrationTest/RazorBlade.IntegrationTest.csproj && ./bin/aot/RazorBlade.IntegrationTest --aot
