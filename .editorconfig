@@ -5,11 +5,11 @@ trim_trailing_whitespace = true
 insert_final_newline = true
 end_of_line = crlf
 
-[*.{cs,csx,cake,tt}]
+[*.{cs,csx,c,cpp,h,cake,tt}]
 indent_size = 4
 indent_style = space
 
-[*.{config,nuspec,resx,xaml}]
+[*.{config,nuspec,resx,xml,xaml}]
 indent_size = 2
 indent_style = space
 
@@ -22,6 +22,12 @@ indent_style = tab
 
 [*.md]
 trim_trailing_whitespace = false
+
+[*.sh]
+end_of_line = lf
+
+[*.ps1]
+ij_powershell_block_brace_style = end_of_line
 
 # Verify
 [*.{received,verified}.{txt,cs}]
@@ -92,13 +98,18 @@ resharper_keep_existing_embedded_arrangement = false
 
 resharper_place_accessorholder_attribute_on_same_line = false
 resharper_place_constructor_initializer_on_same_line = false
+resharper_place_expr_method_on_single_line = false
 resharper_place_field_attribute_on_same_line = false
 resharper_place_simple_embedded_statement_on_same_line = false
 resharper_csharp_place_type_constraints_on_same_line = false
 resharper_csharp_wrap_parameters_style = chop_if_long
-resharper_csharp_wrap_arguments_style = chop_if_long
+resharper_csharp_wrap_arguments_style = wrap_if_long
+resharper_csharp_wrap_after_invocation_lpar = false
+resharper_csharp_wrap_before_invocation_rpar = false
+resharper_csharp_place_single_method_argument_lambda_on_same_line = false
+resharper_csharp_wrap_before_arrow_with_expressions = true
 
-resharper_new_line_before_while = true
+resharper_new_line_before_while = false
 resharper_csharp_stick_comment = false
 
 resharper_wrap_before_arrow_with_expressions = true
@@ -106,3 +117,7 @@ resharper_csharp_wrap_before_binary_opsign = true
 resharper_csharp_wrap_multiple_type_parameter_constraints_style = chop_always
 
 resharper_wrap_tags_and_pi = false
+resharper_xmldoc_indent_text = do_not_touch
+resharper_xmldoc_indent_child_elements = do_not_touch
+resharper_xmldoc_space_before_self_closing = false
+resharper_space_before_self_closing = true
