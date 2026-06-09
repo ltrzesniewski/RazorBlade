@@ -8,5 +8,4 @@ namespace RazorBlade.Support;
 /// </summary>
 [AttributeUsage(AttributeTargets.Constructor)]
 public sealed class TemplateConstructorAttribute : Attribute
-{
-}
+{ }

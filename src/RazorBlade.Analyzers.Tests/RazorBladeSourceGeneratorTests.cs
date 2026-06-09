@@ -102,18 +102,15 @@ public class RazorBladeSourceGeneratorTests
             public abstract class BaseClass : RazorBlade.HtmlTemplate
             {
                 protected BaseClass(int notIncluded)
-                {
-                }
+                { }
 
                 [TemplateConstructor]
                 protected BaseClass(int? foo, string? bar)
-                {
-                }
+                { }
 
                 [TemplateConstructor]
                 protected BaseClass(float @double, string str = @"foo\""bar", DayOfWeek day = DayOfWeek.Friday)
-                {
-                }
+                { }
 
                 [TemplateConstructor]
                 protected BaseClass(in int foo, ref int bar, out int baz, params int[] qux)

@@ -152,8 +152,7 @@ internal class LibraryCodeGenerator
                 _writer.WriteLine();
             }
 
-            _writer.WriteLine("{")
-                   .WriteLine("}");
+            _writer.WriteLine("{ }");
         }
     }
 

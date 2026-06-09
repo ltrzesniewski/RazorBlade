@@ -10,7 +10,6 @@ namespace TestNamespace
         /// <inheritdoc cref="M:Foo.BaseClass`1.#ctor(System.Int32)" />
         public TestFile(int value)
             : base(value)
-        {
-        }
+        { }
     }
 }

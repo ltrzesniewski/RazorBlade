@@ -320,8 +320,7 @@ public abstract class RazorTemplate : IEncodedContent
 
         private ExecutionScope(ExecutionScope parent)
             : this(parent._page, parent.Layout, parent.CancellationToken)
-        {
-        }
+        { }
 
         public void Dispose()
         {

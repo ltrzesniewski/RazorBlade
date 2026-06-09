@@ -212,8 +212,7 @@ public class HtmlLayoutTests
                 },
                 createLayout
             )
-        {
-        }
+        { }
 
         protected internal override async Task ExecuteAsync()
         {

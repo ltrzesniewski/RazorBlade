@@ -10,7 +10,6 @@ namespace TestNamespace
         /// <inheritdoc cref="M:RazorBlade.HtmlTemplate`1.#ctor(`0)" />
         public TestFile(string model)
             : base(model)
-        {
-        }
+        { }
     }
 }

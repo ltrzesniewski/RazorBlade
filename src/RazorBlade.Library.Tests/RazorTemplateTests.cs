@@ -249,16 +249,13 @@ public class RazorTemplateTests
     private abstract class BaseRazorTemplate : RazorTemplate
     {
         protected internal override void BeginWriteAttribute(string name, string prefix, int prefixOffset, string suffix, int suffixOffset, int attributeValuesCount)
-        {
-        }
+        { }
 
         protected internal override void WriteAttributeValue(string prefix, int prefixOffset, object? value, int valueOffset, int valueLength, bool isLiteral)
-        {
-        }
+        { }
 
         protected internal override void EndWriteAttribute()
-        {
-        }
+        { }
     }
 
     private class Template(Func<Template, Task> executeAction, Func<IRazorLayout?>? createLayout = null) : BaseRazorTemplate
@@ -269,8 +266,7 @@ public class RazorTemplateTests
                 executeAction(t);
                 return Task.CompletedTask;
             })
-        {
-        }
+        { }
 
         protected internal override async Task ExecuteAsync()
         {

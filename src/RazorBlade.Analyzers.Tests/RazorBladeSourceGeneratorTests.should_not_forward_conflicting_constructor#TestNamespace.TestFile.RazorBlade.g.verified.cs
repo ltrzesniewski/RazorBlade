@@ -10,13 +10,11 @@ namespace TestNamespace
         /// <inheritdoc cref="M:Foo.BaseClass.#ctor(System.Int32)" />
         public TestFile(int value)
             : base(value)
-        {
-        }
+        { }
 
         /// <inheritdoc cref="M:Foo.BaseClass.#ctor(System.String)" />
         public TestFile(string value)
             : base(value)
-        {
-        }
+        { }
     }
 }
