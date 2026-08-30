@@ -12,13 +12,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.6.0" NoWarn="NU1608" />
-    <PackageReference Include="NUnit" Version="4.6.1" />
-    <PackageReference Include="NUnit3TestAdapter" Version="6.2.0" />
-    <PackageReference Include="Verify.DiffPlex" Version="3.3.1" />
-    <PackageReference Include="Verify.NUnit" Version="31.28.0" />
-    <PackageReference Include="Verify.SourceGenerators" Version="2.5.0" />
-    <PackageReference Include="JetBrains.Annotations" Version="2026.2.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" NoWarn="NU1608" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="Verify.DiffPlex" />
+    <PackageReference Include="Verify.NUnit" />
+    <PackageReference Include="Verify.SourceGenerators" />
+    <PackageReference Include="JetBrains.Annotations" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,7 +29,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../RazorBlade/RazorBlade.csproj" SetTargetFramework="TargetFramework=netstandard2.0" OutputItemType="RazorBladeNetStdRef" ReferenceOutputAssembly="false" />
-    <PackageReference Include="NETStandard.Library" Version="2.0.3" IncludeAssets="none" GeneratePathProperty="true" />
+    <PackageReference Include="NETStandard.Library" VersionOverride="2.0.3" IncludeAssets="none" GeneratePathProperty="true" />
     <RazorBladeNetStdRef Include="$(PkgNETStandard_Library)/build/netstandard2.0/ref/netstandard.dll" Visible="false" />
   </ItemGroup>
 
