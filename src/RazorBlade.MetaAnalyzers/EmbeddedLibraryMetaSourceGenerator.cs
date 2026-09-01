@@ -116,7 +116,7 @@ public sealed class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
     {
         // - Add header comment
         // - Add #nullable enable
-        // - Make public top-level types internal
+        // - Make public top-level types internal with an "embedded" comment placeholder
         // - Make protected internal members protected
 
         // language=csharp
@@ -167,7 +167,9 @@ public sealed class EmbeddedLibraryMetaSourceGenerator : IIncrementalGenerator
                 _toReplace,
                 static (token, _) => token.Kind() switch
                 {
-                    SyntaxKind.PublicKeyword   => SyntaxFactory.Token(SyntaxKind.InternalKeyword).WithTriviaFrom(token),
+                    SyntaxKind.PublicKeyword => SyntaxFactory.Token(SyntaxKind.InternalKeyword)
+                                                             .WithLeadingTrivia(token.LeadingTrivia.Add(SyntaxFactory.Comment(Contracts.EmbeddedComment)))
+                                                             .WithTrailingTrivia(token.TrailingTrivia),
                     SyntaxKind.InternalKeyword => default,
                     _                          => throw new InvalidOperationException("Unexpected token type")
                 }

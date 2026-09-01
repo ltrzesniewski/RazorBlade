@@ -11,7 +11,7 @@ internal static partial class EmbeddedLibrary
         
         #nullable enable
         
-        internal abstract class TestClass
+        /* #EMBEDDED# */ internal abstract class TestClass
         {
             class InnerClass { }
             public class InnerPublicClass { }
@@ -25,11 +25,11 @@ internal static partial class EmbeddedLibrary
         
         class TestClass2 { }
         
-        internal readonly struct TestStruct { }
-        internal interface TestInterface { }
-        internal record TestRecordClass { }
-        internal record struct TestRecordStruct { }
-        internal enum TestEnum { }
-        internal delegate void TestDelegate();
+        /* #EMBEDDED# */ internal readonly struct TestStruct { }
+        /* #EMBEDDED# */ internal interface TestInterface { }
+        /* #EMBEDDED# */ internal record TestRecordClass { }
+        /* #EMBEDDED# */ internal record struct TestRecordStruct { }
+        /* #EMBEDDED# */ internal enum TestEnum { }
+        /* #EMBEDDED# */ internal delegate void TestDelegate();
         """;
 }

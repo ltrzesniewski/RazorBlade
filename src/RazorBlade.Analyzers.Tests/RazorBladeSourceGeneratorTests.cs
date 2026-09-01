@@ -244,7 +244,21 @@ public class RazorBladeSourceGeneratorTests
             """,
             config: new()
             {
-                EmbeddedLibrary = true
+                EmbeddedLibrary = "true"
+            }
+        );
+    }
+
+    [Test]
+    public Task should_forward_constructor_from_private_embedded_library()
+    {
+        return Verify(
+            """
+            @inherits RazorBlade.HtmlTemplate<string>
+            """,
+            config: new()
+            {
+                EmbeddedLibrary = "private"
             }
         );
     }
@@ -684,9 +698,9 @@ public class RazorBladeSourceGeneratorTests
         foreach (var (key, value) in config.ConfigOptions)
             analyzerConfigOptionsProvider.Add(key, value);
 
-        if (config.EmbeddedLibrary)
+        if (!string.IsNullOrEmpty(config.EmbeddedLibrary))
         {
-            analyzerConfigOptionsProvider.Add(Constants.GlobalOptions.EmbeddedLibrary, bool.TrueString);
+            analyzerConfigOptionsProvider.Add(Constants.GlobalOptions.EmbeddedLibrary, config.EmbeddedLibrary);
         }
         else
         {
@@ -714,7 +728,7 @@ public class RazorBladeSourceGeneratorTests
                                            .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithNullableContextOptions(NullableContextOptions.Enable));
 
         var result = CSharpGeneratorDriver.Create(new RazorBladeSourceGenerator())
-                                          .AddAdditionalTexts([new AdditionalTextMock(input.ReplaceLineEndings("\r\n"), config.FilePath), ..config.AdditionalTexts])
+                                          .AddAdditionalTexts([new AdditionalTextMock(input.ReplaceLineEndings("\r\n"), config.FilePath), .. config.AdditionalTexts])
                                           .WithUpdatedAnalyzerConfigOptions(analyzerConfigOptionsProvider)
                                           .RunGeneratorsAndUpdateCompilation(compilation, out var updatedCompilation, out _)
                                           .GetRunResult();
@@ -729,7 +743,7 @@ public class RazorBladeSourceGeneratorTests
         {
             result.Diagnostics.ShouldBeEmpty();
 
-            if (!config.EmbeddedLibrary) // Don't validate the embedded library generator here, assume the final output will compile.
+            if (string.IsNullOrEmpty(config.EmbeddedLibrary)) // Don't validate the embedded library generator here, assume the final output will compile.
             {
                 if (!diagnostics.IsEmpty)
                     Console.WriteLine(result.GeneratedTrees.FirstOrDefault());
@@ -762,7 +776,7 @@ public class RazorBladeSourceGeneratorTests
             { Constants.FileOptions.HintNamespace, "TestNamespace" }
         };
 
-        public bool EmbeddedLibrary { get; init; }
+        public string? EmbeddedLibrary { get; init; }
         public bool NetStandard { get; init; }
         public bool ExpectErrors { get; init; }
         public bool ExpectDiagnostics { get; init; }
