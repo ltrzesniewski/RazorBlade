@@ -1,8 +1,9 @@
-﻿using System.Collections.Immutable;
-using System.Linq;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using RazorBlade.Analyzers.Support;
+using RazorBlade.MetaAnalyzers;
 
 namespace RazorBlade.Analyzers;
 
@@ -10,6 +11,15 @@ namespace RazorBlade.Analyzers;
 public class EmbeddedLibrarySourceGenerator : IIncrementalGenerator
 {
     public const LanguageVersion MinimumSupportedLanguageVersion = LanguageVersion.CSharp10;
+
+    // language=csharp
+    private const string _embeddedAttributeSource = """
+        namespace Microsoft.CodeAnalysis
+        {
+            internal sealed partial class EmbeddedAttribute : global::System.Attribute
+            { }
+        }
+        """;
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -26,7 +36,7 @@ public class EmbeddedLibrarySourceGenerator : IIncrementalGenerator
             {
                 var (embeddedLibrary, langVersion) = input;
 
-                if (!embeddedLibrary)
+                if (embeddedLibrary == EmbeddedLibraryFlag.False)
                     return;
 
                 if (langVersion < MinimumSupportedLanguageVersion)
@@ -36,14 +46,17 @@ public class EmbeddedLibrarySourceGenerator : IIncrementalGenerator
                 }
 
                 foreach (var file in EmbeddedLibrary.Files)
-                    context.AddSource($"{file.Name}.g.cs", file.Source);
+                    context.AddSource($"{file.Name}.g.cs", TransformEmbeddedSource(file, embeddedLibrary));
+
+                if (embeddedLibrary == EmbeddedLibraryFlag.Private)
+                    context.AddSource("EmbeddedAttribute.g.cs", _embeddedAttributeSource);
             }
         );
     }
 
-    private static IncrementalValueProvider<bool> EmbeddedLibraryFlagProvider(IncrementalGeneratorInitializationContext context)
+    private static IncrementalValueProvider<EmbeddedLibraryFlag> EmbeddedLibraryFlagProvider(IncrementalGeneratorInitializationContext context)
         => context.AnalyzerConfigOptionsProvider
-                  .Select(static (i, _) => i.GlobalOptions.GetBooleanValue(Constants.GlobalOptions.EmbeddedLibrary));
+                  .Select(static (i, _) => i.GlobalOptions.GetEnumValue<EmbeddedLibraryFlag>(Constants.GlobalOptions.EmbeddedLibrary));
 
     public static IncrementalValueProvider<ImmutableArray<SyntaxTree>> EmbeddedLibraryProvider(IncrementalGeneratorInitializationContext context)
         => context.ParseOptionsProvider
@@ -52,15 +65,51 @@ public class EmbeddedLibrarySourceGenerator : IIncrementalGenerator
                   {
                       var (parseOptions, embeddedLibrary) = pair;
 
-                      if (!embeddedLibrary)
+                      if (embeddedLibrary == EmbeddedLibraryFlag.False)
                           return ImmutableArray<SyntaxTree>.Empty;
 
-                      return EmbeddedLibrary.Files
-                                            .Select(file => CSharpSyntaxTree.ParseText(
-                                                        file.Source,
-                                                        (CSharpParseOptions?)parseOptions,
-                                                        cancellationToken: cancellationToken
-                                                    ))
-                                            .ToImmutableArray();
+                      var additionalFiles = new List<SyntaxTree>();
+
+                      foreach (var file in EmbeddedLibrary.Files)
+                      {
+                          additionalFiles.Add(
+                              CSharpSyntaxTree.ParseText(
+                                  TransformEmbeddedSource(file, embeddedLibrary),
+                                  (CSharpParseOptions?)parseOptions,
+                                  cancellationToken: cancellationToken
+                              )
+                          );
+                      }
+
+                      if (embeddedLibrary == EmbeddedLibraryFlag.Private)
+                      {
+                          additionalFiles.Add(
+                              CSharpSyntaxTree.ParseText(
+                                  _embeddedAttributeSource,
+                                  (CSharpParseOptions?)parseOptions,
+                                  cancellationToken: cancellationToken
+                              ));
+                      }
+
+                      return additionalFiles.ToImmutableArray();
                   });
+
+    private static string TransformEmbeddedSource(EmbeddedLibrary.File file, EmbeddedLibraryFlag flag)
+    {
+        var source = file.Source;
+
+        return flag switch
+        {
+            EmbeddedLibraryFlag.True    => source.Replace(Contracts.EmbeddedComment, string.Empty),
+            EmbeddedLibraryFlag.Private => source.Replace(Contracts.EmbeddedComment, "[global::Microsoft.CodeAnalysis.Embedded] "),
+            _                           => string.Empty,
+        };
+    }
+
+    private enum EmbeddedLibraryFlag
+    {
+        False,
+        True,
+        Private
+    }
 }

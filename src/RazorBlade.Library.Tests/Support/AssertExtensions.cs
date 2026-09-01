@@ -62,6 +62,9 @@ internal static class AssertExtensions
     public static void ShouldContain<T>(this IEnumerable<T> actual, Predicate<T> predicate)
         => Assert.That(actual, Has.Some.Matches(predicate));
 
+    public static void ShouldNotContain<T>(this IEnumerable<T> actual, Predicate<T> predicate)
+        => Assert.That(actual, Has.None.Matches(predicate));
+
     public static void ShouldBeEquivalentTo<T>(this IEnumerable<T>? actual, IEnumerable<T> expected)
         => Assert.That(actual, Is.EquivalentTo(expected));
 }

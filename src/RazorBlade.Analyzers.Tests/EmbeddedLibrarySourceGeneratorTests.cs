@@ -21,12 +21,28 @@ public class EmbeddedLibrarySourceGeneratorTests
         // C# 7.3 is the latest version officially supported for the netstandard2.0 target,
         // but it's really old at this point. We'll ask the user to upgrade to a newer version.
 
-        var (generatorDiagnostics, compilation) = RunGenerator(languageVersion);
+        var (generatorDiagnostics, compilation) = RunGenerator(languageVersion, "true");
 
         generatorDiagnostics.ShouldBeEmpty();
         compilation.GetDiagnostics().Where(i => i.Severity >= DiagnosticSeverity.Warning).ShouldBeEmpty();
 
-        compilation.Assembly.GetTypeByMetadataName(typeof(HtmlTemplate<>).FullName!).ShouldNotBeNull();
+        var templateType = compilation.Assembly.GetTypeByMetadataName(typeof(HtmlTemplate<>).FullName!).ShouldNotBeNull();
+        templateType.GetAttributes().ShouldNotContain(i => i.AttributeClass?.ToDisplayString() == typeof(EmbeddedAttribute).FullName);
+
+        foreach (var exportedType in typeof(HtmlTemplate).Assembly.GetExportedTypes())
+            compilation.Assembly.GetTypeByMetadataName(exportedType.FullName!).ShouldNotBeNull();
+    }
+
+    [Test]
+    public void should_generate_embedded_source()
+    {
+        var (generatorDiagnostics, compilation) = RunGenerator(EmbeddedLibrarySourceGenerator.MinimumSupportedLanguageVersion, "private");
+
+        generatorDiagnostics.ShouldBeEmpty();
+        compilation.GetDiagnostics().Where(i => i.Severity >= DiagnosticSeverity.Warning).ShouldBeEmpty();
+
+        var templateType = compilation.Assembly.GetTypeByMetadataName(typeof(HtmlTemplate<>).FullName!).ShouldNotBeNull();
+        templateType.GetAttributes().ShouldContain(i => i.AttributeClass?.ToDisplayString() == typeof(EmbeddedAttribute).FullName);
 
         foreach (var exportedType in typeof(HtmlTemplate).Assembly.GetExportedTypes())
             compilation.Assembly.GetTypeByMetadataName(exportedType.FullName!).ShouldNotBeNull();
@@ -35,12 +51,12 @@ public class EmbeddedLibrarySourceGeneratorTests
     [Test]
     public void should_generate_diagnostic_on_unsupported_language_version()
     {
-        var (generatorDiagnostics, _) = RunGenerator(LanguageVersion.CSharp9);
+        var (generatorDiagnostics, _) = RunGenerator(LanguageVersion.CSharp9, "true");
 
         generatorDiagnostics.ShouldContain(Diagnostics.EmbeddedLibraryUnsupportedCSharpVersion(EmbeddedLibrarySourceGenerator.MinimumSupportedLanguageVersion));
     }
 
-    private static (ImmutableArray<Diagnostic> generatorDiagnostics, Compilation compilation) RunGenerator(LanguageVersion languageVersion)
+    private static (ImmutableArray<Diagnostic> generatorDiagnostics, Compilation compilation) RunGenerator(LanguageVersion languageVersion, string embeddedValue)
     {
         var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(languageVersion);
 
@@ -58,7 +74,7 @@ public class EmbeddedLibrarySourceGeneratorTests
         var runResult = CSharpGeneratorDriver.Create([new EmbeddedLibrarySourceGenerator().AsSourceGenerator()], parseOptions: parseOptions)
                                              .WithUpdatedAnalyzerConfigOptions(new AnalyzerConfigOptionsProviderMock
                                              {
-                                                 { Constants.GlobalOptions.EmbeddedLibrary, bool.TrueString }
+                                                 { Constants.GlobalOptions.EmbeddedLibrary, embeddedValue }
                                              })
                                              .RunGeneratorsAndUpdateCompilation(compilation, out var updatedCompilation, out _)
                                              .GetRunResult();

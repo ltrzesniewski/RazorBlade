@@ -51,6 +51,13 @@ internal static class Extensions
            && bool.TryParse(stringValue, out var boolValue)
            && boolValue;
 
+    public static TEnum GetEnumValue<TEnum>(this AnalyzerConfigOptions configOptions, string key)
+        where TEnum : struct, Enum
+        => configOptions.TryGetValue(key, out var stringValue)
+           && Enum.TryParse<TEnum>(stringValue, true, out var enumValue)
+            ? enumValue
+            : default;
+
     private sealed class LambdaComparer<T>(Func<T, T, bool> equals, Func<T, int> getHashCode) : IEqualityComparer<T>
     {
         public bool Equals(T? x, T? y)
