@@ -5,10 +5,8 @@ on: [push, pull_request]
 env:
   DOTNET_NOLOGO: 1
   NUGET_CERT_REVOCATION_MODE: offline
-  BUILD_DOTNET_VERSION: |
-    6.0.x
-    8.0.x
-    10.0.x
+  DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION: 1
+  TERM: xterm
 
 jobs:
   windows:
@@ -26,7 +24,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: ${{ env.BUILD_DOTNET_VERSION }}
+          global-json-file: global.json
 
       - name: Restore
         run: dotnet restore src/RazorBlade.slnx
@@ -63,7 +61,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: ${{ env.BUILD_DOTNET_VERSION }}
+          global-json-file: global.json
 
       - name: Restore
         run: dotnet restore src/RazorBlade.slnx
