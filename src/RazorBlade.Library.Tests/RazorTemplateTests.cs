@@ -114,13 +114,13 @@ public class RazorTemplateTests
         await semaphore.WaitAsync(CancellationToken.None);
         cts.Cancel();
 
-        var exception = Assert.CatchAsync<OperationCanceledException>(async () => await task);
+        var exception = await Assert.CatchAsync<OperationCanceledException>(async () => await task);
         task.IsCanceled.ShouldBeTrue();
         exception.ShouldNotBeNull().CancellationToken.ShouldEqual(cts.Token);
     }
 
     [Test]
-    public void should_not_execute_template_when_already_cancelled()
+    public async Task should_not_execute_template_when_already_cancelled()
     {
         var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -130,8 +130,8 @@ public class RazorTemplateTests
 
         Assert.Catch<OperationCanceledException>(() => template.Render(cts.Token));
         Assert.Catch<OperationCanceledException>(() => template.Render(StreamWriter.Null, cts.Token));
-        Assert.CatchAsync<OperationCanceledException>(() => template.RenderAsync(cts.Token));
-        Assert.CatchAsync<OperationCanceledException>(() => template.RenderAsync(StreamWriter.Null, cts.Token));
+        await Assert.CatchAsync<OperationCanceledException>(() => template.RenderAsync(cts.Token));
+        await Assert.CatchAsync<OperationCanceledException>(() => template.RenderAsync(StreamWriter.Null, cts.Token));
 
         executionCount.ShouldEqual(0);
     }
