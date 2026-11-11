@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <EnableNUnitRunner>true</EnableNUnitRunner>
   </PropertyGroup>
@@ -29,7 +29,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../RazorBlade/RazorBlade.csproj" SetTargetFramework="TargetFramework=netstandard2.0" OutputItemType="RazorBladeNetStdRef" ReferenceOutputAssembly="false" />
-    <PackageReference Include="NETStandard.Library" VersionOverride="2.0.3" IncludeAssets="none" GeneratePathProperty="true" />
+    <PackageReference Include="NETStandard.Library" VersionOverride="2.0.3" IncludeAssets="none" GeneratePathProperty="true" NoWarn="NU1510" />
     <RazorBladeNetStdRef Include="$(PkgNETStandard_Library)/build/netstandard2.0/ref/netstandard.dll" Visible="false" />
   </ItemGroup>
 
